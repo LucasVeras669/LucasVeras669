@@ -1,6 +1,8 @@
 
 ## Olá Pessoal  👋
 <h3> Me chamo Lucas Veras, aqui você pode conhecer um pouco sobre mim. 🙋‍♂️ </h3>
+
+![ezgif com-gif-maker](https://user-images.githubusercontent.com/60482900/130839167-d0d2e21f-7067-4c19-bfb4-630055e05fed.gif)
     
  <p> 🤍 Formado em Análise e Desenvolvimento de Sistemas. </p>
  <p> 💙 Estudante da Labenu (turma Johnson), aprendendo Front-end hadcore 💻 </p>
@@ -17,9 +19,8 @@
   <img align="center" alt="Lucas-HTML" height="30" width="40" src="https://raw.githubusercontent.com/devicons/devicon/master/icons/html5/html5-original.svg">
   <img align="center" alt="Lucas-CSS" height="30" width="40" src="https://raw.githubusercontent.com/devicons/devicon/master/icons/css3/css3-original.svg">
   <img align="center" alt="Lucas-React" height="30" width="40" src="https://raw.githubusercontent.com/devicons/devicon/master/icons/react/react-original.svg">
-  
-  ![ezgif com-gif-maker](https://user-images.githubusercontent.com/60482900/130818300-75e6529a-462f-4277-bf93-3faf2af93eb2.gif)
-
+  <img align="center" alt="Lucas-React" height="30" width="40" src="https://raw.githubusercontent.com/devicons/devicon/master/icons/react/react-original.svg">
+   
 </div>
  
  ##
