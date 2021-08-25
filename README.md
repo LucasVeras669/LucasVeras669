@@ -10,8 +10,8 @@
 ## Oi beleza?! Eu sou o Lucas 
  <div>
   <a href="https://github.com/LucasVeras669">
-  <img height="180em" src="https://github-readme-stats.vercel.app/api?username=LucasVeras669&show_icons=true&theme=t&include_all_commits=true&count_private=true"/>
-  <img height="180em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=LucasVeras669&layout=compact&langs_count=7&theme=""/>
+  <img height="180em" src="https://github-readme-stats.vercel.app/api?username=LucasVeras669&show_icons=true&theme=&include_all_commits=true&count_private=true"/>
+  <img height="180em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=LucasVeras669&layout=compact&langs_count=7&theme=dracula"/>
 </div>
  
  <div style="display: inline_block"><br>
