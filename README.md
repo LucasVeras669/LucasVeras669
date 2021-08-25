@@ -5,7 +5,7 @@
 <h3> Me chamo Lucas Veras, aqui você pode conhecer um pouco sobre mim. 🙋‍♂️ </h3>
     
  <p> 🤍 Formado em Análise e Desenvolvimento de Sistemas. </p>
- <p> 💙 Estudante da Labenu (turma Johnson), aprendendo Front-end e React Js </p>
+ <p> 💙 Estudante da Labenu (turma Johnson), aprendendo Front-end hadcore 💻 </p>
     
 ## Oi beleza?! Eu sou o Lucas 
  <div>
