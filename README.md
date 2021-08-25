@@ -1,7 +1,7 @@
  
  
 
-## Olá Pessoa🤍l  👋
+## Olá Pessoal  👋
 Me chamo Lucas Veras, aqui você pode conhecer um pouco sobre mim. 🙋‍♂️
     
     - 🤍 Formado em Análise e Desenvolvimento de Sistemas.
