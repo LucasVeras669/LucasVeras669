@@ -7,7 +7,6 @@
  <p> 🤍 Formado em Análise e Desenvolvimento de Sistemas. </p>
  <p> 💙 Estudante da Labenu (turma Johnson), aprendendo Front-end hadcore 💻 </p>
     
-## Oi beleza?! Eu sou o Lucas 
  <div>
   <a href="https://github.com/LucasVeras669">
   <img height="180em" src="https://github-readme-stats.vercel.app/api?username=LucasVeras669&show_icons=true&theme=&include_all_commits=true&count_private=true"/>
