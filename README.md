@@ -2,7 +2,6 @@
 ## Olá Pessoal  👋
 <h3> Me chamo Lucas Veras, aqui você pode conhecer um pouco sobre mim. 🙋‍♂️ </h3>
 
-![ezgif com-gif-maker](https://user-images.githubusercontent.com/60482900/130839167-d0d2e21f-7067-4c19-bfb4-630055e05fed.gif)
     
  <p> 🤍 Formado em Análise e Desenvolvimento de Sistemas. </p>
  <p> 💙 Estudante da Labenu (turma Johnson), aprendendo Front-end hadcore 💻 </p>
