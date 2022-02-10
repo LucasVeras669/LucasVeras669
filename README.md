@@ -4,7 +4,9 @@
 
     
  <p> 🤍 Formado em Análise e Desenvolvimento de Sistemas. </p>
- <p> 💙 Estudante da Labenu (turma Johnson), aprendendo Front-end hadcore 💻 </p>
+ <p> 💙 Participei do Bootcamp Labenu 💻 </p>
+ <p> 💙 Apaixonado pelo Front-End </p>
+ <p> 🤍 Continuo em constante aprendizado </p>
     
  <div>
   <a href="https://github.com/LucasVeras669">
