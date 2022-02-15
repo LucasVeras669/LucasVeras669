@@ -5,7 +5,7 @@
     
  <p> 🤍 Formado em Análise e Desenvolvimento de Sistemas. </p>
  <p> 💙 Participei do Bootcamp Labenu 💻 </p>
- <p> 💙 Apaixonado pelo Front-End. </p>
+ <p> 💙 Apaixonado por Front-End. </p>
  <p> 🤍 Continuo em constante aprendizado. </p>
     
  <div>
