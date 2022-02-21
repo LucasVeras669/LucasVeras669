@@ -5,8 +5,8 @@
     
  <p> Programação é disciplina, suor, paciência e amor. Programo como trabalho, como esporte e como hobby. Espírito de aprendiz. </p>
  
- <b>Aprendendo...</b>
-  <p> Front-end </p>
+ <p><b>Aprendendo...</b>
+    Front-end </p>
     
  <div>
   <a href="https://github.com/LucasVeras669">
