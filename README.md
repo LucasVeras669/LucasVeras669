@@ -3,10 +3,8 @@
 <h3> Me chamo Lucas Veras, aqui você pode conhecer um pouco sobre mim. 🙋‍♂️ </h3>
 
     
- <p> 🤍 Formado em Análise e Desenvolvimento de Sistemas. </p>
- <p> 💙 Participei do Bootcamp Labenu 💻 </p>
- <p> 💙 Apaixonado por Front-End. </p>
- <p> 🤍 Continuo em constante aprendizado. </p>
+ <p> Programação é disciplina, suor, paciência e amor. Programo como trabalho, como esporte e como hobby. Espírito de aprendiz. </p>
+
     
  <div>
   <a href="https://github.com/LucasVeras669">
