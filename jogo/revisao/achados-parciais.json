@@ -1,0 +1,470 @@
+[
+ {
+  "id": "CAME-1",
+  "kind": "bug",
+  "title": "O enquadramento ignora a UI: os botões e o HUD cobrem os lutadores (paisagem nas bordas, retrato quase sempre)",
+  "evidence": "Em render() L874, as margens são TOP=H*.17, BOT=H*.04 e MX=W*.05, simétricas e sem relação com o #pad (CSS L55: 244x178 px no canto inferior direito). Além disso, L856 limita camX a [-120,120], enquanto a arena vai até ±230 (AX, L133). Telemetria (cópia instrumentada, pontos reais do esqueleto convertidos para CSS e testados contra os círculos dos botões): retrato 390x844 tem 91% dos quadros com >15% do corpo sob os botões (TP_box_mix e T2P_tkd_cnt). Em paisagem 844x390, o modo flow tkd tem 16,4% e o mix box 6,1%. O ponto médio passa do clamp de camX em 46% dos quadros (T3_box_mix) e 42% (T2_tkd_flow), porque os golpes empurram o rival para a parede direita, e ali a câmera fica parada empurrando a ação para baixo do pad. Cenários: S_edge_0 (rival em x=228: pernas sob ESPECIAL/DIRETO); S_edge_2 (a 410 de distância, zoom .85: rival totalmente escondido atrás de GANCHO/CONTRA); amostra KO em T3_box_mix (win/ko, ex=230, camX=120, corpo caído em x canvas 299-349 = CSS 583-680, sob DIRETO).",
+  "proposal": "Criar uma 'área segura' em coordenadas de canvas. Em resize() e no fim de begin(), depois de mostrar #pad/#hud: k=W/innerWidth; h=$('hud').getBoundingClientRect(); p=$('pad').getBoundingClientRect(); SAFE={x0:8*k, y0:(h.bottom+4)*k, x1:W-8*k, y1:H-8*k}. Em paisagem (W>=H) usar SAFE.x1=p.left*k+12*k, porque o canto superior esquerdo do pad é vazio. Em retrato usar SAFE.y1=p.top*k-4*k, porque o pad ocupa 63% da largura. Depois calcular SAFE.cx/cy/w/h. Em render(), trocar L874 por TOP=max(SAFE.y0,lbox+4), BOT=max(H-SAFE.y1,lbox+2), margem esquerda SAFE.x0 e direita W-SAFE.x1, e usar essas margens em zFit (L875) e no pan (L884-885). Para centralizar no meio da área segura: alvo de camX = mid-(SAFE.cx-W/2)/(F/zMid), com zMid=(player.z+enemy.z)/2, e ampliar o clamp de L856 para ±190. Estender a torcida em L791 (i de -70 a 70) e as luminárias para o fundo continuar coberto. Meta: underPad perto de 0% em todos os modos.",
+  "impact": "high",
+  "effort": "M"
+ },
+ {
+  "id": "CAME-2",
+  "kind": "bug",
+  "title": "Retrato: lutadores colados no rodapé (83% da altura), 70% da tela é parede vazia, o rival some e as bordas do cenário aparecem",
+  "evidence": "resize() L134 em retrato usa W=240, H=240/aspect (519 em 390x844) e HOR=H-135 (=384). O chão em z=225 fica em y≈466/519 e o pivô do zoom (fy = P(foc,32), cerca de 433) também fica a 83% da altura. Como render() L889 dá zoom em torno de (fx,fy) sem recentralizar, aproximar só empurra a ação para baixo. Screenshots P_tkd_0/2/4 e TP_box_mix_03: tudo sob o pad, com a metade de cima vazia. O piso de zoom .72 (L875) não basta para W=240: em S_por_0 (lutadores em x=-200 e 200), zFit pede .48, a câmera trava em .72, o pan prioriza o lado esquerdo (L885) e o rival fica fora da tela (pontos em x 310-329 > W=240). Ali também aparecem as bordas do cenário: o topo da parede (y=700 em L805) vira faixa preta em y≈100, os pilares do fundo (h=400, L814) terminam com topo reto no meio da parede (visível até com zoom 1: P_tkd_0, topo em y≈157 canvas) e os fios das luminárias (L838, até y=400) acabam no vazio. Em T2P_tkd_cnt, 33% dos quadros têm o corpo sob a tarja inferior do letterbox.",
+  "proposal": "(a) Em resize(), no retrato, posicionar a linha do chão pela área segura do CAME-1: HOR = SAFE.y1 - 14 - camH*F/225. (b) Tornar CAMH uma variável `camH` (L133/L136) e, no retrato, usar camH≈150 (câmera mais alta olhando o chão): a elipse da arena ocupa mais altura (profundidade z 170..285 passa de cerca de 27 px para cerca de 55 px) e preenche o espaço vertical. (c) Piso de zoom por orientação em L875: Math.max(H>W?.5:.72, ...). (d) Estender o cenário para cima, para nenhum zoom-out revelar borda: parede até y=1600 (L805 e laços de L808-809), pilares com h=1600 (L814), fios até 1600 (L838), e vigas/treliças escuras do teto em y≈430-470 (line3/poly em z 300-330) com névoa escura (gradiente de y=260 para cima). (e) Ancorar a composição no centro da área segura (ver CAME-9) em vez do pivô natural.",
+  "impact": "high",
+  "effort": "M"
+ },
+ {
+  "id": "CAME-3",
+  "kind": "bug",
+  "title": "Zoom e pan perseguem o enquadramento com atraso e a caixa de enquadramento é estimada: lutadores saem do quadro em lançamentos e juggles",
+  "evidence": "render() L878 aproxima o zoom de zWant=min(zoomT+zKick,zFit) por lerp (taxa 12 ao abrir). L886 faz panX/panY por lerp (10-12). Nenhum dos dois é uma restrição rígida. A caixa em L870-873 é heurística: ±20 em x e cabeça em f.y+70 (ou f.y+26 para 'air'/'down'), mas a pose AIRP rotacionada e os chutes (r até 30, naeryo com a perna acima da cabeça) passam disso. Telemetria: TL_tkd_mix com zoom 1.30→1.19 enquanto zFit=1.05 (rival em ey=117) e jogador saindo por baixo. T2_tkd_cnt plano 'low' com zoom 1.53 contra zFit 1.45 e 1.35 contra 1.13. T2_tkd_flow com 48 quadros de zoom > zFit+.03 e T3_tkd_mix com 45 (durante KO). Em S_air_0 o topo real do rival fica em y=18 com TOP=34, sob a barra de vida do HUD. underHud de 5,7-6,9% nos modos tkd.",
+  "proposal": "1) Montar a caixa a partir do esqueleto real em L870-873: for f: S=skel(f), q=P(f.x,0,f.z); para cada chave de S que seja array, X=q[0]+S[k][0]*f.face*q[2], Y=q[1]-S[k][1]*q[2], com margem de 6*q[2] (raio da cabeça). Em planos (shot), ignorar pontos com S[k][1]<26 para manter o corte no joelho. 2) Depois da suavização em L878, aplicar uma restrição rígida: zoom=Math.min(zoom, zFitHard), em que zFitHard é o zFit calculado com metade das margens. 3) Pan com zona suave e zona rígida: calcular npx/npy como hoje; se a caixa já passa da borda rígida (margem/2), atribuir panX=npx e panY=npy direto, sem lerp; dentro da zona suave, manter a suavização. Meta: offscreen (fora os cortes intencionais de close) e underHud perto de 0.",
+  "impact": "high",
+  "effort": "S"
+ },
+ {
+  "id": "CAME-4",
+  "kind": "bug",
+  "title": "Letterbox e nome da cena: texto estoura no retrato e fica sob o pad; HUD e botões tampam as cenas; linhas de velocidade convergem no vazio",
+  "evidence": "render() L926-929: lbox=H*.11 e fonte Math.round(lbox*.48). No retrato isso dá 27 px de canvas (cerca de 44 px CSS). Em TP_box_mix_03, 'PEGA O CHUTE' ultrapassa os 240 px de largura e fica atrás de ESQUIVA/JAB/FLUXO, porque a tarja inferior (CSS 751-844) inteira fica sob o pad (topo em 658). Em paisagem estreita (667x375, W=356), um nome de 19 caracteres centralizado em W/2 vai até CSS ≈491 e invade ESQUIVA (x≥427). Durante a cena o jogador não pode agir: tryAct L409-435 devolve false para st='atk' com kind 'cnt'/'fin' e para dash 'cnt'/'fin'. Mesmo assim #pad, #hud e #combo continuam opacos sobre a ação. As linhas de velocidade (L923) usam o centro fixo (W/2,H/2), que no retrato é parede vazia (TP_box_mix_03).",
+  "proposal": "(a) Ajustar o nome à largura útil: let fs=Math.round(lbox*.48); repetir ctx.font=`700 ${fs}px Silkscreen`; enquanto ctx.measureText(sceneName).width > (SAFE.x1-SAFE.x0-8) e fs>6, fazer fs--. Em paisagem, alinhar à esquerda a partir de SAFE.x0+6. Em retrato, desenhar as tarjas nas bordas da área segura (topo sob o HUD, base em SAFE.y1) com o nome na tarja de baixo, acima do pad. (b) Modo cinema na DOM: no loop, $('game').classList.toggle('cine', player.inScene || (player.kind==='fin'&&(player.st==='atk'||player.st==='dash'))) e no CSS `.cine #pad,.cine #stickHint{opacity:.15;transition:opacity .2s}`, `.cine #hud,.cine #combo{opacity:.35}`. É seguro porque a entrada já está travada. (c) Centralizar as linhas de velocidade no impacto: antes de ctx.setTransform(1,0,0,1,0,0) em L920, guardar T=ctx.getTransform() e o ponto q=P(enemy.x,enemy.y+40,enemy.z) transformado, e usar esse ponto como cx0/cy0 em L923.",
+  "impact": "medium",
+  "effort": "S"
+ },
+ {
+  "id": "CAME-5",
+  "kind": "bug",
+  "title": "Cortes de câmera 'sujos': depois do corte, camX e o pan continuam deslizando; dois planos iguais seguidos viram jump cut com flash",
+  "evidence": "render() L877: no corte só zoom, fx, fy e tilt são atribuídos direto. camX (L856, taxa 4) e panX/panY (L886) continuam no lerp. Telemetria em 250 ms após o corte: panY variou -31 px ('low'→'dutchR'), +14 px ('dutchL'→'low') e +6,7 px ('face'→'close', retrato); camX variou até 4,6 unidades. Na cena 'pend' (L228), os passos 0 e 1 usam cam:'low' seguidos: runStep (L383) marca camCut de novo com o mesmo plano, o que gera um salto de 21 px em um quadro (pico de 1316 px/s em T2_box_cnt) com o mesmo enquadramento e mais um flash de .12 (L877): é um jump cut.",
+  "proposal": "1) Em L877, ao cortar, também atribuir camX ao alvo (clamp(mid,...) do CAME-1), recalcular npx/npy com o zoom novo e fazer panX=npx, panY=npy, shake=Math.min(shake,2). Outra opção é mover o bloco de pan para antes do corte e aplicar o mesmo snap. 2) Em runStep (L383): se step.cam===(p.ccam&&p.ccam.cam), não cortar (camCut=false) e dar um empurrão de zoom (zKick+=.12); ou usar uma variante espelhada (tilt invertido e âncora do lado oposto, CAME-9). 3) Reservar o flash de corte para passos com impact, deixando os outros cortes secos, para não virar estroboscópio em cenas de 5-6 passos.",
+  "impact": "medium",
+  "effort": "S"
+ },
+ {
+  "id": "CAME-6",
+  "kind": "bug",
+  "title": "Modo cinema por temporizador fixo: letterbox e zoom acabam antes do fim do ESPECIAL/SUPER",
+  "evidence": "doFinisher L404 define cine=3 s em tempo real, e render L857 desconta rdt. A duração real do especial varia (SUPER do boxe: 8 golpes, dashes e slow de .35 em cada acerto, L473). Telemetria: 73 de 654 quadros de especial (11%, TL_tkd_mix) e 86 de 482 (18%, TP_box_mix) rodam com cine<=0, ou seja, os golpes finais (que chamam slow(.12,.7) e tiltT em L473) acontecem sem letterbox e com o zoom voltando a 1. O KO (L460) faz cine=1.8 por atribuição, então pode encurtar um cine maior que já estava ativo.",
+  "proposal": "Derivar o cine do estado em vez de um tempo fixo. No início de render(): const hold = player.inScene || (player.kind==='fin' && (player.st==='atk'||player.st==='dash')) || koCam>0; if(hold) cine=Math.max(cine,.35). Remover cine=3 de doFinisher (ou trocar por Math.max(cine,.5)). Em L460, usar cine=Math.max(cine,1.8). Assim o letterbox entra e sai junto com a sequência, com cauda de .35 s.",
+  "impact": "medium",
+  "effort": "S"
+ },
+ {
+  "id": "CAME-7",
+  "kind": "bug",
+  "title": "Altura do juggle sem limite: a câmera não consegue enquadrar e o rival sai pelo topo",
+  "evidence": "applyHit L463: cada acerto no ar soma d.vy=150-240 a partir da altura atual (apenas airHits>4 força -40). Com gravidade 330 (phys L637), o ápice sobe cerca de 34-87 por acerto e se acumula. O jogador acompanha via airLift=enemy.y (L354/L512). Telemetria: ey chega a 199 (T2_tkd_flow) e zFit pede .61-.65, abaixo do piso de .72 (28 quadros em T2_tkd_cnt). panY sobe até 121 e o chão some do quadro (TL_tkd_flow_04: só parede e torcida, sem referência de chão). No retrato, P_tkd_2 mostra o rival a cerca de 215 unidades de altura.",
+  "proposal": "Limitar o ápice em L463: const HMAX=110, vmax=Math.sqrt(2*330*Math.max(0,HMAX-d.y)); d.vy = d.airHits>4 ? -40 : Math.min(hit.react==='launch'?240:150, Math.max(40,vmax)). Para manter a sensação de impacto, compensar com mais hitstop ou knockback horizontal. Opcional: na câmera, enquanto alguém estiver no ar, subir levemente camH (crane) em vez de só fazer pan, mantendo o chão visível.",
+  "impact": "medium",
+  "effort": "S"
+ },
+ {
+  "id": "CAME-8",
+  "kind": "improvement",
+  "title": "KO e troca de round sem direção de câmera: foco no lutador errado, corpo caído sob o pad, banner sobre a ação, salto de 120 px no novo round",
+  "evidence": "KO em applyHit L460: só cine=1.8, slow e tiltT. O foco de cine em L865 é (2*player.x+enemy.x)/3 em player.z, ou seja, fica no vencedor e não no corpo que voa. O corpo vai até x=230 e fica sob o pad (amostra T3_box_mix: win/ko, ex=230). O #banner (CSS L46, top:34%) com 'NOCAUTE!' cobre as cabeças (TL_tkd_flow_12/13). startRound L297-299 só faz camX=0: na troca de round o mundo pula 120 unidades em um quadro (telemetria: ΔcamX = 119,9 / 120,0 / 91,6), enquanto zoom, fx/fy, panX/panY, tilt/tiltT, lbox, cine, shake e zKick ficam com os valores do KO.",
+  "proposal": "1) Estado koCam: em L460, koCam={t:0,who:d,win:a}. Em render(), enquanto koCam existir: plano com foco no perdedor (z 1.6, ay .45, tilt .06*face), em slow-mo como hoje. Quando o perdedor tocar o chão (who.y<=0 e t>.6), cortar para um plano 'hero' do vencedor (z 1.15, camH baixo ~35, âncora no terço do lado do vencedor) até roundOver<=0, mantendo a área segura (CAME-1). 2) Enquanto roundOver>0, mudar #banner para top:14% (classe .ko). 3) Em startRound, zerar todo o estado da câmera: camX=0, zoom=1, panX=panY=0, tilt=tiltT=0, lbox=0, cine=0, shake=0, zKick=0, koCam=null, com fx/fy no alvo (flag resetCam, aplicada como corte no primeiro render), mais um fade de .25 s a partir do preto (como flashA, mas com '#0b0910').",
+  "impact": "medium",
+  "effort": "M"
+ },
+ {
+  "id": "CAME-9",
+  "kind": "improvement",
+  "title": "Composição dos planos: o zoom gira em torno da posição natural do foco; 'face' não é close de rosto e 'low' não é contra-plongée. Adicionar âncora de tela, altura de câmera e órbita",
+  "evidence": "render() L889: translate(fx+panX,fy+panY), depois scale e translate(-fx,-fy). O ponto de foco fica onde já estava na tela; só a escala muda. SHOTS (L283) só têm z, fy, f e t. Medição no plano 'face' (z 2.1, fy 52): rival ocupa y 103-204 de H=200, com a cabeça no meio da tela, 40% de parede vazia acima e os pés cortados pela tarja (T2_box_cnt). No retrato, a cabeça fica a 80% da altura (T2P_tkd_cnt). 'low' (fy 10) é só zoom em volta dos pés com o mesmo ângulo de câmera (CAMH constante em L133/L136), sem sensação de câmera baixa. Não há órbita ou yaw: o cenário só tem paralaxe lateral via camX.",
+  "proposal": "1) Adicionar a SHOTS âncora de tela (ax, ay em frações da área segura), camH e yaw. Exemplo: close {z:1.75,fy:42,ax:.5,ay:.52}; face {z:2.4,fy:62,ax: lado do rival .62/.38,ay:.36}; low {z:1.5,fy:30,camH:28,ay:.6}; wide {z:1.0,camH:110}; dutchL/R {z:1.5,t:∓.09,yaw:∓.12}. Em L889: ctx.translate(SAFE.x0+ax*SAFE.w+panX+sx, SAFE.y0+ay*SAFE.h+panY+sy), depois rotate, scale e translate(-fx,-fy). Fora de planos, usar ax=.5 e ay≈.55. 2) Trocar CAMH por let camH com mola (alvo do plano ou 80) e usar em P(). Com o mesmo F, uma câmera baixa achata o chão e agiganta os lutadores. 3) Órbita simulada: em P(), girar (x-camX, z-228) por camYaw antes de projetar (x'=dx*cos+dz*sin; z'=228-dx*sin+dz*cos). Os lutadores continuam billboards; chão, elipse, torcida e grades ganham paralaxe de órbita. Ajustar box3 (L797-801: testar a face lateral pelo sinal projetado em vez de camX<x0) e trocar o fillRect da parede (L807) por poly. Aplicar yaw com mola de ±.12 rad nos planos dutch e uma leve deriva de ±.03 durante slow-mo.",
+  "impact": "high",
+  "effort": "M"
+ },
+ {
+  "id": "CAME-10",
+  "kind": "improvement",
+  "title": "Suavização de 1ª ordem gera arrancos (velocidade salta em um quadro), tremidas verticais nos juggles e zoom 'respirando'; sem antecipação do movimento",
+  "evidence": "Todos os parâmetros usam lerp exponencial: camX (L856, taxa 4), fx/fy (L880, 8 ou 3), pan (L886, 10-12) e zoom (L878, 7/12/4). Nesse filtro, a velocidade da câmera salta instantaneamente quando o alvo muda. Telemetria em T2_tkd_flow: picos de aceleração horizontal de 23-36 mil px/s² (velocidade de -16 para 447 px/s em um quadro, durante dash e flanco); panY com passos >4 px por quadro em 90 quadros em 30 s (máximo de 17 px), seguindo cada quique do rival no ar. O zoom inverte de direção 1-2 vezes por segundo fora de planos (T3_box_mix 1,01/s; T2_tkd_flow 2,0/s), por causa do pulso de dash (zoomT 1.08 em L858) somado a zKick (L453/L859). A câmera também não antecipa: em dashes de .07-.3 s (dashTo L350), camX só acompanha depois.",
+  "proposal": "Trocar os lerps por uma mola criticamente amortecida com velocidade, no estilo SmoothDamp: function sd(c,v,t,w,dt){const x=w*dt,e=1/(1+x+.48*x*x+.235*x*x*x),d=c-t,tmp=(v+w*d)*dt;v=(v-w*tmp)*e;return [t+(d+tmp)*e,v];}. Aplicar a camX (w≈6), âncora/fy (w≈9), zoom (w≈8) e camH/yaw (w≈5), guardando as velocidades em variáveis globais (camVX etc.). Vertical com zona morta: só mover panY quando a caixa sair da zona suave (CAME-3). Antecipação: estimar pvx=(player.x-prevPX)/rdt suavizado e somar clamp(pvx*.12,-28,28) ao alvo de camX; no dash, somar D.side*-18 já no início. Remover o pulso de zoom de dash em L858 (a antecipação dá a sensação de velocidade) e manter zKick só em acertos, como impulso na velocidade da mola do zoom (zoomV+=heavy?1.6:.6), sem somar ao alvo.",
+  "impact": "medium",
+  "effort": "M"
+ },
+ {
+  "id": "CAME-11",
+  "kind": "improvement",
+  "title": "Tremor de tela é ruído branco por quadro, sem direção nem rotação; não diferencia golpe leve de pesado",
+  "evidence": "render() L887: sx=(Math.random()-.5)*shake e sy=... sorteados a cada quadro, com decaimento exp(-12·rdt). Num canvas de 200 px escalado em pixelated, shake=9 (L471, L473) dá ±4,5 px de canvas (cerca de ±9 px CSS) de vibração aleatória: parece trepidação, não pancada. Não há componente na direção do golpe (a.face) nem rotação, e não respeita prefers-reduced-motion (o CSS L85 já trata isso para os botões).",
+  "proposal": "Modelo de trauma: trauma=min(1,trauma+(heavy?.55:.25)) em applyHit L453 e L471, guardando shakeDir=a.face. Em render(): trauma-=rdt*2.2; const s=trauma*trauma; sx = shakeDir*s*7*Math.sin(time*58)*Math.exp(-tSinceHit*9) + s*2.5*Math.sin(time*37+1.3); sy = s*3*Math.sin(time*47+.7); roll = s*.018*Math.sin(time*31). Aplicar roll em ctx.rotate(tilt+roll) em L889. O primeiro quadro fica deslocado no sentido do golpe (recuo) e depois oscila amortecido. Multiplicar por .3 quando matchMedia('(prefers-reduced-motion: reduce)').matches. Manter o shake atual só como compatibilidade (trauma=max(trauma,shake/10)).",
+  "impact": "medium",
+  "effort": "S"
+ },
+ {
+  "id": "CAME-12",
+  "kind": "bug",
+  "title": "Primeiro plano: a corrente cobre a cabeça dos lutadores no lado esquerdo e os pilares frontais quase nunca aparecem",
+  "evidence": "drawFG L850 desenha uma corrente em x=-170, z=140, de y=60 até 400. Com fighters em x≈-200 (camX=-120), ela cruza a cabeça do boxeador (S_chain_1). Os pilares frontais (L849, x=±250, z 118-132) projetam a borda interna em ≥414 px de W=433 quando camX=120 (clamp de L856) e saem ainda mais com zoom>1 em torno do foco: a camada de profundidade do primeiro plano fica praticamente invisível.",
+  "proposal": "1) Com a caixa real dos lutadores (CAME-3), fazer o drawFG desenhar com globalAlpha .3 qualquer elemento que cruze essa caixa na tela. 2) Subir o fim da corrente para y≥110 (acima da cabeça) ou movê-la para x=-265. 3) Criar uma camada frontal que realmente apareça: silhuetas da primeira fila da torcida e postes da grade em z≈150-160, só na faixa inferior (alturas 0-14), desenhadas depois dos lutadores com alpha .85. Elas ganham paralaxe forte com camX (sensação de velocidade nos dashes) e somem com alpha .25 quando cruzam a caixa dos lutadores. Os pilares podem ficar em ±215 para enquadrar a arena no zoom-out e na órbita do CAME-9.",
+  "impact": "low",
+  "effort": "S"
+ },
+ {
+  "id": "INTE-1",
+  "kind": "bug",
+  "title": "Rival fica preso em hitstun infinito e quase nunca ataca no FLUXO (o combate perde a tensão e o CONTRA quase não aparece)",
+  "evidence": "Medido com cópia instrumentada (scratchpad/qa/inte/game.html + run.js). Em todas as sessões mix/flow (box e tkd, 25 s) o HP do jogador ficou em 100% e a luta terminou 2x0 em cerca de 22 s. No modo flow do box o rival passou 21 de 1574 frames em 'wind' e 0 em 'strike'; no flow do tkd, 0 frames de ataque. Os estados dominantes foram 'hit', 'down' e 'ko'. Causa: em applyHit (l.466) cada acerto põe o rival em 'hit'. updEnemy case 'hit' (l.620) volta para 'stalk' depois de 0,36 s com cd=min(cd,rnd(.4,1.1)), e o próximo golpe do FLUXO chega antes do cd acabar. A única saída é o sorteio de evade/guard dentro de startMove (l.357-360), que é raro e não gera ⚡.",
+  "proposal": "Criar uma 'ruptura' de combo: (1) em applyHit, quando d é o rival e não está em guarda, fazer d.stun=(d.stun||0)+1 e zerar stun quando o rival entra em wind, evade ou guard, ou fica 1,2 s sem apanhar. (2) No updEnemy case 'hit', se e.stun>=7-round (6, 5 ou 4 acertos), sair do hitstun mais cedo (e.t>=.2) com pop('RUPTURA',e,'#ff5d3a') e e.stun=0, sorteando entre duas opções. A: eStart(e,'evade') seguido de wind imediato. B: e.st='wind', e.wd=.3, e.armor=true. Com e.armor em wind, applyHit causa só flash e dano reduzido, sem trocar o estado. Assim o ⚡ aparece no meio do combo e o jogador precisa de CONTRA ou ESQUIVA. (3) Se o CONTRA ou a esquiva perfeita derem certo, NÃO zerar combo/comboT, para o FLUXO continuar depois da cena. (4) Reduzir a duração de 'hit' conforme stun cresce (.36-stun*.02, mínimo .24).",
+  "impact": "high",
+  "effort": "M"
+ },
+ {
+  "id": "INTE-2",
+  "kind": "bug",
+  "title": "SUPER ESPECIAL do Taekwondo erra os dois golpes finais (Dolgae Chagi e VENDAVAL 540)",
+  "evidence": "FIN.tkd.s (l.261) é ['dub','dol','hur','tor','f540'], e TK.hur (l.191) tem react:'knock'. Em applyHit (l.464), knock coloca o rival em 'down'. Na checagem de acerto de updPlayer (l.520), ok exige hittable(e), que é falso para 'down' e 'getup'. Teste determinístico (t1.js, fc=12, rival com HP 999), dano por golpe: Dubal 18.2, Dollyo 14, Dwi Huryeo 19.1, Dolgae 0 (rival 'down'), VENDAVAL 540 0 (rival 'down/getup'). O clímax do SUPER bate no vazio e não dispara o anel e o slow final (l.473).",
+  "proposal": "Em applyHit, quando a.isP, a.kind==='fin' e a.fseq.length>0 (ainda há golpes), trocar a reação 'knock' por 'launch': o rival vai para 'air' e entra em juggle, o que combina com Dolgae e 540. Como reforço, na checagem de acerto (l.520), aceitar e.st==='down' quando p.kind==='fin' (acerto no chão): ok=(hittable(e)||p.kind==='fin'&&e.st!=='ko')&&... Outra opção é definir na própria lista FIN: s:['dub','dol',cl(TK.hur,{react:'launch'}),'tor','f540'].",
+  "impact": "high",
+  "effort": "S"
+ },
+ {
+  "id": "INTE-3",
+  "kind": "bug",
+  "title": "ESPECIAL e golpe na fila continuam batendo no rival nocauteado: o vencedor não faz a pose de vitória",
+  "evidence": "updPlayer, fim do golpe (l.524-529): a cadeia de contra checa e.st!=='ko' (l.526), mas a do especial `else if(p.fseq&&p.fseq.length){dashTo(p,'fin',...)}` (l.527) não checa, e nem o queued (l.528). Medido: em b_mix houve 183 frames de golpes 'fin' contra o rival em 'ko' (Rajada, Gancho no corpo, Uppercut do Martelo, MARTELO). Em t_mix, durante roundOver, o jogador ficou 144 frames em 'atk' e 11 em 'dash' e nunca chegou a 'win'. A condição de vitória (l.665) só vale para idle, stalk ou rec, e o round 2 começou com o jogador ainda em atk/fin. No flow aparece também 'ERROU' sobre o KO (pop l.522).",
+  "proposal": "Em l.524-529, se e.st==='ko', fazer p.fseq=null; p.queued=null; p.cseq=null; p.inScene=false; p.ccam=null; p.st='idle' e encerrar o golpe. Em dashTo, retornar sem dash se enemy.st==='ko'. Em l.522, não mostrar ERROU quando e.st==='ko'. Opcional: depois do KO por especial, segurar o último quadro (hitstop maior) e partir para a pose WIN com câmera 'face'.",
+  "impact": "high",
+  "effort": "S"
+ },
+ {
+  "id": "INTE-4",
+  "kind": "bug",
+  "title": "Botão apertado durante o KO vaza para o round seguinte e para a nova partida, e startRound não zera vários estados",
+  "evidence": "Em updPlayer (l.482), o descarte do buffer (`performance.now()-a.t>300`) fica dentro de `if(a&&running&&!roundOver)`, então durante roundOver e depois de endMatch o inp.act nunca expira. Medido: nas 4 sessões (b_mix, t_mix, b_flow, t_flow) o jogador passou de 'idle' para 'dash' já no 2º frame de cada round novo, ainda sob o banner 'ROUND 2'. Ao fim da partida, g().inpAct='atk' com running=false, e 'LUTAR DE NOVO' começa com um dash automático. startRound (l.298) também não zera inp.act, airHits (um KO no ar deixa airHits alto e o próximo juggle cai cedo por `airHits>4`, l.463), e.chain, e.feint, e.gh, p.early, hitstop, timeScale/slowT, cine e impactF.",
+  "proposal": "Em startRound, e também em endMatch e begin: inp.act=null; para cada lutador airHits=0, early=false, chain=[], feint=false, gh=0, dash=null, dg=null, spin=0, rotT=0. No global: hitstop=0; timeScale=1; slowT=0; cine=0; impactF=0; speedL=0; zoomT=1. Em updPlayer, tirar a expiração do buffer de dentro do if: `if(a&&performance.now()-a.t>300)inp.act=null;` antes do bloco que chama tryAct. Também ignorar act() quando roundOver>0.",
+  "impact": "high",
+  "effort": "S"
+ },
+ {
+  "id": "INTE-5",
+  "kind": "bug",
+  "title": "Câmera perde o jogador nos juggles: a altura do rival no ar não tem limite e o enquadramento prioriza o topo",
+  "evidence": "applyHit (l.463) faz d.vy=240 (launch) ou 150 a cada acerto no ar, sem levar em conta a altura atual. Com Twio Ap Chagi (dashTo l.342) e a cena 'lethal', o rival sobe em escada: medido enemy.y até 228,8 (CAMH=80). O jogador também sobe, por airLift=enemy.y (l.354). Em render, zFit tem piso .72 (l.875) e panY usa `if(sy0<TOP)npy=TOP-sy0` (l.884), o que empurra a cena para baixo. Medido em t_mix2: panY até 149 e pés do jogador em y de tela 214-300 com H=200 (t=7.4-8.1 s e 25.3-26.1 s). O jogador some da tela inteiro enquanto o rival flutua. Nos planos 'low' e 'dutchR', fyw ignora a altura (l.863/867).",
+  "proposal": "(1) Limitar o ápice do juggle em applyHit: `const apex=hit.react==='launch'?105:80; d.vy=Math.sqrt(2*330*Math.max(8,apex-d.y));`, mantendo airHits>4 com vy=-40. Limitar airLift a 70. (2) Em render, depois de calcular npy, garantir os pés do jogador na tela: calcular spf=(P(player.x,player.y,player.z)[1]-fy)*zoom+fy e fazer npy=Math.min(npy,(H-BOT)-spf). Baixar o piso de zFit para .6 quando alguém está com y>40. (3) Nos SHOTS, somar a fyw a altura do foco (shot.f==='e'?enemy.y*.6:Math.max(player.y,enemy.y)*.4).",
+  "impact": "high",
+  "effort": "M"
+ },
+ {
+  "id": "INTE-6",
+  "kind": "bug",
+  "title": "Dash de flanco começa de costas para o rival (moonwalk): a virada no meio do dash nunca acontece",
+  "evidence": "Em dashTo, quando kind é 'flank', side é invertido (l.337) e depois vem `setFace(p,-side)` (l.351). Com side já invertido, isso vira o jogador para o lado final logo no início, ou seja, de costas para o rival enquanto corre na direção dele. A linha `else if(D.flank&&k>.5)setFace(p,-D.side)` (l.503) mostra que a intenção era virar no meio. Teste (t2.js): jogador em -25, rival em 0. De k=0 a k=0.4, face=-1, 'AWAY' em todos os frames. Nas sessões, os frames de flank dash de costas foram 16/27 (box flow), 29/51 (tkd flow) e 32/51 (tkd mash).",
+  "proposal": "Em dashTo, trocar l.351 por `setFace(p,flank?side:-side);`, para olhar o rival no início. Manter l.503, que passa a fazer a virada com turn=PI no meio do salto ou pêndulo. No boxeador, aproveitar a virada para um pivô de ombro (p.tw=.8 no k=.5) e dar leitura de 'passou por fora'.",
+  "impact": "medium",
+  "effort": "S"
+ },
+ {
+  "id": "INTE-7",
+  "kind": "bug",
+  "title": "Flanco com o rival encostado na parede manda o jogador para fora da arena, sobrepõe os dois e garante 'PELAS COSTAS'",
+  "evidence": "dashTo calcula tx=e.x+side*(mv.r-2) (l.347) sem considerar AX. Com o rival em x≈226, o alvo fica em 248, e phys corta em 230 (l.640). Teste t2.js (box, e.x=226, p.x=200, flank): o jogador para em 230 e ataca de dentro do rival (distância de 4 a 15 unidades, px 231.4 durante o atk). fromBehind fica verdadeiro, o que dá +25% de dano, fura a guarda (l.441) e mostra 'PELAS COSTAS', mesmo sem espaço físico para passar. Os combos levam o rival à parede com frequência (b_mix: 642 frames de rival na parede), e o FLUXO sorteia flanco em 30% dos golpes com combo>=3 (l.417).",
+  "proposal": "Em tryAct (l.417), fl=false quando Math.abs(enemy.x)>AX-30. Em dashTo, se flank e Math.abs(e.x+side*(mv.r-2))>AX-6, cancelar o flanco (side=-side; flank=false). Para dar mais dinamismo, fazer um 'wall splat': quando o rival bater na parede com |vx|>60 (checar em phys), aplicar um pequeno quique (vx*=-.4), poeira e shake, além de stagger curto, e liberar o flanco de novo depois do quique.",
+  "impact": "medium",
+  "effort": "S"
+ },
+ {
+  "id": "INTE-8",
+  "kind": "bug",
+  "title": "A janela de punição da esquiva perfeita não funciona: o rival não mostra o cambaleio e ainda pode esquivar ou bloquear a punição",
+  "evidence": "Na esquiva perfeita (updEnemy l.614) o código faz e.st='rec', e.t=-.6 e setPose(e,STAG...). Só que o case 'rec' (l.619) chama setPose(e,G[e.style]) em todo frame, e o STAG nunca aparece: o rival fica parado em guarda por 1 s. Além disso, startMove (l.357) inclui enemy.st==='rec' no sorteio de evade/guard. Teste t1.js (round 3, jogador tkd contra boxeador, rival no rec pós-esquiva, 2000 amostras): 26,4% evade e 41,3% guard, ou seja, cerca de 67% das punições falham. Na recuperação de um golpe que errou (rec normal), o rival também pode esquivar.",
+  "proposal": "Na esquiva perfeita, marcar e.punish=true. No case 'rec', usar `if(e.t<0){const w=Math.sin(e.t*9);const o=STAG.slice();o[0]+=w*.15;o[1]-=w*.25;setPose(e,o,220,.45);}else setPose(e,G[e.style],300,.7);`. Em startMove (l.357), retirar 'rec' da lista ou exigir !enemy.punish&&enemy.t>.25, e zerar e.punish quando o rec terminar. Opcional: dano x1.3 e pop 'PUNIÇÃO' no primeiro acerto enquanto e.punish estiver ativo.",
+  "impact": "medium",
+  "effort": "S"
+ },
+ {
+  "id": "INTE-9",
+  "kind": "bug",
+  "title": "O buffer de 300 ms usa tempo real: em câmera lenta, os comandos se perdem (ex.: punir depois da esquiva perfeita)",
+  "evidence": "act() grava inp.act={k,t:performance.now()} (l.950), e updPlayer descarta o comando depois de 300 ms reais (l.482). Os estados, porém, andam em tempo de jogo, escalado por timeScale. tryAct não aceita ataque vindo de 'dodge' (l.414-430) nem esquiva vinda de 'block' (l.433). Teste t3.js (box e tkd): FLUXO apertado no instante da ESQUIVA PERFEITA (slow .2) teve inp.act descartado em cerca de 300 ms, enquanto o dodge ainda durou cerca de 950 ms reais. O jogador terminou em idle sem atacar, e o rival saiu de 'rec' para 'stalk' em 1,7 s sem ser punido. O mesmo vale para CONTRA sem ameaça (block de 0,35 s) seguido de ESQUIVA logo depois: o comando é descartado.",
+  "proposal": "(1) Medir a idade do buffer em tempo de jogo: em act(), gravar g:time e expirar quando time-a.g>.3 (com fallback de 1,2 s reais). (2) Permitir 'atk' e os básicos vindos de 'dodge' com p.t>p.dg.dur*.5 ('cancelamento de esquiva'): dashTo direto, com bônus PERFEITO se o rival estiver em e.punish. (3) Permitir 'dod' vindo de 'block'. (4) Trocar o slot único inp.act por uma fila de 2 itens para não perder ESQUIVA+FLUXO apertados quase juntos.",
+  "impact": "medium",
+  "effort": "M"
+ },
+ {
+  "id": "INTE-10",
+  "kind": "bug",
+  "title": "O giro (spin) fica congelado entre estados: o lutador aparece espelhado ou fino durante dash e esquiva, e o Check Hook acerta 'de costas'",
+  "evidence": "p.spin só volta a 0 no fim natural do golpe (l.525) e em idle (l.492). (a) Encadear no PERFEITO (tryAct l.425 chamando dashTo) no meio de dwi, hur ou tor mantém o spin perto de π durante o dash: 75 frames com cos(spin)=-1, o personagem correndo espelhado. Esquivar no meio do golpe (doDodge) deixou spin=2.05 por 52 frames. hurt, down e getup do jogador (l.543-545) também não zeram o spin. (b) BX.chk (l.180) tem spin PI*.6 e sa:1, então o spin fica em .6π do impacto até o fim. Teste t4.js: cos=-0.31 de t=.18 até .46, ou seja, desenhado espelhado e com 31% da largura no momento do impacto da cena CHECK HOOK. PARRY.pivot (l.216) termina em π/2 (cos 0, largura zero) e PARRY.spinEv (l.218) termina em π (de costas), voltando a 0 de repente no passo seguinte.",
+  "proposal": "Ao sair de 'atk' por dashTo, doDodge, doCounter ou applyHit (no jogador), não zerar de repente: guardar p.spinOut=p.spin%TAU e, nos estados dash, dodge, hurt e down, decair até o múltiplo de TAU mais próximo (p.spinOut=lerp(p.spinOut,Math.round(p.spinOut/TAU)*TAU,1-Math.exp(-dt*18)); p.spin=p.spinOut). Nos movimentos de pivô, usar spin que termina inteiro ou que não passa de ±.35π: chk {spin:-PI*.3,sa:1,tw:1.4}; PARRY.pivot {spin:PI*.3,sa:0}, que volta a 0; PARRY.spinEv {spin:TAU,sa:.5}, que completa a volta.",
+  "impact": "medium",
+  "effort": "M"
+ },
+ {
+  "id": "INTE-11",
+  "kind": "bug",
+  "title": "CONTRA acionado no meio de uma esquiva ou flanco aéreo do Taekwondo deixa o personagem de cabeça para baixo durante todo o aparo e o faz cair de uma vez",
+  "evidence": "tryAct permite CONTRA a partir de 'dodge' com p.t>.18 e a partir de dash 'norm'/'flank' (l.432). Nesses estados o tkd tem p.rot até ±TAU (l.498, l.535, l.539) e p.y até 40. doCounter, runStep e startMove (l.354) zeram y de uma vez, mas não zeram rot, e o case 'atk' não mexe em rot. Teste t1.js: CONTRA durante o dodge 'back' do tkd deixou o Makki com rot=-3.8 rad (cerca de 218°, de cabeça para baixo) em todos os frames do aparo (cerca de 1 s real em slow .28), voltando a 0 de repente no passo seguinte. O y caiu de cerca de 15 para 0 em um frame.",
+  "proposal": "Em startMove, quando kind==='cnt' ou 'fin': `p.rotT=0; p.rot=((p.rot%TAU)+TAU)%TAU; if(p.rot>PI)p.rot-=TAU;`. No case 'atk', aplicar `if(!p.mv.jump)p.rot=lerp(p.rot,0,1-Math.exp(-dt*25))`. Para o y, em vez de f.y=0 em startMove, guardar f.y0=f.y e somar f.y0*(1-ease(min(1,t/.12))) ao y do golpe, para o aparo 'pousar' de forma suave.",
+  "impact": "medium",
+  "effort": "S"
+ },
+ {
+  "id": "INTE-12",
+  "kind": "bug",
+  "title": "FLUXO avança e erra no rival caído ou levantando: 'ERROU' zera ritmo e FLUXO logo depois de um knockdown do próprio combo",
+  "evidence": "Em tryAct (l.419/425), dashTo é chamado sem checar hittable(enemy). No atk (l.520-522), o golpe erra porque o rival está em 'down' ou 'getup', e o código faz p.streak=0 e p.flow=0. O SEQ termina em golpes de knock (box ['dir','gan','dir','ovr'], tkd ['ban','nae'] e ['mir','hur']), então o toque PERFEITO logo depois do knock gera PERFEITO e, em seguida, ERROU. Medido: os ERROU nas sessões foram 13/13 (b_flow), 29/30 (t_flow), 14/16 (t_mix) e 7/7 (b_mix) com o rival em down/getup. Isso quebra o nível de FLUXO justamente no ápice do combo.",
+  "proposal": "Em tryAct, quando o rival estiver em down ou getup: não chamar dashTo. Em vez disso, (a) manter o comando na fila (não consumir; p.queued=k) e disparar no frame em que o rival voltar a ser hittable, com um 'ataque de levantar' garantido; ou (b) fazer uma 'pressão' curta: dash para perto (sem golpe), pose de guarda e pop 'PRESSÃO', sem penalidade. Em l.522, não zerar streak e flow quando e.st for down, getup ou ko. Pausar comboT enquanto o rival estiver em down ou getup por knock do jogador, para o combo atravessar o knockdown.",
+  "impact": "medium",
+  "effort": "S"
+ },
+ {
+  "id": "INTE-13",
+  "kind": "bug",
+  "title": "Dano de raspão na guarda pode zerar o HP sem nocaute: o rival continua lutando com 0%",
+  "evidence": "Em applyHit (l.442), `d.hp-=hit.dmg*.15` não tem Math.max nem checagem de KO. Só o caminho normal (l.449/460) leva a 'ko', e update (l.660) só encerra o round com st==='ko'. Teste t4.js: rival com hp=.5 em guarda levou um Direto e ficou com hp=-0.7, st='guard' e barra HUD '0%', ainda vivo e depois voltando a atacar. Isso acontece de verdade no fim do round, porque o boxeador rival guarda com chance de .18*round (l.360).",
+  "proposal": "Em l.442, usar `d.hp=Math.max(0,d.hp-hit.dmg*.15); if(d.hp<=0){/* cair no caminho de KO */}`. Uma forma é marcar uma flag e não retornar, deixando o fluxo seguir até o bloco de KO em l.460. A alternativa é limitar com Math.max(1,...), para que o raspão nunca mate e a guarda tenha de ser quebrada.",
+  "impact": "low",
+  "effort": "S"
+ },
+ {
+  "id": "INTE-14",
+  "kind": "improvement",
+  "title": "A finta não tem punição real, e o botão CONTRA pisca amarelo também nas fintas",
+  "evidence": "doCounter com e.feint (l.369) põe o jogador em 'block' por 0,35 s (l.487) e reinicia o rival em wind com wd=.28. O golpe real chega em cerca de .28+(h0-a), entre .325 e .34 s, ainda dentro do block, e applyHit bloqueia automaticamente (l.440). Pior: com block p.t>.2, tryAct já considera o estado livre (l.410), e apertar CONTRA de novo dá contra PERFEITO no golpe real (e.t>e.wd*.55). Ou seja, quem aperta duas vezes ignora a finta. Além disso, o alerta do botão (l.943) liga com qualquer 'wind', incluindo finta, e contradiz o raio branco desenhado em l.904.",
+  "proposal": "(1) Punir a finta com um 'tropeço': p.st='hurt' por 0,3 s, sem dano, com a pose PULL e pop 'FINTA!', sem estado de block. Assim o golpe real (wd .3) acerta se o jogador não esquivar, e só ESQUIVA (permitida a partir de hurt depois de .15 s) salva. (2) Em loop (l.943), usar `$('bCnt').classList.toggle('alert',threat&&!enemy.feint); $('bCnt').classList.toggle('feint',threat&&enemy.feint)` com CSS branco e sem pulso. (3) Opcional: depois de uma finta lida corretamente (o jogador não apertou e o rival foi para 'rec' em l.600), dar pop 'LEU A FINTA' e +1 streak, recompensando a leitura.",
+  "impact": "medium",
+  "effort": "S"
+ },
+ {
+  "id": "VISU-1",
+  "kind": "bug",
+  "title": "Cada osso tem contorno próprio: aparecem 'costuras' em todas as articulações, falta pescoço e a espessura do contorno muda com o zoom",
+  "evidence": "drawFighter, linha 727: `const bone=(a,b,w,k,kh)=>{seg(a,b,w+1.5,OL);seg(a,b,w,col(k));...}`. Cada segmento desenha o contorno e o preenchimento logo em seguida. leg() (735-739) divide a perna em 5 ossos (h→m1 calção, m1→kn, kn→m2, m2→ft bota, ft→toe) e arm() (731-734) divide o braço em 2 ou 3, então a ponta arredondada e contornada de cada osso é pintada sobre o osso anterior. Na captura nativa ampliada (plano 'close', zoom 1.75; visu/close_1_zz.png) aparecem anéis pretos no joelho, no meio da coxa, no topo da bota e no cotovelo dos dois lutadores, com cara de boneco articulado. Não existe osso de pescoço: head() desenha dot(h,5) em P.hd=nk+6, enquanto o tronco termina em P.sh=16. O contorno é w+1.5 em unidades de mundo, então fica com cerca de 1px no zoom .72 e cerca de 3px no plano 'face' (2.1).",
+  "proposal": "Desenhar em duas passadas por grupo (membro): `const Q=[];const bone=(a,b,w,k,kh)=>Q.push([a,b,w,k,kh]);const flush=()=>{for(const q of Q)seg(q[0],q[1],q[2]+ow,OL);for(const q of Q){seg(q[0],q[1],q[2],col(q[3]));if(q[4]&&!fl)seg(up(q[0],q[2]*.22),up(q[1],q[2]*.22),q[2]*.32,pal[q[4]]);}Q.length=0;};`. Chamar flush() no fim de leg(), e em arm() antes do dot da luva ou do punho. Pescoço: no início de head(), `bone(S.sh,S.nk,3.6,'skin');flush();`. Contorno com espessura constante na tela: `const ow=2/(s*zoom)` no lugar de 1.5 (zoom já é global), e no dot usar r+ow/2. O contorno entre grupos (perna da frente sobre a de trás) continua e deve continuar. Protótipo testado em /tmp/claude-0/-home-user-LucasVeras669/df342a4f-9004-59b5-89e6-2b9773635a0a/scratchpad/qa/visu/game_proto.html (proto_0_z.png): calção, coxa e bota ficam contínuos e sem anéis, com o mesmo custo.",
+  "impact": "high",
+  "effort": "S"
+ },
+ {
+  "id": "VISU-2",
+  "kind": "improvement",
+  "title": "Os lutadores não recebem luz das lâmpadas: sem variação de tom, sem rim light, e o feixe fica sempre atrás deles",
+  "evidence": "As lâmpadas (lx=±110, y=165, z=228) existem só em drawBG (828-846): poças de luz no chão com 'lighter' e cones em poly com gradiente (840-841). render() desenha os lutadores depois (linha 899) com paleta fixa (linha 721: col(k)→pal[k]). Nas capturas, o lutador embaixo da lâmpada (x=-110) e o lutador entre as lâmpadas (x=0) têm cores idênticas, e o volume de luz nunca passa na frente do corpo, mesmo quando o lutador está em z>228.",
+  "proposal": "(a) Luz por troca de paleta quantizada (fica pixel-art): `lampAt(x)` retorna k=min(1,Σexp(-(x-lx)²/(2·70²))) e dx até a lâmpada mais próxima. `litPal(pal,k)` gera e guarda em cache (Map por paleta×nível 0..5) uma paleta misturada para '#ffd9a0' nos níveis 4-5 (+9% por nível) ou para '#141826' nos níveis 0-2 (+12% por nível). Em drawFighter: `const LP=litPal(pal,LI.k);const col=k=>fl?'#fff':LP[k]`. Custo por quadro praticamente zero. (b) Rim light na passada de preenchimento do VISU-1: se k>.25, `seg(sd(a,w*.3),sd(b,w*.3),w*.22,'rgba(255,214,150,'+k*.55+')')`, com `sd=(a,d)=>[a[0]+d*Math.sign(dx)*fc,a[1]]`. (c) Luz na frente: depois do loop dos lutadores, redesenhar os 2 polígonos de cone (mesma geometria da linha 841) com 'lighter' e alpha .06-.08 quando |f.x-lx|<70, para o corpo parecer dentro do feixe. (d) As fontes extras do VISU-10 (tambor com fogo laranja tremulando, placa verde de SAÍDA) entram em lampAt como luzes coloridas. Os itens (a) e (b) foram prototipados em visu/game_proto.html (proto_1_z.png): quem está sob a lâmpada fica mais quente e claro, e quem está entre as lâmpadas fica mais frio.",
+  "impact": "high",
+  "effort": "M"
+ },
+ {
+  "id": "VISU-3",
+  "kind": "improvement",
+  "title": "Sombra é uma elipse fixa no quadril: sem contato dos pés e sem sombra projetada pelas lâmpadas",
+  "evidence": "render, linha 892: elipse 13×3.4 em P(f.x,0,f.z). Ela não acompanha os pés: em bandal ou dollyo o pé de apoio fica cerca de 15 unidades fora dela. Com a altura só muda o alpha, não o tamanho, e as duas lâmpadas não projetam nada. As manchas do chão (linha 823) são elipses escuras e lisas, iguais a sombras: na captura idle_1_z.png a mancha em z=180 parece uma sombra solta do rival.",
+  "proposal": "(1) Sombra de contato por pé: para k em ['ff','bf'], se S[k][1]<4, elipse 4×1.3 com alpha .45 em P(f.x+S[k][0]*f.face,0,f.z). (2) Elipse do corpo com raio multiplicado por (1-min(f.y/120,.6)). (3) Sombra projetada por lâmpada L=(lx,165,ZL): para as juntas hip, sh, hd, fe, fh, be, bh, fk, ff, bk, bf, calcular t=165/(165-min(yj,140)) e o ponto no chão = P(lx+(xj-lx)*t, 0, ZL+(f.z-ZL)*t). Montar UM path com os 10 segmentos e fazer um único stroke (a união não escurece onde os segmentos se cruzam), com lineWidth 5*s e cor rgba(0,0,0,.3·exp(-(f.x-lx)²/(2·120²))), desenhado antes das elipses. Usar ZL≈255 (lâmpadas um pouco atrás do ringue) para a sombra cair na diagonal em direção à câmera: com ZL=228≈f.z ela vira uma faixa horizontal fina (vi isso no protótipo, dolly_2.png). Custo: 4 strokes por quadro. Em juggles a sombra se afasta e encolhe, o que deixa a altura legível. Trocar as manchas da linha 823 por formas irregulares (ver VISU-8).",
+  "impact": "high",
+  "effort": "S"
+ },
+ {
+  "id": "VISU-4",
+  "kind": "improvement",
+  "title": "Anatomia e sombreamento por plano: tronco é um quadrilátero estreito, membros com só um realce e rosto mínimo",
+  "evidence": "torso() (740-750) é o polígono [hB,hF,sF,sB], com 7 de largura no quadril e 8.6 nos ombros (skel 697-698): o boxeador tem quase a largura da luva (dot r=3.4). O sombreamento do tronco são 2 riscos skinD e 1 risco skinH. bone() só tem realce no lado de cima (kh, up(a,w*.22)) e nenhuma sombra embaixo, então os membros parecem tubos chapados. head() (751-762) tem um círculo de cabelo deslocado, olho de 1px, orelha e nariz, sem sobrancelha, boca ou queixo, e o cabelo é igual nos dois estilos.",
+  "proposal": "(1) Tronco com 6 pontos (o V do boxeador): hB, hF, cinturaF=mid(hF,sF,.35)+n*.6, peitoF=mid(hF,sF,.78)+n*1.6 (TKD: n*.8), sF, sB e dorsalB=mid(hB,sB,.7)-n*1.2, com n=normal do tronco (skel 693, expor em S). Deltoides: dot r 2.6 em S.sF (skin) antes de armF e em S.sB (skinD) antes de armB. (2) Três tons por plano: na passada de preenchimento, além do realce, `seg(up(a,-w*.28),up(b,-w*.28),w*.3,pal[escuro])` como sombra inferior. No tronco, `ctx.save();clip(polígono)` e preencher 30% do lado de trás com skinD (plano lateral na sombra), mais uma linha curta skinD no peitoral a 75% da altura e 3 marcas de 1px no abdômen. No gi, linha giD da lapela de nk até hF. (3) Rosto: sobrancelha de 1px em OL de at(2.6,1.6) a at(4,1.3), inclinada quando st é 'atk' ou 'strike'; boca de 1px skinD em at(3.6,-2.2), aberta (1×2) em hurt/hit; protetor bucal branco no boxeador quando é atingido. (4) Cabelo por estilo: boxeador com cabelo raspado (arco 0..π, r 5.2); TKD com franja e mecha traseira (triângulo) presa à mola do VISU-5. São cerca de 15 strokes a mais por lutador.",
+  "impact": "high",
+  "effort": "M"
+ },
+ {
+  "id": "VISU-5",
+  "kind": "improvement",
+  "title": "Figurino sem detalhes (luva circular, dobok sem gola nem saia, faixa vira mancha) e tecidos animados por sin(time)",
+  "evidence": "arm() linha 732: a luva é dot(ha,3.4), um círculo perfeito sem punho, cadarço ou polegar. O calção são 2 cápsulas, uma por perna (737: bone(h,m1,6.4,'sh')). No TKD, braços e pernas são cápsulas de largura fixa (733, 738), sem gola em V e sem a 'saia' do dobok abaixo da faixa. A faixa (749) tem o nó no meio do quadril com pontas apontando para trás (b0[0]-3*S.dirS) e é desenhada dentro do torso, antes de legF: a perna da frente cobre e sobra uma mancha vermelha na coxa (close_1_zz.png). As pontas da faixa (sin(time*9)) e da bandana (760, sin(time*11)) balançam do mesmo jeito parado ou girando.",
+  "proposal": "Boxe: luva como ctx.ellipse orientada pelo antebraço (rx 3.9, ry 3.2, rot=atan2(ha-el)), com punho/cadarço `seg(mid(el,ha,.7),mid(el,ha,.85),4.6,'trim')` e um brilho em arco. Calção como polígono único (hB, hF, mid(hF,fk,.45), mid(hB,bk,.45)) com cós e faixa lateral em 'trim'. Bota com sola clara (seg ft→toe deslocado -1) e uma dobra no cano. TKD: gola em V (2 segs de nk até mid(sF,hF,.45); '#151515' no dobok branco, giH no escuro); saia do casaco como polígono de hB/hF até 4 unidades abaixo, sobre o topo da calça; mangas e barra da calça mais largas no último terço (w+1), com anel giD no punho e no tornozelo. Faixa com nó em hF e pontas desenhadas DEPOIS de legF. Movimento secundário: mola 2D por lutador `f.cloth={x,y,vx,vy}` atualizada em phys(), com alvo = -(velocidade real do lutador entre quadros + f.vx)*k + gravidade, e amortecimento .5. As pontas da faixa, da bandana e a mecha de cabelo usam esse vetor, o que dá atraso e overshoot em giros (spin), dash e quedas. Custo: 2 molas por lutador.",
+  "impact": "medium",
+  "effort": "M"
+ },
+ {
+  "id": "VISU-6",
+  "kind": "improvement",
+  "title": "Zoom e pan da câmera são 2D (ctx.scale): sem paralaxe justamente nas cenas cinematográficas e nos juggles",
+  "evidence": "P() (linha 136) só tem camX como parâmetro de câmera; CAMH=80 e F são constantes. render() (888-889) aplica zoom, tilt, fx/fy e panX/panY como transformação de tela. Quando a câmera sobe atrás de um juggle (fyw += y*.6, linha 867) ou entra nos SHOTS 'face'/'close'/'low', parede (z 345), plateia (z 320), chão e lutadores escalam e se deslocam juntos, como uma foto. A profundidade some nos momentos mais imersivos.",
+  "proposal": "`let camZ=0,camY=CAMH;const P=(x,y,z)=>{const s=F/(z-camZ);return [W/2+(x-camX)*s,HOR+(camY-y)*s,s];}`. Animar camY e camZ com lerp exponencial por SHOTS: close camZ 70; face camZ 95 e camY 60; low camY 30 e camZ 60; wide camZ -30 e camY 110. No juggle, camY += .5*max(y dos lutadores). Nos cortes (camCut), atribuir direto em vez de interpolar. ctx.scale fica só como ajuste fino do zFit. Restrição: camZ<110, porque o FG está em z≥118 e as partículas em z≥170. O bbox de enquadramento (870-875) já usa P, então se ajusta sozinho. Protótipo em visu/game_proto2.html: camZ=95 e camY=40 dão um contra-plongée real (dolly_1.png), com linhas do chão convergindo, lutadores crescendo mais que a parede e cones abrindo; camY=150 dá um plongée com o ringue aberto (dolly_2.png).",
+  "impact": "high",
+  "effort": "M"
+ },
+ {
+  "id": "VISU-7",
+  "kind": "bug",
+  "title": "Retrato com 70% da tela em parede vazia, objetos que terminam no ar em y=400 e primeiro plano quebrado ou invisível",
+  "evidence": "resize() linha 134: em retrato, W=240, H=519 e HOR=H-135=384, então os lutadores ficam no rodapé, embaixo do pad (por_0.png, 390×844: parede lisa até ~650px). Pilares box3(...,400) (814), fios das lâmpadas line3 até [lx,400,228] (838) e tijolos (y<400, 808-809) acabam todos em y=400: em retrato o pilar termina flutuando, o fio some no meio da parede e acima disso só há gradiente. drawFG (848-851): a corrente em x=-170, z=140 são retângulos 2.4×3 a cada 6 unidades a partir de y=60, então parece uma linha pontilhada que termina na altura do peito e cruza os lutadores quando camX<-60 (edge_0.png). Os pilares de FG em x=±250 ficam fora da tela para |camX|≤120 no zoom 1. Em paisagem, um rival em x=230 fica embaixo do pad (edge_1.png): MX=5% (linha 874) ignora os 244×178px dos botões.",
+  "proposal": "(1) Teto: plano em y=TETO≈230, de z=60 a 345 (poly com 4 P), cor '#0f0d12', com vigas a cada 60 em x (line3 de z 60 a 345) e 2 dutos ao longo de x (line3 grossa escura + realce de 1px). Pilares, fios e tijolos vão até TETO. Com camY<TETO o teto aparece em perspectiva e preenche o topo do retrato. (2) Retrato: HOR=Math.round(H*.58) e zoom base 1.25, para o chão ficar acima da área dos botões. (3) Primeiro plano útil: trocar a corrente por cabeças e ombros da plateia da frente em z≈120, encostados na borda de baixo (silhuetas escuras em 2-3 tons, alpha .85), e por uma corrente de verdade (elos alternando elipse e traço, presa ao TETO). O alpha cai para .35 quando o elemento cruza o bbox de um lutador. (4) Enquadramento com margem assimétrica: margem direita = 244/innerWidth*W quando os pés estão na faixa vertical dos botões, ou um viés de fx de ~W*.06 para a esquerda.",
+  "impact": "high",
+  "effort": "M"
+ },
+ {
+  "id": "VISU-8",
+  "kind": "improvement",
+  "title": "Chão de concreto genérico: sem umidade, sem reflexos e sem marcas da luta",
+  "evidence": "drawBG (815-826): gradiente, grade de linhas (alpha .35), 4 elipses escuras fixas (823), anel âmbar e linha central. Nada reage à luta e não há reflexo das lâmpadas nem dos lutadores, o que achata o plano do chão (todas as capturas).",
+  "proposal": "(1) Poças: 3-4 fixas no mundo, polígono irregular de 7-9 pontos (r 18-30), cor '#1a1d22' com alpha .6. Dentro de ctx.save();clip(poça): reflexo das lâmpadas (faixa vertical em gradiente creme→transparente sob P(lx,0,zPoça), 'lighter' .25) e reflexo do lutador só quando o bbox cruza a poça: `translate(q[0],q[1]);scale(1,-1);translate(-q[0],-q[1]);globalAlpha=.22;drawFighter(ctx,f,q[0],q[1],q[2],S)`, reaproveitando S. Passar pela poça (dash, dodge, queda) gera parts 'r' pequenos azul-acinzentados e 2-3 gotas. (2) Decalques persistentes: array decals (FIFO, máx. 50) que recebe 3-6 gotas de suor ou sangue (elipses 1×.3, '#5a1414' / '#9fb3c0') em applyHit pesado e riscos de arrasto quando st==='down' desliza com vx alto; desenhar logo depois do chão. (3) Trocar as 4 manchas por manchas irregulares, rachaduras (polilinhas de 1px), um ralo com grade no centro e pixels especulares creme nas bordas úmidas perto das lâmpadas.",
+  "impact": "medium",
+  "effort": "M"
+ },
+ {
+  "id": "VISU-9",
+  "kind": "improvement",
+  "title": "Atmosfera: cones chapados, sem névoa nem perspectiva atmosférica, e poeira sempre atrás dos lutadores",
+  "evidence": "O cone é um único poly com gradiente linear (840-841), sem borda suave e sem tremulação. Os motes (linha 792) têm z entre 205 e 245, mas são desenhados em drawBG (842), então os que estão mais perto da câmera que o lutador (z≈225) aparecem atrás dele, um erro de ordem de desenho. Não há névoa entre a plateia e o ringue, e a plateia (z≈320) tem o mesmo contraste do primeiro plano.",
+  "proposal": "(1) Cone em 3 camadas de largura 1.0, .7 e .4 (alpha .08, .08 e .1), o que dá borda em faixas no estilo pixel-art. Intensidade com flicker: 1±.03·sin(t·37), e com Math.random()<.004 a lâmpada apaga por 60ms (com o chão junto). (2) Fumaça: pré-renderizar uma vez um sprite 32×32 de gradiente radial cinza; 6-8 nuvens no mundo (z 230-300, y 60-160) derivando devagar, desenhadas com drawImage escalado, 'screen' e alpha .05, ou ×3 quando dentro de um cone. (3) Névoa rente ao chão: depois da grade e antes dos lutadores, faixa de x=-900 a 900, y de 0 a 28, z=300, com gradiente rgba(70,60,55,.35)→0, separando plateia e ringue. (4) Perspectiva atmosférica: depois de desenhar a plateia, fillRect na faixa dela com rgba(40,36,44,.25). (5) Desenhar os motes com z<225 depois do loop dos lutadores (os outros continuam no BG).",
+  "impact": "medium",
+  "effort": "M"
+ },
+ {
+  "id": "VISU-10",
+  "kind": "improvement",
+  "title": "Cenário pouco 'subsolo': parede de tijolo com texto, subtítulo de 3px ilegível, limite da arena invisível e ~360 strokes por quadro só nos tijolos",
+  "evidence": "drawBG (808-809): os tijolos são feitos com line3 segmento por segmento, 16 horizontais + 38×9 verticais = ~358 pares beginPath/stroke por quadro. Linha 813: 'SEM REGRAS · SEM JUIZ · X1' em fonte Math.round(5·0.667)=3px, um borrão em todas as capturas. Há 4 pilares lisos e uma grade simples (834-835). Nada mostra o limite real da arena: AX=230 e o anel âmbar tem raio 150, então o lutador para numa parede invisível.",
+  "proposal": "(1) Cache: a parede é um plano paralelo à tela (z=345), então pode ser pré-renderizada em resize() num offscreen (largura 1800·F/345) com tijolos, cartazes, pichações, rachaduras e manchas de infiltração, e desenhada com um único drawImage em P(-900,700,345). Isso remove ~360 strokes por quadro e libera orçamento para os detalhes abaixo, e continua compatível com camY/camZ do VISU-6 (só escala e translação). (2) Letreiro neon 'SUBSOLO 9': tubo vermelho de 1px + halo com 'lighter' em 2 passadas, uma letra falhando com flicker. O subtítulo vai numa placa de metal com fonte ≥6px, ou sai. (3) Ventilador industrial na parede: aro e grade, 3-4 pás girando a time·6, raio 22, com feixes 'lighter' alpha .05 entrando entre as pás. (4) Cartazes rasgados (14×20, cores dessaturadas, canto dobrado, silhueta e 'SEXTA 23H') e uma placa verde 'SAÍDA' com halo verde, como contraponto frio ao âmbar. (5) Canos com gotejamento: uma gota a cada ~1.5s caindo numa poça do VISU-8, com anel. (6) Limite visível em x=±245: pneus empilhados e tambores de óleo (elipse no topo + retângulo), um deles com fogo (partículas laranja em 'lighter' + luz extra em lampAt, ver VISU-2). (7) Trocar a grade por alambrado: losangos com line3 a cada 8 unidades em z=300, alpha .35, desenhados depois da plateia (a 'jaula' vista de fora).",
+  "impact": "medium",
+  "effort": "M"
+ },
+ {
+  "id": "VISU-11",
+  "kind": "improvement",
+  "title": "Plateia é uma fileira de silhuetas iguais que só balançam",
+  "evidence": "crowd (linha 791): 93 figuras numa fileira (z 312-326), cada uma um fillRect + arc com a mesma forma, em 4 tons. As linhas 831-833 só fazem um balanço senoidal (amplitude 2+combo·.08) e 1px de 'flash de celular' quando ph2>.93. Golpe pesado, contra, especial e KO não provocam reação.",
+  "proposal": "(1) Duas fileiras: a de trás (z 335-342, mais escura e menor, coberta pela névoa do VISU-9) e a da frente (z 308-314) com os braços apoiados na grade. (2) Silhueta variada, gerada uma vez por figura: ombros de 8 a 12, cabeça de 2.8 a 3.6, boné (retângulo de 1px), capuz, braço erguido com garrafa ou celular. (3) Reação: variável global crowdHype (0..1) que sobe em applyHit pesado, doCounter e KO e decai com exp(-dt·.8). Amplitude do balanço ×(1+3·hype); com hype>.5, figuras sorteadas erguem 1-2 braços (line3 do ombro até +12 em y, mão de 1px), numa onda com atraso |c.x-hitX|/400 s. (4) Rim light: figuras com |c.x-lx|<60 ganham 1px creme no topo da cabeça e do ombro. (5) No especial e no KO, 6-10 flashes brancos 2×2 com 'lighter' e halo de 1 quadro. O custo em fills fica parecido com o atual.",
+  "impact": "medium",
+  "effort": "S"
+ },
+ {
+  "id": "VISU-12",
+  "kind": "improvement",
+  "title": "Sem color grading; a câmera lenta só cobre a tela com um azul chapado",
+  "evidence": "O pós-processamento em render (921-931) é uma vinheta radial fixa (buildVignette, linha 794), o flash creme e, em câmera lenta, `fillRect rgba(30,60,80,.12)` com source-over (931), que clareia os pretos em vez de tingir. Não há separação quente/frio, nem resposta a FLUXO 3, vida baixa ou cena letal (só impactRed no quadro de impacto).",
+  "proposal": "Depois da vinheta: (1) Grade base quente/fria: 'multiply' com gradiente vertical de #8fa0b8 (topo) a #ffffff (chão), deixando sombras e teto frios, e depois 'screen' com 2 gradientes radiais âmbar (alpha .10) na posição projetada das lâmpadas. (2) Estados: FLUXO 3 → multiply '#ffe2b8' a .5; câmera lenta → trocar a linha 931 por multiply '#b9d6e6' (tinge sem clarear); sceneRed durante p.inScene → multiply '#ffb0a0'; player.hp<25% → vinheta vermelha pré-renderizada em buildVignette pulsando com alpha .25+.15·sin(t·6). (3) Grão: padrão de ruído 64×64 gerado uma vez com createPattern, fillRect em 'overlay' alpha .05 com deslocamento aleatório a cada quadro. (4) Bloom barato: sprite de halo 16×16 pré-renderizado, desenhado com 'lighter' nas partículas 'f' e nas carcaças das lâmpadas. Evitar ctx.filter (caro e sem suporte no Safari antigo); multiply, screen e overlay são acelerados no celular.",
+  "impact": "medium",
+  "effort": "S"
+ },
+ {
+  "id": "VISU-13",
+  "kind": "improvement",
+  "title": "Densidade de pixel inconsistente: lutadores ficam borrados no zoom 1 e lisos como vetor no zoom 1.75",
+  "evidence": "O canvas é de baixa resolução (H=200, image-rendering:pixelated), mas zoom (0.72 a 2.1), tilt e pan entram por ctx.scale/rotate (linha 889) antes de desenhar paths com antialiasing. No plano 'close' (1.75) o lutador vira um boneco liso de ~80px (close_0_z.png); no zoom 1 tem ~45px com bordas de 2-3 tons de alpha em todos os membros (idle_1_z.png). O contorno também muda de espessura (ver VISU-1).",
+  "proposal": "Renderizar cada lutador num sprite (pixel snapping): um offscreen por lutador (~128×128). drawFighter desenha nele numa escala fixa s0=1, com as juntas arredondadas para inteiros (Math.round em X() e Y()). Para endurecer o alpha sem getImageData, redesenhar o buffer sobre ele mesmo 2 vezes com source-over (o alpha vai a 1-(1-a)³). Contorno de 1px perfeito: cópia em silhueta tingida de OL ('source-in' fillRect), desenhada nos 4 deslocamentos de 1px atrás do sprite. Rim: cópia tingida de creme com 'destination-out' da silhueta deslocada 1px para o lado oposto à lâmpada, desenhada por cima. No mundo, drawImage(sprite, ..., escala s/s0) com imageSmoothingEnabled=false: no zoom aparecem pixels grossos, como em jogos de luta pixel-art. São ~10 drawImage de 128² por lutador por quadro, aceitável no celular. Variante completa: renderizar o mundo num buffer de W/zoom × H/zoom e escalar no fim. Fazer depois dos VISU-1 a 5, porque substitui o contorno por stroke.",
+  "impact": "medium",
+  "effort": "L"
+ },
+ {
+  "id": "VISU-14",
+  "kind": "bug",
+  "title": "Erros de ordem de desenho e de sobreposição em textos, rastros, poeira e lâmpadas",
+  "evidence": "(a) pop() (linha 314) cria todos os textos em f.y+66 no mesmo x: 'PERFEITO' aparece 2-3 vezes empilhado e sobreposto (box_4.png, tkd_1.png). Os pops (913-914) são desenhados dentro da transformação com tilt (giram no plano holandês) e antes de drawFG (915), então o FG pode cobri-los. (b) Os trails (897) são desenhados antes dos DOIS lutadores: no flanco por baixo (D.zs, z menor) o rastro do jogador passa atrás do rival. (c) As partículas 'd' e 's' (906-911) ficam sempre na frente dos dois lutadores, inclusive a poeira dos pés de quem está atrás sobre as pernas de quem está na frente. (d) Carcaça e fio das lâmpadas (838, 844-845) ficam em drawBG: em juggles altos (TL_tkd_flow_05_air.png, lutadores na altura das lâmpadas) quem está em z>228 deveria ficar atrás da lâmpada. (e) O anel do jogador (895) aparece também em cenas, KO e letterbox. (f) O letreiro 'SUBSOLO 9' (811-813) fica atrás do banner 'NOCAUTE!' e perto do placar central (tkd_3.png).",
+  "proposal": "(a) Em pop(), y += 7·(número de pops vivos do mesmo lutador), ou substituir o pop de mesmo texto ainda vivo. Desenhar os pops depois de ctx.setTransform(1,0,0,1,0,0), projetando o ponto com a matriz do mundo guardada (`const M=ctx.getTransform()` antes do reset, depois `M.transformPoint(new DOMPoint(q[0],q[1]))`), com fonte inteira ≥6px e sem rotação. (b) Desenhar o rastro de cada lutador dentro do loop ordenado por z (linha 899), logo antes do próprio lutador. (c) Partículas 't'==='d' (rente ao chão) antes do loop dos lutadores; faíscas e flash continuam depois. (d) Se algum lutador tiver y>90 e z>228, redesenhar carcaça e fio da lâmpada depois desse lutador. (e) Não desenhar o anel quando player.inScene, cine>0 ou roundOver. (f) Mover o letreiro para x≈-200, y≈150 na parede, longe do centro onde ficam o HUD e o banner.",
+  "impact": "low",
+  "effort": "S"
+ },
+ {
+  "id": "FLUI-1",
+  "kind": "bug",
+  "title": "A torção do tronco (tw) achata o tronco em vez de girá-lo: os golpes de potência ficam até 18 un. curtos e os corpos se sobrepõem",
+  "evidence": "skel() linha 707: `const ct=Math.cos(f.tw||0);for(const k of UPPER){P[k][0]*=ct;}` multiplica por cos(tw) o x de ombros, braços e cabeça. Com isso o braço que golpeia encolhe justamente no impacto. Medido no momento do golpe (impact.js, sem tw → com tw): Direto, bh x 24.7→15.4; Gancho, fh 19.1→7.8; Gancho no corpo 23.3→10.6; Overhand 19.4→10.5; Cross-counter 25.1→13.5; MARTELO 18.9→8.6. Em jogo (sim_box_mix_1, primeiro frame de hitstop), a distância da luva à coluna do rival foi: Gancho 11.5–17.6 un., Gancho no corpo 9.6, Uppercut 7, Overhand 5.6. As faíscas de applyHit (linha 450) usam esse skel, então nascem no ar. Ao mesmo tempo, o espaçamento usa mv.r-2 (linhas 347, 495 e 516) e ignora o alcance real do membro. Sem tw, a luva acerta o centro do rival, e com a inclinação de .3 a .7 os troncos se atravessam (film_flank_box.png, frames 7 a 14). As armas também partem do mesmo ponto P.sh (linhas 701 e 702), enquanto sF/sB só servem para o polígono do tronco.",
+  "proposal": "1) Em skel(), apagar a linha 707. Os braços passam a nascer nos ombros: limb(P.sF,...,'fe','fh') e limb(P.sB,...,'be','bh'). A torção vira rotação da linha de ombros: `const tw=f.tw||0,c=Math.cos(tw),s=Math.sin(tw),g=f.twS||1;` `oF=4.4*c-(g>0?2.5*s:-3*s)`, `oB=-4.2*c+(g>0?3*s:-2.5*s)`, `P.sF=[sh+n*oF]`, `P.sB=[sh+n*oB]`, cabeça `P.hd[0]+=s*1.5*g`. O comprimento dos braços nunca é escalado, e `P.armSwap=oB>oF`. Em mk(), `m.twS=(m.lim==='bh'||m.lim==='bt')?1:-1`, e em startMove copiar `f.twS=mv.twS`. 2) Criar o espaçamento m.sp, calculado uma única vez no fim do script, depois de skel/UPPER existirem (mk roda antes, e UPPER na linha 690 ainda estaria em TDZ): `m.sp = alcanceX do membro em S (skel com spin=mv.spin*mv.sa e tw=mv.tw) + 5`, sendo 5 a meia-largura do rival. Usar mv.sp no lugar de mv.r-2 nas linhas 347, 495 e 516, e manter mv.r só no teste de alcance da linha 520. Assim a luva ou o pé toca a superfície do corpo e os troncos deixam de se interpenetrar.",
+  "impact": "high",
+  "effort": "M"
+ },
+ {
+  "id": "FLUI-2",
+  "kind": "bug",
+  "title": "O lutador teleporta no eixo vertical ao encadear golpes, ao fazer dash e ao esquivar no ar (o juggle vira um pula-pula)",
+  "evidence": "startMove linha 354 faz `f.y=0` e o dash força `p.y=0` (linha 501). O atk com airLift (linha 512) faz um arco sin que só volta a 0 em t=d, mas com `p.queued` o golpe termina em d-.04 (linha 524) com y alto. doDodge/dodge (linhas 534-540) recalcula y=sin(kπ)*.. a partir de 0. Na simulação (sim_tkd_mix_2.json) houve 9 quedas de mais de 12 un. num único frame em 30 s: Twio Ap Chagi→Dollyo y 117→0, atk→dodge 48→0, dodge→atk(Recuo) 34.6→0, dash→atk 32.9→0. Em film_flow_tkd.png (frames 64→66, 76→78 e 86→88) o jogador volta ao chão e sobe de novo a cada golpe do juggle. O pouso também não amortece: phys (linha 637) só gera poeira.",
+  "proposal": "Manter y contínuo. Em startMove, dashTo e doDodge, salvar `f.y0=f.y` (e `f.vy0=f.vy`) em vez de zerar. Golpe: `p.y = f.y0*(1-eout(min(1,t/(mv.d*.6)))) + arcoJump + arcoAir`. No juggle trocar o arco sin por perseguição de altura: `alvo=e.st==='air'?Math.max(0,e.y-8):0; p.y=lerp(p.y,alvo,1-Math.exp(-dt*10))` enquanto t<h0, e só depois deixar descer. Dash: `p.y=lerp(D.y0,arco,ease(k))`. Dodge: somar `D.y0*(1-ease(k))`. Ao sair para idle com y>0, entregar à gravidade de phys com vy=0 e remover o decremento linear `p.y-dt*200` (linha 492). Pouso: quando y passar de >4 para 0 com velocidade de queda > 120, aplicar `kick(f,7,-7);kick(f,9,-6);kick(f,0,3)` e manter a pose por 60 ms com k 500 (agachamento de amortecimento). Aplicar o mesmo na aterrissagem dos golpes com jump, que pousam em t=.85d.",
+  "impact": "high",
+  "effort": "M"
+ },
+ {
+  "id": "FLUI-3",
+  "kind": "bug",
+  "title": "Giros (spin) inconsistentes: o 540 chuta para trás, o check hook e o pivô viram uma linha, e o giro estala para 0 ao encadear",
+  "evidence": "Pela fórmula da linha 510 o spin no impacto é spin*sa. VENDAVAL 540 (linha 201: spin TAU*1.5, sa 1) fica em 3π no impacto, o personagem espelhado: o pé de chute fica em x=-24.2, a 50 un. do alvo medido em jogo (as faíscas nascem atrás). Check hook (linha 180, π*.6): cos=-.31, uma fatia fina com a luva em x=-2.1. PARRY.pivot (linha 216) termina em π/2 (largura 0) e spinEv (linha 218) termina em π, de costas (gal2.png). No fim do golpe a linha 525 faz `p.spin=0`, e no FLUXO o novo startMove zera spin no meio do giro: Dwi Chagi com cos -0.8 passa para 1 de um frame para o outro. Foram 8 estalos por 30 s em sim_tkd_mix_2 (Dwi→Dubal, Huryeo→Mireo, 540→idle). A janela PERFEITO começa em hl, justo quando o dwi está de costas.",
+  "proposal": "a) Valores: f540 com `sa:2/3` (impacto em 2π, de frente); chk sem giro de corpo (`spin:0`) e com o pivô feito por deslocamento lateral `zs:12` + tw 1.2; PARRY.pivot com `spin:PI*.5` e recuperação de volta a 0; spinEv com `spin:TAU` e `sa:.5`. b) Normalizar o fim: após h0, interpolar de spin*sa até `Math.round(spin/TAU)*TAU` em vez de até spin. c) Ao cancelar um golpe girando (startMove, dashTo, doDodge, doCounter), passar o resíduo para turn: `r=((f.spin%TAU)+TAU)%TAU; f.turn=r>PI?TAU-r:r; f.spin=0;` (o cos é contínuo). Corrigir phys linha 641 para `if(Math.abs(f.turn)<.02)`. d) Validação no fim do script: avisar quando cos(spin*sa) e o lado do membro de S apontarem para trás.",
+  "impact": "high",
+  "effort": "M"
+ },
+ {
+  "id": "FLUI-4",
+  "kind": "bug",
+  "title": "CONTRA durante a esquiva-mortal do Taekwondo faz o parry de cabeça para baixo durante toda a cena",
+  "evidence": "tryAct linha 432 permite cnt em `st==='dodge'&&p.t>.18`. A esquiva TKD 'back' (linha 539) gira `p.rot=-ease(k)*TAU`. doCounter→runStep→startMove (linhas 353-354) não reseta rot, e o case 'atk' não mexe em rot (só idle o interpola, na linha 492). O rot só é zerado de uma vez no dashTo seguinte (linha 349). Medido em sim_tkd_mix_2: 49 frames de atk com rot=1.396 e salto de 38 un. na cabeça ao zerar. film_dodge_counter.png mostra o 'Recuo' executado de cabeça para baixo, com câmera cinematográfica e câmera lenta, além do y 17.9→0 instantâneo.",
+  "proposal": "Em startMove, normalizar `f.rot=((f.rot+PI)%TAU+TAU)%TAU-PI` e marcar `f.rotUn=1`. No case 'atk', fazer `if(p.rotUn){p.rot=lerp(p.rot,0,1-Math.exp(-dt*22));if(Math.abs(p.rot)<.02){p.rot=0;p.rotUn=0;}}`, que termina o mortal rapidamente no início do parry. Em dashTo, trocar `p.rot=0` pela mesma normalização seguida de lerp no case 'dash' (o flanco TKD já anima rot). Opcional: se |rot|>1.2 no momento do CONTRA, usar a cena 'leap' (já é aérea) em vez de 'back'.",
+  "impact": "high",
+  "effort": "S"
+ },
+ {
+  "id": "FLUI-5",
+  "kind": "bug",
+  "title": "O rival contra-atacado fica congelado com o chute giratório apontando para longe do jogador",
+  "evidence": "Na linha 374, doCounter faz `e.spin=0;e.y=0;setPose(e,e.mv.S,...)` e o case 'countered' (linha 624) repete `e.spin=0`. As poses S de dwi/hur/cdw foram desenhadas para spin≈π (perna de trás -1.75 rad). Com spin=0, o chute congelado aponta para trás (gal2.png 'dwi S spin0 (countered)'; film_counter_dwi.png: o rival de gi escuro mantém a perna esticada para a direita, longe do boxeador, durante toda a cena 'PÊNDULO E UPPERCUT'). Se o rival estava no ar (tor/fly/jump), `e.y=0` o teleporta para o chão. O tw também é descartado.",
+  "proposal": "Em doCounter: `const m=e.mv||{};e.spin=m.spin?m.spin*m.sa:0;e.tw=m.tw||0;e.vy=0;` sem zerar y (phys aplica a gravidade porque 'countered' não é ctl). Trocar a pose congelada por uma versão 'atrasada' e legível: `setPose(e, lerpPose(m.A,m.S,.8), 1100, .6)`, ou seja, o golpe que 'errou' fica a 80% do caminho. No case 'countered' (linha 624), remover `e.spin=0`. Ao sair do estado, mandar o resíduo para turn como no FLUI-3. Na primeira etapa da cena, aplicar um tremor leve `o[0]+=Math.sin(e.t*40)*.03` para ler como 'travado no vazio'.",
+  "impact": "high",
+  "effort": "S"
+ },
+ {
+  "id": "FLUI-6",
+  "kind": "improvement",
+  "title": "A caminhada patina e faz moonwalk: a fase é avançada pelo tempo e o pé de apoio nunca é o certo",
+  "evidence": "walkPose (linha 318) só balança os ângulos (amplitude .28/.42). A fase é avançada por tempo, sem sinal: player na linha 489 (`p.walk+=dt*10*jm`), stalk na linha 581 e appr na linha 593. Andar para trás anima passos para frente. Com a guarda G, a perna de trás (quadril -.35, joelho -.3) é mais curta e o auto-apoio do skel (linha 712) mantém sempre o pé da frente no chão. Medido (an.py, tornozelo mais baixo): o deslizamento do pé de apoio é ≈ a velocidade do corpo. Jogador box 95% para frente / 115% para trás, tkd 100% / 100%; rival stalk 102–136%, appr 92–132%. Protótipo validado (game_walk4.html): IK de 2 ossos + apoio linear + fase pela distância reduziu o deslizamento para 19% (box) e 25% (tkd), e film_walkcmp_ik.png mostra passos reais contra a base estática film_walkcmp_orig.png.",
+  "proposal": "Substituir walkPose por IK: `function ik2(fx,fy){const l=13,d=Math.min(25.8,Math.hypot(fx,fy)),a=Math.atan2(fx,-fy);const flex=PI-Math.acos(clamp((2*l*l-d*d)/(2*l*l),-1,1));return [a+Math.acos(clamp(d/(2*l),-1,1)),-flex];}`. Para cada perna i (x0 = 2.5 frente / -9 trás, fase φ+iπ, u=(φ mod 2π)/π): apoio u<1 → `x=x0+S/2-S*u, y=-24.4`; balanço → `v=u-1; x=x0-S/2+S*ease(v); y=-24.4+lift*sin(πv)`; depois `o[6+2i],o[7+2i]=ik2(x,y)`. Avanço da fase por deslocamento com sinal: `f.walk += (dx*f.face)*PI/S` (com |dz| quando o movimento é em profundidade). S=10 no boxe (step-drag, os pés não cruzam) e 20 no tkd, lift 3/4. Pernas sem atraso de mola durante a locomoção: depois de phys, `pose[6..9]=lerp(pose,pt,.85); pv=0`. Contra-balanço: braços `o[2]-=s*.1;o[4]+=s*.1` e quadril `y+=|cos φ|*1.2`. No rival, usar o mesmo walkPose com a fase vinda do deslocamento real.",
+  "impact": "high",
+  "effort": "M"
+ },
+ {
+  "id": "FLUI-7",
+  "kind": "bug",
+  "title": "O quadro de impacto fica fora de controle: o hitstop congela o braço hiperestendido ou ainda dobrado, sem limites articulares",
+  "evidence": "phys (linhas 642-643) é uma mola sem limites, e mk (linha 166) usa ks=1700 com zt .55 (≈12% de overshoot). O hitstop (loop, linha 939) congela a física no frame do hit. Medido em jogo no 1º frame de hitstop (erro do cotovelo em relação a S): Direto -0.29 a -0.34 rad (cotovelo dobrado para trás), Uppercut -0.17 a -0.28 (cotovelo em -0.52/-0.63, 30–36° invertido), Jab -0.18. Em simulação isolada (impact.js) o Jab chega ao h com o cotovelo ainda em 0.6 (75% do caminho). Joelhos passam de +0.1 a +0.22 (hiperextensão) em dwi/tor/mir/fly/air/cdw. A antecipação A (ka 520) só atinge 23–48% antes de 'a' em jab/dir/gan. Não há follow-through: S fica parado até h+(d-h)/2 e volta à guarda com k280 com o membro rígido.",
+  "proposal": "1) Limites em phys, após cada subpasso: `if(f.pose[3]<.02){f.pose[3]=.02;if(f.pv[3]<0)f.pv[3]=0}` (idem idx 5); joelhos `if(f.pose[7]>-.02){...pv>0→0}` (idem 9). 2) Snap de impacto: em applyHit, do lado do atacante, copiar `pose[j]=pt[j];pv[j]=0` para as juntas do membro (fh:2,3 | bh:4,5 | ft:6,7 | bt:8,9), de modo que o hitstop mostre extensão limpa. Logo depois aplicar `kick(a,0,-2)` como recuo. 3) Antecipação legível: `ka` padrão 900 nos golpes com a≤.07. 4) Follow-through/recâmara: em mk, inserir uma key em h+.04 com o membro recolhido. Chutes: joelho do chute -1.9 com o quadril ainda a 70% de S, k 900. Socos: cotovelo 1.6 com o ombro em 80% de S, k 1100. Só então a key de guarda.",
+  "impact": "high",
+  "effort": "S"
+ },
+ {
+  "id": "FLUI-8",
+  "kind": "bug",
+  "title": "O dash de flanco começa virado de costas para o rival, e as viradas estalam (turn zerado e reiniciado)",
+  "evidence": "dashTo inverte side para o flanco (linha 337) e depois faz `setFace(p,-side)` (linha 351), olhando para o lado oposto ao rival durante a primeira metade. A linha 503 (`k>.5`) indica que a virada deveria ser no meio. Medido: no flanco só 6/16 (box) e 4/13 (tkd) frames olham para o rival; film_flank_box.png frames 0–6 mostram o boxeador de costas, achatado, atravessando o rival. No fim do dash, `if(D.flank){p.turn=0;}` (linha 502) zera turn de 0.5–1.08 rad: 3 a 5 estalos por 30 s. setFace (linha 317) reinicia turn=PI mesmo no meio de uma virada, causando pulo de largura; houve 1–2 reviradas em menos de 0.25 s em cada sim mix. O decaimento exponencial (linha 641) concentra a virada nos primeiros 40 ms.",
+  "proposal": "Em dashTo: `setFace(p, flank? side : -side)`, olhando para o rival na partida. No case 'dash', virar quando cruzar o rival: `if(D.flank&&Math.sign(e.x-p.x)!==Math.sign(e.x-D.sx))setFace(p,-D.side)`. Remover `p.turn=0` da linha 502. setFace contínuo: `f.turn = f.turn>0 ? PI-f.turn : PI`. Virada com easing: guardar `f.turnT` (0→1 em .12 s) e usar `turn=PI*(1-smoothstep(turnT))` no lugar do exp. Histerese no idle (linha 490) e no rival (linha 572): só virar quando `(e.x-p.x)*p.face < -6`.",
+  "impact": "medium",
+  "effort": "S"
+ },
+ {
+  "id": "FLUI-9",
+  "kind": "improvement",
+  "title": "O quadril é o pivô de tudo: o pé de apoio desliza nos chutes e giros, e o pé de trás flutua nas poses agachadas",
+  "evidence": "skel() parte de P.hip=[0,0] e só aterra o ponto mais baixo (linha 712). Durante chutes e giros, a perna de apoio gira em torno do quadril e o pé varre o chão: no atk do TKD o pé plantado anda 74 un/s com o corpo a 10 un/s (sim_tkd_mix_2). No dwi/hur, o cos(spin) leva o pé de apoio de +x a -x. No getup os pés andam 79 un/s com o corpo parado. Pés flutuando (feet.js, altura do pé de trás acima do chão): DUCK 6.5, PULL 5.8, DASHP box 5.5, DASHP tkd 3.4, STAG 2.9, BLOCK box 2.2. Essas poses são usadas no pêndulo, no flanco, no dash e no stagger, e na galeria (gallery.png 'b:DUCK') parecem um coice para trás.",
+  "proposal": "Pós-processo de IK no chão, num helper chamado em drawFighter/snap (não altera a física). 1) Pé de apoio travado: em startMove/eAttack guardar `f.st0 = (lim==='ft'||lim==='fh')?'bf':'ff'` e `f.st0x = S[st0][0]` (x local após spin). Por frame, `f.rootOff = clamp((f.st0x - S[st0][0]), -14, 14)` com decaimento `*exp(-dt*10)` depois de hl. Somar `rootOff*face` ao bx em drawFighter, em drawSmear e na posição da faísca. Os giros passam a pivotar sobre o pé. 2) Pé que não golpeia e está a menos de 8 un. do chão (estados de solo): aplicar ik2 (FLUI-6) mantendo o x local do pé e y=-alturaQuadril, para os dois pés tocarem o chão. 3) No getup, ancorar os pés (rootOff a partir do pé no início do getup).",
+  "impact": "medium",
+  "effort": "M"
+ },
+ {
+  "id": "FLUI-10",
+  "kind": "improvement",
+  "title": "A aproximação do rival é robótica: pose estática deslizando, velocidade constante e wind-up patinando",
+  "evidence": "appr (linhas 589-596): o rival TKD usa a pose HOP fixa a 110*aggr un/s por até 1.2 s (film_appr_tkd.png, frames 24–57 idênticos). O boxe usa walkPose a 14 rad/s com deslizamento de ~100%. stalk (linhas 579-582): velocidade constante com partida e parada instantâneas, alvo sempre oscilando (R e tz senoidais), andando em 80–93% do tempo. A troca dura `moving&&d>10` faz 17% (rival tkd) e 6.5% (rival box) dos frames de stalk deslizarem em idlePose (st.js). wind (linha 598): lerp de x a taxa 3, ou seja, desliza ~100 un/s na pose A congelada (box_mix: corpo 100.8, pé 98.6 un/s). strike (linha 610) avança 40+lunge*2 un/s sem passo.",
+  "proposal": "1) Locomoção por velocidade com aceleração: `e.vxL=lerp(e.vxL,desejado,1-Math.exp(-dt*6))` (idem z) e mover por vxL; blend walk/idle pelo |v|/sp (sem limiar duro); fase pela distância (FLUI-6). 2) Appr do TKD em saltitos: `e.walk += dist*PI/28; e.y=Math.abs(Math.sin(e.walk))*6`, pernas alternando HOP/G pela fase, pé de trás chegando no pouso. Appr do boxe em step-drag (S=10). 3) Wind: sem lerp contínuo. Um passo único com ease nos primeiros 40% de wd (`x=lerp(x0,tx,ease(min(1,t/(wd*.4))))`) e depois enrolar progressivamente: `pt = lerpPose(G, A, eout(t/wd))*1.12` nos últimos 25%, mais tremor de .02 rad em o[0] para telegrafar. 4) Strike: avanço só até h0 com ease-out e passo do pé da frente (ik).",
+  "impact": "medium",
+  "effort": "M"
+ },
+ {
+  "id": "FLUI-11",
+  "kind": "improvement",
+  "title": "Dash e esquiva são poses estáticas deslizando, com tranco de velocidade no fim e sem compressão no pouso",
+  "evidence": "dash (linhas 498-501): setPose fixo DASHP/HOP/DUCK com x=lerp(...,ease(k)), e o pé desliza com o corpo (dash: pé 23–145 un/s ≈ corpo). dodge 'back'/'side' (linha 537): `p.x+=D.vx*dt*(1-k*.6)` ainda está a 40% da velocidade (68–92 un/s) em k=1 e para seco (linha 541); o pé desliza 116 un/s = corpo (PULL/DUCK estáticos). TKD flanco/over/back (linhas 498, 535 e 539) pousa com vy ≈ -250 a -330 un/s direto no golpe ou no idle, sem amortecer. Os mortais ignoram as poses entre TUCK e o pouso.",
+  "proposal": "Dash em step-drag dirigido por k: k<.45 com a perna da frente alcançando (quadril F .9, joelho -.3; T -.7) e k≥.45 com o pé de trás arrastando para dentro (quadril T -.2, joelho -.9), mais `p.y+=Math.sin(k*PI)*3`. No boxe, um pequeno lean extra no meio. Dodge com perfil de velocidade `2*(1-k)` (mesma distância e velocidade final 0), pose PULL→G com mola no último terço e um 'peso' `kick(p,0,-3)` no fim. Mortais: abrir a pose no fim (k>.7: setPose HOP→G com k 700) e aplicar o squash de pouso do FLUI-2 (`kick(7,-7)`, `kick(9,-6)`, 60 ms) antes de startMove/idle. Para não perder responsividade, permitir buffer de entrada durante esses 60 ms.",
+  "impact": "medium",
+  "effort": "M"
+ },
+ {
+  "id": "FLUI-12",
+  "kind": "improvement",
+  "title": "Queda, juggle e getup são tábuas rígidas: rotação de prancha, pose aérea única e levantar sem ajoelhar",
+  "evidence": "getup (linhas 545 e 627): rotT=0 com lerp a taxa 12 e setPose G. O corpo gira em bloco do chão até em pé em ~.2 s (film_getup.png, frames 68→76), com os pés varrendo 79 un/s. down/ko (linhas 544, 546, 626 e 628): rot por lerp a taxa 6 a partir de AIRP e queda em diagonal só com os pés tocando (frames 12–24). air (linha 625): sempre a mesma pose AIRP com rotT -.9, e cada novo hit só reaplica AIRP (applyHit, linha 463). O juggle mostra um boneco esticado e idêntico (film_flow_tkd.png, frames 46–64). Ao bater no chão não há quique nem reação.",
+  "proposal": "1) Getup em 3 tempos: 0–.16 s sentar (rotT -.55, pose KNEEL=[.9,.2,1.2,2.2,.8,2.3,1.5,-2.3,-.2,-1.7], k 600); .16–.32 agachar (DUCK, rotT 0, rootOff ancorado no pé, FLUI-9); .32–.45 subir para G (k 300). Total ~.45 s, igual ao atual. 2) Impacto no chão: ao tocar o solo em down/ko com vy<-60, `f.vy=-f.vy*.25` (um quique), `kick(f,0,6);kick(f,1,-8)` e poeira. Rot com mola (`f.rv+=(rotT-rot)*k`) em vez de lerp, para dar um leve overshoot. 3) Juggle com variedade: alternar AIRP / AIRP2 (tuck [.4,.5,-.6,1.2,-.8,1.0,1.4,-2.0,.9,-1.8]) a cada hit, somar `e.rotT += a.face*(.35 a .6)` para o corpo rodar na direção do golpe e `kick` nos braços (idx 2/4 ±8) para soltar os membros.",
+  "impact": "medium",
+  "effort": "M"
+ }
+]
