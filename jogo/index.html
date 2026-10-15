@@ -272,7 +272,7 @@ const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
 
 // ---------- estado ----------
 let player=null,enemy=null,parts=[],trails=[],pops=[],time=0,hitstop=0,timeScale=1,slowT=0,cine=0,flashA=0,shake=0,zoom=1,zoomT=1,zKick=0,lbox=0,tilt=0,tiltT=0;
-let camCut=false,speedL=0,impactF=0,impactRed=false,sceneName='',sceneRed=false;
+let panX=0,panY=0,camCut=false,speedL=0,impactF=0,impactRed=false,sceneName='',sceneRed=false;
 const SHOTS={close:{z:1.75,fy:42,f:'mid',t:0},wide:{z:1.05,fy:30,f:'mid',t:0},dutchL:{z:1.5,fy:36,f:'p',t:-.09},dutchR:{z:1.5,fy:36,f:'e',t:.09},low:{z:1.55,fy:10,f:'mid',t:.05},face:{z:2.1,fy:52,f:'e',t:-.03}};
 let running=false,combo=0,comboT=0,score=0,round=1,wins=[0,0],roundOver=0,roundMsg=null,matchOver=false,fx=0,fy=0,best=0;
 const inp={x:0,z:0,act:null};
@@ -802,13 +802,13 @@ function drawBG(){
   ctx.fillStyle='rgba(216,64,47,.55)';ctx.fillText('SUBSOLO 9',sg[0],sg[1]);
   ctx.font=`${Math.round(5*sg[2])}px Silkscreen, monospace`;ctx.fillStyle='rgba(239,230,210,.25)';ctx.fillText('SEM REGRAS · SEM JUIZ · X1',sg[0],sg[1]+9*sg[2]);
   for(const x of [-330,-170,170,330])box3(x-14,x+14,326,344,400,'#24232a','#17161c');
-  const fz0=120,fz1=WZ;
+  const fz0=60,fz1=WZ;
   const f0=P(-900,0,fz0),f1=P(-900,0,fz1);
   const fg=ctx.createLinearGradient(0,f1[1],0,f0[1]);fg.addColorStop(0,'#2b2724');fg.addColorStop(1,'#3d3631');
   poly([P(-1200,0,fz1),P(1200,0,fz1),P(1200,0,fz0),P(-1200,0,fz0)],fg);
   ctx.globalAlpha=.35;
-  for(let x=-600;x<=600;x+=40)line3([x,0,130],[x,0,fz1],'#1a1715');
-  for(let z=140;z<fz1;z+=18)line3([-900,0,z],[900,0,z],'#1a1715');
+  for(let x=-600;x<=600;x+=40)line3([x,0,70],[x,0,fz1],'#1a1715');
+  for(let z=86;z<fz1;z+=18)line3([-900,0,z],[900,0,z],'#1a1715');
   ctx.globalAlpha=1;
   ctx.fillStyle='rgba(20,16,14,.35)';for(const [x,z,r] of [[-90,200,24],[110,262,30],[30,180,14],[-160,270,20]]){const q=P(x,0,z);ctx.beginPath();ctx.ellipse(q[0],q[1],r*q[2],r*q[2]*.22,0,0,TAU);ctx.fill();}
   ctx.strokeStyle='rgba(242,169,59,.55)';ctx.lineWidth=2;ctx.beginPath();
@@ -853,14 +853,30 @@ function render(rdt){
   if(shot){zoomT=shot.z;fyw=shot.fy;tiltTarget=shot.t*(player.face||1);
     foc=shot.f==='p'?player:shot.f==='e'?enemy:{x:(player.x+enemy.x)/2,z:(player.z+enemy.z)/2};}
   else foc=cine>0?{x:(player.x*2+enemy.x)/3,z:player.z}:{x:(player.x+enemy.x)/2,z:(player.z+enemy.z)/2};
+  // quem está no ar puxa o foco para cima
+  if(!shot)fyw+=Math.max(player.y,enemy.y)*.6;
   const [tfx,tfy]=P(foc.x,fyw,foc.z);
-  if(shot&&camCut){camCut=false;zoom=zoomT;fx=tfx;fy=tfy;tilt=tiltTarget;flashA=Math.max(flashA,.12);}
-  zoom+=(zoomT+zKick-zoom)*Math.min(1,rdt*(shot?4:7));zoomT=1;
+  // enquadramento: caixa que envolve os dois lutadores (inclusive no ar)
+  let bx0=1e9,by0=1e9,bx1=-1e9,by1=-1e9;
+  for(const f of fs){const lying=f.st==='down'||f.st==='ko'||f.st==='air'||f.st==='getup';
+    const a=P(f.x-20,f.y+(lying?26:70),f.z),b=P(f.x+20,f.y+(shot?26:-4),f.z);
+    bx0=Math.min(bx0,a[0],b[0]);bx1=Math.max(bx1,a[0],b[0]);by0=Math.min(by0,a[1],b[1]);by1=Math.max(by1,a[1],b[1]);}
+  const TOP=Math.max(H*.17,lbox+4),BOT=Math.max(H*.04,lbox+2),MX=W*.05;
+  const zFit=Math.max(.72,Math.min((W-2*MX)/Math.max(1,bx1-bx0),(H-TOP-BOT)/Math.max(1,by1-by0)));
+  const zWant=Math.min(zoomT+zKick,zFit);
+  if(shot&&camCut){camCut=false;zoom=zWant;fx=tfx;fy=tfy;tilt=tiltTarget;flashA=Math.max(flashA,.12);}
+  zoom+=(zWant-zoom)*Math.min(1,rdt*(zWant<zoom?12:(shot?4:7)));zoomT=1;
   tilt+=(tiltTarget-tilt)*Math.min(1,rdt*6);tiltT*=Math.exp(-rdt*1.5);
   fx+=(tfx-fx)*Math.min(1,rdt*(shot?3:8));fy+=(tfy-fy)*Math.min(1,rdt*(shot?3:8));
+  // deslocamento extra para manter a caixa inteira na tela
+  const sy0=(by0-fy)*zoom+fy,sy1=(by1-fy)*zoom+fy,sx0=(bx0-fx)*zoom+fx,sx1=(bx1-fx)*zoom+fx;
+  let npy=0,npx=0;
+  if(sy0<TOP)npy=TOP-sy0;else if(sy1>H-BOT)npy=Math.max(TOP-sy0,(H-BOT)-sy1);
+  if(sx0<MX)npx=MX-sx0;else if(sx1>W-MX)npx=(W-MX)-sx1;
+  panY+=(npy-panY)*Math.min(1,rdt*12);panX+=(npx-panX)*Math.min(1,rdt*10);
   shake*=Math.exp(-rdt*12);const sx=(Math.random()-.5)*shake,sy=(Math.random()-.5)*shake;
   ctx.setTransform(1,0,0,1,0,0);
-  ctx.translate(fx+sx,fy+sy);ctx.rotate(tilt);ctx.scale(zoom,zoom);ctx.translate(-fx,-fy);
+  ctx.translate(fx+sx+panX,fy+sy+panY);ctx.rotate(tilt);ctx.scale(zoom,zoom);ctx.translate(-fx,-fy);
   ctx.imageSmoothingEnabled=false;
   drawBG();
   for(const f of fs){const q=P(f.x,0,f.z);ctx.fillStyle=`rgba(0,0,0,${.5*(1-Math.min(f.y/80,.7))})`;ctx.beginPath();ctx.ellipse(q[0],q[1],(f.st==='ko'||f.st==='down'?22:13)*q[2],3.4*q[2],0,0,TAU);ctx.fill();}
