@@ -52,15 +52,17 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 #knob{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(239,230,210,.35);border:2px solid var(--paper)}
 #stickHint{position:absolute;left:max(24px,env(safe-area-inset-left,0px));bottom:calc(26px + env(safe-area-inset-bottom,0px));width:96px;height:96px;border-radius:50%;
   border:2px dashed rgba(239,230,210,.22);pointer-events:none;display:grid;place-items:center;font-family:var(--display);font-size:9px;opacity:.6;text-align:center}
-#pad{position:absolute;right:max(10px,env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));width:236px;height:200px}
-#pad button{position:absolute;border-radius:50%;border:3px solid var(--paper);color:var(--paper);font-family:var(--display);font-size:10px;letter-spacing:.04em;
-  background:rgba(13,11,18,.45);touch-action:none;padding:0;box-shadow:0 4px 0 var(--ink)}
+#pad{position:absolute;right:max(8px,env(safe-area-inset-right,0px));bottom:calc(8px + env(safe-area-inset-bottom,0px));width:244px;height:178px}
+#pad button{position:absolute;border-radius:50%;border:3px solid var(--paper);color:var(--paper);font-family:var(--display);font-size:8px;line-height:1.05;letter-spacing:.03em;
+  background:rgba(13,11,18,.5);touch-action:none;padding:0 4px;box-shadow:0 4px 0 var(--ink);display:grid;place-items:center;text-align:center}
 #pad button:active,#pad button.dn{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
-#bAtk{width:96px;height:96px;right:6px;bottom:10px;background:rgba(216,64,47,.55)!important;font-size:12px!important}
-#bCnt{width:70px;height:70px;right:24px;bottom:118px;background:rgba(242,169,59,.35)!important}
-#bDod{width:70px;height:70px;right:114px;bottom:6px}
-#bFin{width:62px;height:62px;right:112px;bottom:94px;opacity:.35}
-#bFin.ready{opacity:1;background:rgba(242,169,59,.7)!important;animation:pulse .5s steps(2) infinite}
+#bAtk{width:92px;height:92px;right:4px;bottom:8px;background:rgba(216,64,47,.6)!important;font-size:12px!important}
+#b1,#b2,#b3{width:60px;height:60px;background:rgba(127,214,255,.18)!important;border-color:rgba(239,230,210,.85)!important}
+#b1{right:104px;bottom:4px}#b2{right:110px;bottom:70px}#b3{right:56px;bottom:104px}
+#bCnt{width:56px;height:56px;right:0;bottom:110px;background:rgba(242,169,59,.4)!important}
+#bDod{width:56px;height:56px;right:176px;bottom:6px}
+#bFin{width:56px;height:56px;right:180px;bottom:72px;opacity:.4}
+#bFin.ready{opacity:1;background:rgba(242,169,59,.75)!important;animation:pulse .5s steps(2) infinite}
 #bFin.super{background:rgba(127,214,255,.75)!important}
 #bCnt.alert{background:rgba(242,169,59,.95)!important;color:var(--ink);animation:pulse .18s steps(2) infinite}
 @keyframes pulse{50%{transform:scale(1.08)}}
@@ -96,10 +98,13 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
   <div id="stickHint" hidden>MOVER</div>
   <div id="stick"><div id="knob"></div></div>
   <div id="pad" hidden>
-    <button id="bFin" aria-label="Golpe final">FINAL</button>
-    <button id="bCnt" aria-label="Contra-ataque">CONTRA</button>
+    <button id="bFin" aria-label="Especial">ESPECIAL</button>
     <button id="bDod" aria-label="Esquiva">ESQUIVA</button>
-    <button id="bAtk" aria-label="Atacar">ATACAR</button>
+    <button id="b2">DIRETO</button>
+    <button id="b1">JAB</button>
+    <button id="b3">GANCHO</button>
+    <button id="bCnt" aria-label="Contra-ataque">CONTRA</button>
+    <button id="bAtk" aria-label="Luta livre em fluxo">FLUXO</button>
   </div>
   <div class="screen" id="menu">
     <h1>FLUXO<br>BRUTAL</h1>
@@ -108,7 +113,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
       <button class="card" id="pickBox"><canvas id="pvBox" width="60" height="60"></canvas><strong>BOXEADOR</strong><small>Rocco "Martelo"<br>Jab, direto, gancho, uppercut. Esquiva no pêndulo.</small></button>
       <button class="card" id="pickTkd"><canvas id="pvTkd" width="60" height="60"></canvas><strong>TAEKWONDO</strong><small>Ji-ho "Vendaval"<br>Bandal, dollyo, dwi chagi, tornado. Acrobacias.</small></button>
     </div>
-    <p class="how"><b>ATACAR</b> no ritmo: toque logo depois de cada impacto para encadear (PERFEITO acelera o FLUXO; apertar sem parar quebra o ritmo e o rival escapa). Segure o direcional <b>para além do rival</b> ao atacar para trocar de lado pelo flanco. <b>CONTRA</b> no raio ⚡ amarelo (o branco é finta): cada golpe do rival gera uma cena diferente, e contras seguidos no tempo perfeito liberam o CONTRA LETAL. <b>ESQUIVA</b> na hora do golpe vira esquiva perfeita. Com 5 acertos, <b>FINAL</b>; com 12, SUPER FINAL.</p>
+    <p class="how">Três botões com o nome dos <b>golpes básicos</b> do seu estilo. <b>FLUXO</b> luta sozinho de forma livre: salta até o rival, encadeia golpes e troca de lado pelo flanco (toque logo depois de cada impacto para o PERFEITO; apertar sem parar quebra o ritmo). <b>CONTRA</b> no raio ⚡ amarelo (o branco é finta) dispara uma cena de contra-ataque. <b>ESQUIVA</b> na hora do golpe vira esquiva perfeita. <b>ESPECIAL</b> libera com 5 acertos; com 12 vira SUPER.</p>
   </div>
   <div class="screen" id="over" hidden>
     <h1 id="oTitle">NOCAUTE</h1>
@@ -251,6 +256,8 @@ function pickScene(p,e,perfect){
   let k=pick(opts);if(k===p.lastScene&&opts.length>1)k=pick(opts.filter(x=>x!==k));p.lastScene=k;
   return SCENES[p.style][k];
 }
+const BASIC={box:{b1:'jab',b2:'dir',b3:'gan'},tkd:{b1:'ban',b2:'dol',b3:'dwi'}};
+const BLABEL={box:['JAB','DIRETO','GANCHO'],tkd:['BANDAL','DOLLYO','DWI CHAGI']};
 const FIN={box:{n:['fly','fly','fly','cor','finUpp','finOvr'],s:['fly','fly','fly','fly','cor','gan','finUpp','finOvr']},tkd:{n:['ban','dol','tor','f540'],s:['dub','dol','hur','tor','f540']}};
 
 // ---------- áudio ----------
@@ -395,7 +402,7 @@ function doDodge(p){
 function doFinisher(p){
   const sup=p.fc>=12;const list=(sup?FIN[p.style].s:FIN[p.style].n).map(k=>MOV[p.style][k]);
   p.fseq=list.slice(1);p.fsup=sup;p.fc=0;cine=3;
-  pop(sup?'SUPER FINAL':'FINAL',p,sup?'#7fd6ff':'#f2a93b');
+  pop(sup?'SUPER ESPECIAL':'ESPECIAL',p,sup?'#7fd6ff':'#f2a93b');
   dashTo(p,'fin',{mv:list[0]});updHud();
 }
 
@@ -403,19 +410,22 @@ function tryAct(p,k){
   const st=p.st,free=st==='idle'||(st==='block'&&p.t>.2);
   if(st==='hurt'||st==='ko'||st==='win'||st==='down'||st==='getup')return false;
   const normAtk=st==='atk'&&p.kind==='norm';
-  if(k==='atk'){
-    if(free){const fl=Math.abs(inp.x)>.5&&Math.sign(inp.x)===Math.sign(enemy.x-p.x)&&Math.abs(enemy.x-p.x)<55&&hittable(enemy);dashTo(p,fl?'flank':'norm');return true;}
+  const basic=k==='b1'||k==='b2'||k==='b3';
+  if(k==='atk'||basic){
+    // FLUXO: golpes livres em sequência, trocando de lado sozinho de vez em quando; básicos: o golpe escolhido
+    const near=Math.abs(enemy.x-p.x)<55&&hittable(enemy);
+    const fl=(Math.abs(inp.x)>.5&&Math.sign(inp.x)===Math.sign(enemy.x-p.x)&&near)||(k==='atk'&&combo>=3&&near&&Math.random()<.3);
+    const o=basic?{mv:MOV[p.style][BASIC[p.style][k]]}:undefined;
+    if(free){dashTo(p,fl?'flank':'norm',o);return true;}
     if(normAtk||(st==='dash'&&p.dash.kind!=='fin'&&p.dash.kind!=='cnt')||(st==='atk'&&p.kind==='flank')){
       if(st==='atk'&&p.t>=p.mv.hl){
         const w=p.t-p.mv.hl;
         if(w<.2){p.streak++;pop('PERFEITO',p,'#7fd6ff');sfx.perfect();}
-        else p.streak=Math.max(0,p.streak);
         p.flow=Math.min(3,Math.floor(p.streak/4));
-        const fl=Math.abs(inp.x)>.5&&Math.sign(inp.x)===Math.sign(enemy.x-p.x)&&Math.abs(enemy.x-p.x)<55&&hittable(enemy);
-        dashTo(p,fl?'flank':'norm');return true;
+        dashTo(p,fl?'flank':'norm',o);return true;
       }
       // apertou cedo demais: quebra o ritmo
-      p.early=true;p.queued='atk';p.streak=0;p.flow=0;pop('CEDO',p,'#d8402f');return true;
+      p.early=true;p.queued=k;p.streak=0;p.flow=0;pop('CEDO',p,'#d8402f');return true;
     }
     return false;
   }
@@ -515,7 +525,7 @@ function updPlayer(p,rdt){
       p.spin=0;p.y=0;
       if(p.cseq&&p.cseq.length&&e.st!=='ko'){runStep(p,p.cseq.shift());}
       else if(p.fseq&&p.fseq.length){dashTo(p,'fin',{mv:p.fseq.shift()});}
-      else if(p.queued){p.queued=null;dashTo(p,'norm');}
+      else if(p.queued){const q=p.queued;p.queued=null;dashTo(p,'norm',q!=='atk'?{mv:MOV[p.style][BASIC[p.style][q]]}:undefined);}
       else{p.st='idle';p.fseq=null;p.cseq=null;p.inScene=false;p.ccam=null;}
     }
     break;}
@@ -673,7 +683,7 @@ function updHud(force){
   $('rlabel').textContent='ROUND '+round;$('score').textContent=score;
   if(combo!==lastCombo||force){lastCombo=combo;$('cNum').textContent=combo;$('combo').classList.toggle('on',combo>=2);}
   if(player.flow!==lastFlow||force){lastFlow=player.flow;[...$('flow').children].forEach((s,i)=>s.classList.toggle('on',i<player.flow));$('flow').classList.toggle('max',player.flow>=3);}
-  const ready=player.fc>=5&&player.st!=='ko';$('bFin').classList.toggle('ready',ready);$('bFin').classList.toggle('super',player.fc>=12);$('bFin').textContent=player.fc>=12?'SUPER':'FINAL';
+  const ready=player.fc>=5&&player.st!=='ko';$('bFin').classList.toggle('ready',ready);$('bFin').classList.toggle('super',player.fc>=12);$('bFin').textContent=player.fc>=12?'SUPER':'ESPECIAL';
 }
 
 // ---------- esqueleto ----------
@@ -945,12 +955,12 @@ document.addEventListener('pointerdown',e=>{
 document.addEventListener('pointermove',e=>{if(e.pointerId!==sid)return;let dx=e.clientX-sox,dy=e.clientY-soy;const m=Math.hypot(dx,dy),R=44;if(m>R){dx*=R/m;dy*=R/m;}knob.style.transform=`translate(${dx}px,${dy}px)`;inp.x=dx/R;inp.z=-dy/R;});
 const endStick=e=>{if(e.pointerId!==sid)return;sid=null;inp.x=0;inp.z=0;stick.classList.remove('on');};
 document.addEventListener('pointerup',endStick);document.addEventListener('pointercancel',endStick);
-for(const [id,k] of [['bAtk','atk'],['bCnt','cnt'],['bDod','dod'],['bFin','fin']]){const b=$(id);
+for(const [id,k] of [['bAtk','atk'],['bCnt','cnt'],['bDod','dod'],['bFin','fin'],['b1','b1'],['b2','b2'],['b3','b3']]){const b=$(id);
   b.addEventListener('pointerdown',e=>{e.preventDefault();b.classList.add('dn');act(k);});
   const up=()=>b.classList.remove('dn');b.addEventListener('pointerup',up);b.addEventListener('pointerleave',up);b.addEventListener('pointercancel',up);
   b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();act(k);}});}
 const keys={};
-addEventListener('keydown',e=>{if(e.repeat)return;keys[e.code]=1;const m={KeyJ:'atk',KeyK:'cnt',KeyL:'dod',KeyI:'fin',Space:'atk'};if(m[e.code]&&running){e.preventDefault();act(m[e.code]);}kb();});
+addEventListener('keydown',e=>{if(e.repeat)return;keys[e.code]=1;const m={KeyJ:'atk',KeyK:'cnt',KeyL:'dod',KeyI:'fin',Space:'atk',Digit1:'b1',Digit2:'b2',Digit3:'b3',KeyU:'b1',KeyO:'b2',KeyP:'b3'};if(m[e.code]&&running){e.preventDefault();act(m[e.code]);}kb();});
 addEventListener('keyup',e=>{keys[e.code]=0;kb();});
 function kb(){if(sid!==null)return;const x=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),z=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0);const m=Math.hypot(x,z)||1;inp.x=x/m;inp.z=z/m;}
 document.addEventListener('contextmenu',e=>e.preventDefault());
@@ -960,6 +970,7 @@ function begin(style){
   try{const d=document.documentElement;if(d.requestFullscreen&&!document.fullscreenElement)d.requestFullscreen().then(()=>screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})).catch(()=>{});}catch(e){}
   $('menu').hidden=true;$('over').hidden=true;$('hud').hidden=false;$('pad').hidden=false;$('stickHint').hidden=false;
   newMatch(style);
+  ['b1','b2','b3'].forEach((id,i)=>{$(id).textContent=BLABEL[style][i];$(id).setAttribute('aria-label',BLABEL[style][i]);});
   setTimeout(()=>{if(running)$('stickHint').hidden=true;},9000);
 }
 let chosen='box';
