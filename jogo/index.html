@@ -32,13 +32,20 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 #rlabel{font-size:10px;letter-spacing:.15em;opacity:.8}
 #score{font-size:10px;font-variant-numeric:tabular-nums;opacity:.8}
 #combo{position:absolute;left:max(14px,env(safe-area-inset-left,0px));top:calc(56px + env(safe-area-inset-top,0px));pointer-events:none;
-  font-family:var(--display);line-height:1;opacity:0;transition:opacity .2s}
-#combo.on{opacity:1}
+  font-family:var(--display);line-height:1}
+#cWrap{opacity:0;transition:opacity .2s}
+#combo.on #cWrap{opacity:1}
 #combo b{font-size:34px;color:var(--amber);text-shadow:3px 3px 0 var(--ink);display:inline-block}
 #combo span{font-size:11px;letter-spacing:.12em;margin-left:4px;text-shadow:2px 2px 0 var(--ink)}
 #combo.pop b{animation:pop .18s steps(3)}
 #combo em{display:block;font-style:normal;font-size:10px;color:var(--paper);opacity:.85;margin-top:4px;letter-spacing:.06em;text-shadow:2px 2px 0 var(--ink)}
-#flow{display:flex;align-items:center;gap:4px;margin-top:6px;font-size:9px;letter-spacing:.12em;text-shadow:2px 2px 0 var(--ink)}
+#flow{display:flex;align-items:center;gap:4px;margin-top:6px;padding-bottom:7px;position:relative;width:max-content;font-size:9px;letter-spacing:.12em;text-shadow:2px 2px 0 var(--ink);opacity:0;transition:opacity .3s}
+#flow.on{opacity:1}
+/* ÍMPETO: barra contínua sob as 3 marcas de FLUXO, com divisões nos limiares de nível (25/55/85) */
+#imp{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(239,230,210,.2);box-shadow:0 1px 0 var(--ink)}
+#imp::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent calc(25% - 1px),var(--ink) calc(25% - 1px) 25%,transparent 25% calc(55% - 1px),var(--ink) calc(55% - 1px) 55%,transparent 55% calc(85% - 1px),var(--ink) calc(85% - 1px) 85%,transparent 85%)}
+#impF{height:100%;width:0;background:var(--steel);transition:width .12s linear}
+#flow.max #impF{background:var(--amber)}
 #flow i{width:10px;height:6px;border:2px solid var(--paper);display:inline-block}
 #flow i.on{background:var(--steel);border-color:var(--steel)}
 #flow.max i.on{background:var(--amber);border-color:var(--amber)}
@@ -66,6 +73,9 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 #bFin.ready{opacity:1;background:rgba(242,169,59,.75)!important;animation:pulse .5s steps(2) infinite}
 #bFin.super{background:rgba(127,214,255,.75)!important}
 #bCnt.alert{background:rgba(242,169,59,.95)!important;color:var(--ink);animation:pulse .18s steps(2) infinite}
+/* finta: o botão fica branco e parado (não é hora de CONTRA); tropeço da finta: a ESQUIVA pulsa (INTE-14) */
+#bCnt.feint{background:rgba(239,230,210,.5)!important;border-color:#fff;color:var(--ink)}
+#bDod.alert{background:rgba(127,214,255,.8)!important;color:var(--ink);animation:pulse .18s steps(2) infinite}
 @keyframes pulse{50%{transform:scale(1.08)}}
 #pad button:focus-visible,.card:focus-visible,.cta:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
@@ -83,7 +93,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 .how{font-size:12px;opacity:.78;max-width:60ch;line-height:1.5;margin:0}
 .how b{color:var(--amber);font-weight:600}
 .cta{font-family:var(--display);font-size:14px;padding:12px 22px;background:var(--blood);color:var(--paper);border:3px solid var(--paper);box-shadow:0 4px 0 #000;cursor:pointer}
-@media (prefers-reduced-motion:reduce){#bFin.ready,#bCnt.alert,#combo.pop b{animation:none}}
+@media (prefers-reduced-motion:reduce){#bFin.ready,#bCnt.alert,#bDod.alert,#combo.pop b{animation:none}}
 @media (max-height:420px){.screen{justify-content:flex-start}.card canvas{width:90px;height:90px}.screen h1{font-size:34px}}
 </style>
 
@@ -94,7 +104,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
     <div id="mid"><div id="rlabel">ROUND 1</div><div id="score">0</div></div>
     <div class="fbar r"><div class="fname" id="eName">Rival</div><div class="hp"><b id="eHpB"></b><i id="eHp"></i></div><div class="wins" id="eWins"><span></span><span></span></div></div>
   </div>
-  <div id="combo"><b id="cNum">0</b><span>HITS</span><em id="cMove"></em><div id="flow">FLUXO <i></i><i></i><i></i></div></div>
+  <div id="combo"><div id="cWrap"><b id="cNum">0</b><span>HITS</span><em id="cMove"></em></div><div id="flow">FLUXO <i></i><i></i><i></i><div id="imp"><div id="impF"></div></div></div></div>
   <div id="banner"><h2 id="bTitle"></h2><p id="bSub"></p></div>
   <div id="stickHint" hidden>MOVER</div>
   <div id="stick"><div id="knob"></div></div>
@@ -114,7 +124,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
       <button class="card" id="pickBox"><canvas id="pvBox" width="60" height="60"></canvas><strong>BOXEADOR</strong><small>Rocco "Martelo"<br>Jab, direto, gancho, uppercut. Esquiva no pêndulo.</small></button>
       <button class="card" id="pickTkd"><canvas id="pvTkd" width="60" height="60"></canvas><strong>TAEKWONDO</strong><small>Ji-ho "Vendaval"<br>Bandal, dollyo, dwi chagi, tornado. Acrobacias.</small></button>
     </div>
-    <p class="how">Três botões com o nome dos <b>golpes básicos</b> do seu estilo. <b>FLUXO</b> luta sozinho de forma livre: salta até o rival, encadeia golpes e troca de lado pelo flanco (toque logo depois de cada impacto para o PERFEITO; apertar sem parar quebra o ritmo). <b>CONTRA</b> no raio ⚡ amarelo (o branco é finta) dispara uma cena de contra-ataque. <b>ESQUIVA</b> na hora do golpe vira esquiva perfeita. <b>ESPECIAL</b> libera com 5 acertos; com 12 vira SUPER.</p>
+    <p class="how">Três botões com o nome dos <b>golpes básicos</b> do seu estilo. <b>FLUXO</b> luta sozinho de forma livre: salta até o rival, encadeia golpes e troca de lado pelo flanco (toque logo depois de cada impacto para o PERFEITO e encha o <b>ÍMPETO</b>; quem amassa o botão provoca a <b>RUPTURA</b>: o rival escapa blindado). <b>CONTRA</b> no raio ⚡ amarelo (o branco é finta) dispara uma cena de contra-ataque. <b>ESQUIVA</b> na hora do golpe vira esquiva perfeita. <b>ESPECIAL</b> libera com 5 acertos; com 12 vira SUPER.</p>
   </div>
   <div class="screen" id="over" hidden>
     <h1 id="oTitle">NOCAUTE</h1>
@@ -274,20 +284,23 @@ const sfx={
  block:()=>{noise(.06,4000,.25,'highpass');tone(600,300,.06,.1,'triangle')},
  hurt:()=>{noise(.15,700,.5);tone(90,40,.2,.6)},
  perfect:()=>tone(988,1480,.09,.06,'square'),
+ rupt:()=>{tone(180,520,.16,.14,'sawtooth');noise(.14,1600,.4,'bandpass')},
  bell:()=>{tone(880,860,.9,.2,'triangle');tone(1320,1300,.6,.08,'sine')},
 };
 const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
 
 // ---------- estado ----------
 let player=null,enemy=null,parts=[],trails=[],pops=[],time=0,hitstop=0,timeScale=1,slowT=0,cine=0,flashA=0,shake=0,zoom=1,zoomT=1,zKick=0,lbox=0,tilt=0,tiltT=0;
+let rclock=0; // relógio real acumulado (ritmo e amassar botão não dependem de câmera lenta, hitstop nem velocidade do FLUXO)
 let panX=0,panY=0,camCut=false,speedL=0,impactF=0,impactRed=false,sceneName='',sceneRed=false;
 const SHOTS={close:{z:1.75,fy:42,f:'mid',t:0},wide:{z:1.05,fy:30,f:'mid',t:0},dutchL:{z:1.5,fy:36,f:'p',t:-.09},dutchR:{z:1.5,fy:36,f:'e',t:.09},low:{z:1.55,fy:10,f:'mid',t:.05},face:{z:2.1,fy:52,f:'e',t:-.03}};
 let running=false,combo=0,comboT=0,score=0,round=1,wins=[0,0],roundOver=0,roundMsg=null,matchOver=false,fx=0,fy=0,best=0;
 const inp={x:0,z:0,act:null};
 function mkF(style,isP,pal,x,z){return {style,isP,pal,x,z,y:0,vx:0,vz:0,vy:0,face:isP?1:-1,hp:100,max:100,st:'idle',t:0,mv:null,
   pose:G[style].slice(),pt:G[style].slice(),pv:new Array(10).fill(0),k:160,zt:.8,ki:-1,hi:0,rot:0,rotT:0,spin:0,turn:0,tw:0,walk:0,flash:0,cd:1.4,bob:Math.random()*6,
-  chain:[],trailT:0,fc:0,kind:'norm',smear:[],seq:null,si:0,streak:0,flow:0,queued:null,early:false,airHits:0,gh:0,lt:0,
-  rotR:0,rotDir:0,y0:0,spinT:0,buf:null,hold:null,finBuf:null,punish:false,tgtOk:true,dash:null,dg:null,inScene:false};}
+  chain:[],trailT:0,fc:0,kind:'norm',smear:[],seq:null,si:0,imp:0,impT:0,mash:0,flow:0,queued:null,early:false,cedo:false,preK:null,impMv:null,lastImpact:-9,airHits:0,gh:0,lt:0,
+  rotR:0,rotDir:0,y0:0,spinT:0,buf:null,hold:null,finBuf:null,punish:false,tgtOk:true,dash:null,dg:null,inScene:false,stum:false,hurtD:.38,
+  stun:0,stunT:0,armor:false,jg:0,landV:0,bounced:false,spk:false};}
 
 function newMatch(style){
   const es=style==='box'?'tkd':'box';
@@ -298,8 +311,9 @@ function newMatch(style){
 }
 function startRound(){
   // zera todo estado transitório: nada da luta anterior (toque guardado, giro, juggle, câmera lenta) vaza para o round novo
-  for(const [f,x] of [[player,-70],[enemy,70]]){Object.assign(f,{x,z:225,y:0,vx:0,vz:0,vy:0,rot:0,rotT:0,rotR:0,rotDir:0,y0:0,spin:0,spinT:0,turn:0,tw:0,st:'idle',t:0,flash:0,face:f.isP?1:-1,fc:0,streak:0,flow:0,queued:null,smear:[],seq:null,inScene:false,cseq:null,ccam:null,cStreak:0,fseq:null,
-    kind:'norm',airHits:0,early:false,chain:[],dash:null,dg:null,buf:null,hold:null,finBuf:null,punish:false,feint:false,gh:0,inv:false,tgtOk:true,airLift:0});f.max=f.isP?100:110+round*20;f.hp=f.max;}
+  for(const [f,x] of [[player,-70],[enemy,70]]){Object.assign(f,{x,z:225,y:0,vx:0,vz:0,vy:0,rot:0,rotT:0,rotR:0,rotDir:0,y0:0,spin:0,spinT:0,turn:0,tw:0,st:'idle',t:0,flash:0,face:f.isP?1:-1,fc:0,imp:0,impT:0,mash:0,flow:0,queued:null,smear:[],seq:null,inScene:false,cseq:null,ccam:null,cStreak:0,fseq:null,
+    kind:'norm',airHits:0,early:false,cedo:false,preK:null,impMv:null,lastImpact:-9,chain:[],dash:null,dg:null,buf:null,hold:null,finBuf:null,punish:false,feint:false,gh:0,inv:false,tgtOk:true,airLift:0,
+    stum:false,hurtD:.38,stun:0,stunT:0,armor:false,jg:0,landV:0,bounced:false,spk:false});f.max=f.isP?100:110+round*20;f.hp=f.max;}
   enemy.st='stalk';enemy.cd=1.6;combo=0;comboT=0;parts=[];trails=[];pops=[];roundOver=0;camX=0;speedL=0;impactF=0;
   inp.act=null;hitstop=0;timeScale=1;slowT=0;cine=0;zoomT=1;zKick=0;tiltT=0;sceneName='';sceneRed=false;
   running=true;updHud(true);
@@ -316,7 +330,8 @@ function sparks(x,y,z,n,heavy,col){
 }
 function dust(x,z,n,sp){for(let i=0;i<n;i++)parts.push({x:x+rnd(-6,6),y:1,z:z+rnd(-3,3),vx:rnd(-1,1)*(sp||40),vy:rnd(5,25),vz:rnd(-10,10),l:rnd(.3,.6),ml:.6,c:'#8d8478',t:'d'});}
 function ring(x,z,r,c){parts.push({x,y:0,z,l:.4,ml:.4,t:'r',r,c:c||'#f2a93b',vx:0,vy:0,vz:0});}
-function pop(txt,f,c){pops.push({txt,x:f.x,y:f.y+66,z:f.z,l:.9,c:c||'#efe6d2'});}
+// textos que nascem juntos no mesmo lutador (PERFEITO + FLUXO 2!, PELAS COSTAS + RUPTURA) empilham em vez de se sobrepor
+function pop(txt,f,c){let n=0;for(const q of pops)if(q.o===f&&q.l>.72)n++;pops.push({txt,o:f,x:f.x,y:f.y+66+n*8,z:f.z,l:.9,c:c||'#efe6d2'});}
 function setPose(f,p,k,zt){const s=p||G[f.style];for(let i=0;i<10;i++)f.pt[i]=s[i];f.k=k||160;f.zt=zt||.75;}
 function kick(f,i,v){f.pv[i]+=v;}
 // virada contínua: o lado visível (cos(spin+turn)·face) não salta, mesmo no meio de outra virada ou de um giro
@@ -349,6 +364,48 @@ const isDown=e=>e.st==='down'||e.st==='getup';
 function finOpen(p){return p.fc>=5&&canAct(p)&&p.st!=='hurt'&&hittable(enemy)&&enemy.st!=='air';}
 function canFin(p){return finOpen(p)&&(p.st==='idle'||p.st==='block'&&p.t>.2||p.st==='atk'&&p.kind==='norm'&&p.t>=p.mv.h0);}
 const optK=(p,k)=>k&&k!=='atk'?{mv:MOV[p.style][BASIC[p.style][k]]}:undefined;
+// ⚡: preparação (wind), golpe antes do impacto, ou a ruptura (brk) que já anuncia o golpe blindado
+const isThreat=e=>e.st==='brk'||e.st==='wind'||(e.st==='strike'&&e.hi===0);
+// ÍMPETO 0-100 (FREE-5): ganhos e perdas graduais; níveis de FLUXO com histerese (sobe em 25/55/85, desce 5 pontos abaixo)
+const FLV=[25,55,85];
+function setFlowLv(p){
+  let lv=p.flow;while(lv<3&&p.imp>=FLV[lv])lv++;while(lv>0&&p.imp<FLV[lv-1]-5)lv--;
+  if(lv>p.flow&&running&&!roundOver){pop('FLUXO '+lv+'!',p,lv>=3?'#f2a93b':'#7fd6ff');tone(660,990,.12,.08,'square');buzz([15,30,15]);}
+  p.flow=lv;
+}
+function gainImp(p,v){p.imp=Math.min(100,p.imp+v);p.impT=time;setFlowLv(p);}
+function loseImp(p,v){p.imp=Math.max(0,p.imp-v);setFlowLv(p);}
+// RUPTURA (INTE-1/FREE-1): o rival escapa do combo com um golpe blindado (⚡) que só CONTRA ou ESQUIVA resolvem.
+// Garantida depois de 7-round acertos seguidos (6/5/4); antes disso é rara no ritmo e frequente para quem amassa o botão
+function ruptChance(p,e){
+  const cap=7-round;if(e.stun>=cap)return 1;
+  return Math.min(.6,.03+.025*round+Math.min(.36,Math.max(0,p.mash-2.2)*.09)+Math.max(0,e.stun-(cap-3))*.06);
+}
+function eBreak(e,p){
+  e.stun=0;e.st='brk';e.t=0;e.armor=true;e.feint=false;e.chain=[];e.punish=false;e.cd=0;
+  e.mv=MOV[e.style][pick(e.style==='box'?['dir','gan','cor']:['dol','ban','mir'])];e.wd=Math.max(.24,.36-.03*round);
+  unspin(e);e.vx*=.3;setPose(e,BLOCK[e.style],900,.55);kick(e,0,-6);
+  pop('RUPTURA',e,'#ff5d3a');sfx.rupt();buzz(20);shake=Math.max(shake,3);
+  // o que estava guardado não dispara sozinho contra a armadura
+  if(p){p.queued=null;p.buf=null;p.preK=null;p.impMv=null;}
+}
+// ritmo julgado em tempo real a partir do impacto (sem lt nem hitstop): PERFEITO até .28 s, BOM até .42 s (FREE-4).
+// Um toque CEDO no mesmo golpe anula o crédito; cada impacto é julgado uma vez só
+const WP=.28,WB=.42,WPRE=.06;
+function judge(p){
+  if(!p.impMv||p.impMv!==p.mv||p.kind!=='norm')return;p.impMv=null;if(p.cedo)return;
+  const w=rclock-p.lastImpact;
+  if(w<=WP){gainImp(p,10);pop('PERFEITO',p,'#7fd6ff');sfx.perfect();}
+  else if(w<=WB){gainImp(p,5);pop('BOM',p,'#a9c4d6');}
+}
+// golpe livre (FLUXO) ou básico: com o rival caído segura o toque; o FLUXO troca de lado pelo flanco às vezes
+// (sem flanco com o rival na grade: não há espaço para passar por fora) (INTE-7/INTE-12)
+function goAtk(p,k){
+  if(isDown(enemy)){holdKey(p,k);return;}
+  const near=Math.abs(enemy.x-p.x)<55&&hittable(enemy);
+  const fl=((Math.abs(inp.x)>.5&&Math.sign(inp.x)===Math.sign(enemy.x-p.x)&&near)||(k==='atk'&&combo>=3&&near&&Math.random()<.3))&&Math.abs(enemy.x)<AX-30;
+  dashTo(p,fl?'flank':'norm',optK(p,k));
+}
 function nextSeqMove(p){
   if(!p.seq||p.si>=p.seq.length||combo===0&&p.si>0){p.seq=pick(SEQ[p.style]);p.si=0;}
   return MOV[p.style][p.seq[p.si++]];
@@ -396,7 +453,9 @@ function dashTo(p,kind,o){
 }
 function startMove(f,mv,kind){
   unspin(f);unrot(f);
-  f.st='atk';f.mv=mv;f.t=0;f.hi=0;f.ki=-1;f.kind=kind||'norm';f.y0=f.y;f.smear=[];f.airLift=f.isP&&enemy.st==='air'?enemy.y:0;
+  f.st='atk';f.mv=mv;f.t=0;f.hi=0;f.ki=-1;f.kind=kind||'norm';f.y0=f.y;f.smear=[];f.cedo=false;f.preK=null;
+  // o jogador acompanha o rival no ar, com teto (o ápice do juggle já é limitado em applyHit) (INTE-5)
+  f.airLift=f.isP&&enemy.st==='air'?Math.min(70,enemy.y):0;
   // toque feito durante o dash vira a fila do golpe (neutro: sem CEDO e sem crédito) (FREE-3)
   f.queued=null;if(f.isP&&f.kind==='norm'&&f.buf){f.queued=f.buf.k;f.buf=null;}
   sfx.swoosh();
@@ -412,11 +471,13 @@ function startMove(f,mv,kind){
 }
 function doCounter(p){
   const e=enemy;
-  const threat=e.st==='wind'||(e.st==='strike'&&e.hi===0);
-  if(!threat){p.st='block';p.t=0;setPose(p,BLOCK[p.style],700,.6);return;}
-  if(e.feint){e.feint=false;p.st='block';p.t=0;setPose(p,BLOCK[p.style],700,.6);pop('FINTA!',p,'#ffffff');p.streak=0;p.flow=0;e.st='wind';e.t=0;e.wd=.28;e.mv=MOV[e.style][pick(['jab','dir','ban','dol'].filter(k=>MOV[e.style][k]))];setPose(e,e.mv.A,700,.7);return;}
-  const perfect=e.st==='strike'||e.t>e.wd*.55;
-  p.cStreak=(p.cStreak||0)+1;
+  if(!isThreat(e)){p.st='block';p.t=0;setPose(p,BLOCK[p.style],700,.6);return;}
+  // mordeu a finta: tropeço sem guarda (CONTRA de novo é engolido) e o golpe real vem logo atrás; só a ESQUIVA salva (INTE-14)
+  if(e.feint){e.feint=false;unspin(p);unrot(p);p.st='hurt';p.t=0;p.stum=true;p.hurtD=.3;p.queued=null;p.preK=null;p.buf=null;setPose(p,PULL,700,.5);kick(p,0,-5);
+    pop('FINTA!',p,'#ffffff');loseImp(p,25);sfx.block();
+    e.st='wind';e.t=0;e.wd=.3;e.mv=MOV[e.style][pick(['jab','dir','ban','dol'].filter(k=>MOV[e.style][k]))];setPose(e,e.mv.A,700,.7);return;}
+  const perfect=e.st==='strike'||e.st==='wind'&&e.t>e.wd*.55;
+  p.cStreak=(p.cStreak||0)+1;e.armor=false;e.stun=0;
   const sc=pickScene(p,e,perfect);
   // o rival termina o golpe no vazio e fica congelado a 80% do caminho, com o giro do golpe (o chute giratório
   // continua apontando para o jogador) e caindo pela gravidade se estava no ar (FLUI-5)
@@ -424,7 +485,7 @@ function doCounter(p){
   e.st='countered';e.t=0;e.spinT=m.spin?m.spin*m.sa:0;e.tw=m.tw||0;e.vy=0;e.chain=[];setPose(e,m.S?lerpPose(m.A||G[e.style],m.S,.8):HURT_BODY,1100,.6);
   flashA=perfect?.45:.3;sfx.counter();buzz(30);
   pop(p.cStreak>1?'CONTRA x'+p.cStreak:perfect?'CONTRA PERFEITO':'CONTRA!',p,'#f2a93b');
-  if(perfect)p.streak+=2;
+  gainImp(p,perfect?20:15);
   p.inScene=true;p.scene=sc;p.cseq=sc.steps.slice(1);p.zsd=Math.random()<.5?-1:1;sceneName=sc.n;sceneRed=!!sc.red;
   $('cMove').textContent=sc.n;
   runStep(p,sc.steps[0]);
@@ -444,66 +505,71 @@ function doDodge(p){
   const toward=Math.sign(dx)===Math.sign(e.x-p.x)&&Math.abs(dx)>.4&&Math.abs(e.x-p.x)<75&&Math.abs(e.z-p.z)<30&&canAct(e);
   const box=p.style==='box';
   let kind=toward?'over':Math.abs(dz)>.7?'side':'back';
-  unrot(p);p.st='dodge';p.t=0;p.buf=null;p.hold=null;p.rotDir=box?0:kind==='back'?-1:kind==='over'?1:0;
+  unrot(p);p.st='dodge';p.t=0;p.buf=null;p.hold=null;p.preK=null;p.rotDir=box?0:kind==='back'?-1:kind==='over'?1:0;
   if(kind==='over'){const tx=e.x+Math.sign(e.x-p.x)*30;p.dg={kind,sx:p.x,sz:p.z,sy:p.y,tx,tz:e.z,dur:box?.42:.5,zs:dz>0?1:-1};pop(box?'PÊNDULO':'ESTRELA',p,'#7fd6ff');}
   else p.dg={kind,sy:p.y,vx:dx*(box?170:230),vz:dz*(box?140:160),dur:box?.34:.42};
   sfx.swoosh();dust(p.x,p.z,4);
 }
 function doFinisher(p){
   const sup=p.fc>=12;const list=(sup?FIN[p.style].s:FIN[p.style].n).map(k=>MOV[p.style][k]);
-  p.fseq=list.slice(1);p.fsup=sup;p.fc=0;cine=3;p.finBuf=null;p.hold=null;p.buf=null;p.queued=null;
+  p.fseq=list.slice(1);p.fsup=sup;p.fc=0;cine=3;p.finBuf=null;p.hold=null;p.buf=null;p.queued=null;p.preK=null;enemy.stun=0;
   pop(sup?'SUPER ESPECIAL':'ESPECIAL',p,sup?'#7fd6ff':'#f2a93b');
   dashTo(p,'fin',{mv:list[0]});updHud();
 }
 
 function tryAct(p,k){
   const st=p.st,free=st==='idle'||(st==='block'&&p.t>.2);
-  if(st==='hurt'||st==='ko'||st==='win'||st==='down'||st==='getup')return false;
+  // tropeço da finta: CONTRA é engolido (apertar duas vezes não atravessa a finta); ESQUIVA vale depois de .15 s (INTE-14)
+  if(st==='hurt'){if(p.stum){if(k==='cnt')return true;if(k==='dod'&&p.t>.15){doDodge(p);return true;}}return false;}
+  if(st==='ko'||st==='win'||st==='down'||st==='getup')return false;
   const normAtk=st==='atk'&&p.kind==='norm';
   const basic=k==='b1'||k==='b2'||k==='b3';
   if(k==='atk'||basic){
-    // FLUXO: golpes livres em sequência, trocando de lado sozinho de vez em quando; básicos: o golpe escolhido
-    const near=Math.abs(enemy.x-p.x)<55&&hittable(enemy);
-    // sem flanco com o rival na grade: não há espaço para passar por fora (INTE-7)
-    const fl=((Math.abs(inp.x)>.5&&Math.sign(inp.x)===Math.sign(enemy.x-p.x)&&near)||(k==='atk'&&combo>=3&&near&&Math.random()<.3))&&Math.abs(enemy.x)<AX-30;
-    const o=optK(p,k);
-    // rival caído/levantando: não avança para errar no chão; segura o toque e pressiona (INTE-12/FREE-2)
-    if(free){if(isDown(enemy)){holdKey(p,k);return true;}dashTo(p,fl?'flank':'norm',o);return true;}
+    // livre: julga o ritmo do golpe que acabou (até .42 s do impacto) e parte para o próximo
+    if(free){judge(p);goAtk(p,k);return true;}
     // durante o dash o toque é neutro: guardado e solto depois do golpe (FREE-3)
     if(st==='dash'&&(p.dash.kind==='norm'||p.dash.kind==='flank')){p.buf={k,g:time};return true;}
     // esquiva: guarda o toque para o fim; depois da ESQUIVA PERFEITA cancela na hora para punir (FREE-10/INTE-9)
-    if(st==='dodge'){if(enemy.punish&&hittable(enemy)){dashTo(p,'norm',o);return true;}p.buf={k,g:time};return true;}
+    if(st==='dodge'){if(enemy.punish&&hittable(enemy)){dashTo(p,'norm',optK(p,k));return true;}p.buf={k,g:time};return true;}
     // cena de contra-ataque ou especial: guarda o último toque para o fim da sequência (FREE-10)
     if(st==='dash'||st==='atk'&&p.kind!=='norm'){p.buf={k,g:time};return true;}
     if(normAtk){
-      if(p.t>=p.mv.hl){
-        const w=p.t-p.mv.hl;
-        if(w<.2){p.streak++;pop('PERFEITO',p,'#7fd6ff');sfx.perfect();}
-        p.flow=Math.min(3,Math.floor(p.streak/4));
-        if(isDown(enemy)){holdKey(p,k);return true;}
-        dashTo(p,fl?'flank':'norm',o);return true;
-      }
-      // apertou cedo demais: quebra o ritmo
-      p.early=true;p.queued=k;p.streak=0;p.flow=0;pop('CEDO',p,'#d8402f');return true;
+      if(p.t>=p.mv.hl){judge(p);goAtk(p,k);return true;}
+      if(p.preK)return true;
+      // até 60 ms (reais) antes do impacto o toque é guardado e sai no impacto como PERFEITO (FREE-4)
+      const pre=(p.mv.hl-p.t)/((1+p.flow*.12)*Math.max(.05,timeScale))+Math.max(0,hitstop);
+      if(pre<=WPRE&&!p.cedo){p.preK=k;return true;}
+      // cedo demais (inclusive com um toque do dash já na fila): quebra o ritmo uma vez por golpe, anula o crédito desse
+      // golpe e conta como amassar; o toque fica na fila e sai no fim do golpe
+      if(!p.cedo){p.early=true;p.cedo=true;p.mash+=1;loseImp(p,15);pop('CEDO',p,'#d8402f');}
+      if(!p.queued)p.queued=k;return true;
     }
     return false;
   }
   if(k==='cnt'){
     if(p.inScene)return true; // CONTRA repetido durante a cena não vaza para depois dela
-    if(free||normAtk||(st==='dash'&&p.dash.kind!=='cnt'&&p.dash.kind!=='fin')||(st==='dodge'&&p.t>.18)){p.hold=null;p.buf=null;p.finBuf=null;doCounter(p);return true;}return false;}
+    if(free||normAtk||(st==='dash'&&p.dash.kind!=='cnt'&&p.dash.kind!=='fin')||(st==='dodge'&&p.t>.18)){p.hold=null;p.buf=null;p.finBuf=null;p.preK=null;doCounter(p);return true;}return false;}
   if(k==='dod'){if(free||normAtk){p.finBuf=null;doDodge(p);return true;}return false;}
   // ESPECIAL fora de hora fica guardado (tempo de jogo) e sai assim que puder (FREE-7)
   if(k==='fin'){if(canFin(p)){doFinisher(p);return true;}if(p.fc>=5){p.finBuf={g:time,d:time+1.5};return true;}return false;}
 }
 
 // ---------- impacto ----------
+const AIRMAX=4; // acertos no ar antes do spike que encerra o juggle
 function applyHit(a,d,hit,mv){
   const fromBehind=Math.sign(a.x-d.x)!==d.face;
   if(!a.isP&&d.isP&&d.st==='block'){sfx.block();sparks(d.x+a.face*-4,36,d.z-1,5,false,'#cfe3ff');d.vx=a.face*80;return;}
+  // ARMADURA da ruptura: o golpe livre só raspa e não interrompe o golpe blindado; o que nocautearia atravessa (INTE-1/FREE-1)
+  if(d.armor&&a.isP&&a.kind==='norm'){
+    const dm=hit.dmg*.3;
+    if(d.hp-dm>0){d.hp-=dm;d.flash=.05;kick(d,0,-3);sfx.block();sparks(d.x-a.face*5,38,d.z-1,7,false,'#ff9a5a');hitstop=.03;shake=Math.max(shake,1.5);
+      pop('ARMADURA',d,'#ff9a5a');loseImp(a,8);updHud();return;}
+    d.armor=false;
+  }
   // raspão na guarda nunca deixa o HP em 0 sem nocaute: o golpe letal atravessa a guarda (INTE-13)
   if(d.st==='guard'&&!fromBehind&&d.hp>hit.dmg*.15){
     sfx.block();sparks(d.x-a.face*5,38,d.z-1,6,false,'#cfe3ff');d.hp-=hit.dmg*.15;d.vx=a.face*60;kick(d,0,-4);d.gh++;
-    if(a.isP){combo++;comboT=2;a.fc++;}
+    if(a.isP){combo++;comboT=2;a.fc++;a.lastImpact=rclock;a.impMv=mv;gainImp(a,1);}
     if(d.gh>=3){eStart(d,'stagger');pop('GUARDA QUEBRADA',d,'#f2a93b');slow(.3,.3);sfx.heavy();}else pop('BLOQUEIO',d,'#cfe3ff');
     updHud();return;
   }
@@ -519,21 +585,33 @@ function applyHit(a,d,hit,mv){
   sparks(hx,hy,d.z-2,heavy?16:9,heavy);
   if(heavy){sfx.heavy();hitstop=.085;shake=Math.max(shake,5);zKick=.08;buzz(25);}else{sfx.hit(combo);hitstop=.05;shake=Math.max(shake,2);zKick=.035;buzz(10);}
   if(a.isP){combo++;comboT=2;score+=Math.round(dmg*10*(1+combo*.1)*(1+a.flow*.5));best=Math.max(best,combo);if(a.kind!=='fin')a.fc++;
+    // impacto no relógio real: a janela de ritmo conta daqui (FREE-4)
+    a.lastImpact=rclock;a.impMv=mv;gainImp(a,3+(fromBehind?8:0)+(pun?8:0));
     const c=$('combo');c.classList.remove('pop');void c.offsetWidth;c.classList.add('pop');
     if(pun)pop('PUNIÇÃO',d,'#ff5d3a');else if(fromBehind)pop('PELAS COSTAS',d,'#f2a93b');}
   else{combo=0;}
   // reação física na mola da pose
   if(hit.lv==='body'){kick(d,0,9);kick(d,1,-6);}else{kick(d,0,-10);kick(d,1,16);}
   unspin(d);d.spinT=0;
-  if(d.isP){d.hold=null;d.buf=null;d.finBuf=null;d.queued=null;d.fseq=null;d.cseq=null;d.inScene=false;d.ccam=null;}
-  if(d.hp<=0){if(a.isP&&a.kind==='cnt'){impactF=.12;impactRed=true;}d.st='ko';d.t=0;d.vx=a.face*130;d.vy=180;setPose(d,AIRP,300,.5);slow(.15,1.2);cine=1.8;flashA=.5;tiltT=.07;sfx.heavy();ring(d.x,d.z,40,'#ffffff');updHud();return;}
+  if(d.isP){d.hold=null;d.buf=null;d.finBuf=null;d.queued=null;d.preK=null;d.fseq=null;d.cseq=null;d.inScene=false;d.ccam=null;d.stum=false;d.hurtD=.38;}
+  if(d.hp<=0){d.armor=false;if(a.isP&&a.kind==='cnt'){impactF=.12;impactRed=true;}d.st='ko';d.t=0;d.vx=a.face*130;d.vy=180;d.jg=0;setPose(d,AIRP,300,.5);slow(.15,1.2);cine=1.8;flashA=.5;tiltT=.07;sfx.heavy();ring(d.x,d.z,40,'#ffffff');updHud();return;}
   setFace(d,-a.face);
   if(d.st==='air'||(!d.isP&&react==='launch')){
-    d.st='air';d.t=0;d.airHits=(d.airHits||0)+1;d.vy=d.airHits>4?-40:(react==='launch'?240:150);d.vx=a.face*(hit.kb*.4);setPose(d,AIRP,400,.5);
+    // lançamento novo (do chão ou de uma cena): o juggle anterior não conta
+    if(d.st!=='air'){d.airHits=0;d.bounced=false;d.spk=false;}
+    d.st='air';d.t=0;d.airHits=(d.airHits||0)+1;
+    // juggle com ápice alvo e gravidade crescente: o rival não sobe em escada; no limite de acertos (ou num golpe de queda) vem o
+    // spike, que bate no chão e quica uma vez (FREE-6/INTE-5)
+    if(d.airHits>AIRMAX||react==='knock'){d.vy=-160;d.spk=true;d.jg=d.jg||330;}
+    else{const top=react==='launch'?64:Math.min(72,Math.max(d.y+12,38));d.jg=330*(1+.15*(d.airHits-1));d.vy=Math.sqrt(2*d.jg*Math.max(6,top-d.y));}
+    d.vx=a.face*(hit.kb*.4);setPose(d,AIRP,400,.5);
   }else if(react==='knock'||(d.isP&&react==='launch')){d.st='down';d.t=0;d.vx=a.face*(hit.kb+40);d.vy=90;setPose(d,AIRP,500,.5);}
   else if(react==='stagger'&&!d.isP){eStart(d,'stagger');d.vx=a.face*30;}
   else{d.st=d.isP?'hurt':'hit';d.t=0;d.vx=a.face*hit.kb;setPose(d,hit.lv==='body'?HURT_BODY:HURT_HEAD,700,.45);}
-  if(d.isP){sfx.hurt();flashA=.15;a.streak=0;d.streak=0;d.flow=0;d.cStreak=0;}
+  if(d.isP){sfx.hurt();flashA=.15;loseImp(d,60);d.cStreak=0;}
+  // atordoamento acumulado do rival (todas as reações de golpe livre); em pé ele pode romper o combo na hora (RUPTURA)
+  if(a.isP&&!d.isP&&a.kind==='norm'){d.stun=(d.stun||0)+1;d.stunT=0;
+    if((d.st==='hit'||d.st==='stagger')&&running&&!roundOver&&Math.random()<ruptChance(a,d))eBreak(d,a);}
   if(a.isP&&a.kind==='cnt'){
     const more=a.cseq&&a.cseq.length;
     if(more&&d.st==='hit'){d.st='countered';d.t=0;}
@@ -556,8 +634,8 @@ function updPlayer(p,rdt){
   // (o prazo de 1,5 s se estende enquanto o rival está no ar/caído, até 4 s do toque)
   if(p.finBuf){const fb=p.finBuf;if(isDown(e)||e.st==='air')fb.d=Math.max(fb.d,time+.5);
     if(!live||time>fb.d||time-fb.g>4)p.finBuf=null;else if(canFin(p)){p.finBuf=null;p.hold=null;doFinisher(p);}}
-  // toque segurado com o rival no chão: golpe na levantada assim que ele ficar acertável
-  if(p.hold){if(!live||time-p.hold.g>2.6||!canAct(p))p.hold=null;else if(free&&hittable(e)){const k=p.hold.k;p.hold=null;pop('NA LEVANTADA',p,'#7fd6ff');dashTo(p,'norm',optK(p,k));}}
+  // toque segurado com o rival no chão: golpe na levantada assim que ele ficar acertável (nunca contra a armadura da ruptura)
+  if(p.hold){if(!live||time-p.hold.g>2.6||!canAct(p))p.hold=null;else if(free&&hittable(e)&&!e.armor){const k=p.hold.k;p.hold=null;pop('NA LEVANTADA',p,'#7fd6ff');dashTo(p,'norm',optK(p,k));}}
   // fora do golpe (e do flanco, que gira por k) o giro não fica congelado: o resíduo vira turn e se desfaz (INTE-10)
   if(p.spin&&p.st!=='atk'&&!(p.st==='dash'&&p.dash.flank))unspin(p);
   const jm=Math.hypot(inp.x,inp.z);
@@ -606,9 +684,14 @@ function updPlayer(p,rdt){
     while(p.hi<mv.hits.length&&t>=mv.hits[p.hi].t){const h=mv.hits[p.hi++];
       const dx=(e.x-p.x)*p.face,ok=hittable(e)&&dx>-10&&dx<mv.r+18&&Math.abs(e.z-p.z)<24&&(e.st!=='air'||Math.abs(e.y-p.y)<40||p.kind!=='norm');
       if(ok||(p.kind==='cnt'&&e.st==='countered'))applyHit(p,e,h,mv);
-      // ERROU só quando o alvo era acertável no início do golpe; rival caído, levantando ou nocauteado não quebra o ritmo (INTE-12/INTE-3)
-      else if(p.hi===mv.hits.length&&p.kind==='norm'&&p.tgtOk&&!isDown(e)&&e.st!=='ko'){pop(e.st==='evade'?'ESQUIVOU':'ERROU',e,'#cfc6b6');p.streak=0;p.flow=0;}
+      // ERROU só quando o alvo era acertável no início do golpe; rival caído, levantando, nocauteado ou rompendo o combo
+      // (já blindado) não pune o ritmo de novo (INTE-12/INTE-3/FREE-1)
+      else if(p.hi===mv.hits.length&&p.kind==='norm'&&p.tgtOk&&!isDown(e)&&e.st!=='ko'&&!e.armor){pop(e.st==='evade'?'ESQUIVOU':'ERROU',e,'#cfc6b6');loseImp(p,20);p.impMv=null;}
     }
+    // toque antecipado (até 60 ms antes do impacto): sai no impacto e conta como PERFEITO se o golpe acertou (FREE-4)
+    if(p.preK&&p.hi>=mv.hits.length){const k=p.preK;p.preK=null;
+      if(p.impMv===mv){p.impMv=null;gainImp(p,10);pop('PERFEITO',p,'#7fd6ff');sfx.perfect();}
+      if(e.st==='ko')endChain(p);else goAtk(p,k);break;}
     if(t>=mv.d||(p.queued&&t>=mv.d-.04)){
       unspin(p);
       // rival nocauteado: encerra cena, especial e fila; o vencedor vai para a pose de vitória (INTE-3)
@@ -632,20 +715,21 @@ function updPlayer(p,rdt){
     if(k>=1){p.st='idle';p.t=0;p.rot=0;p.y=0;p.rotDir=0;dust(p.x,p.z,4);if(canAct(e))setFace(p,Math.sign(e.x-p.x));
       if(p.buf){const q=p.buf.k;p.buf=null;fireKey(p,q);}}
     break;}
-   case 'hurt':if(p.t>.38)p.st='idle';break;
+   case 'hurt':if(p.t>(p.hurtD||.38)){p.st='idle';p.stum=false;p.hurtD=.38;}break;
    case 'down':p.rotT=-1.45;if(p.t>.25)setPose(p,DOWN,200,.8);if(p.t>1&&p.y<=0){p.st='getup';p.t=0;}break;
    case 'getup':p.rotT=0;setPose(p,G[p.style],260,.7);if(p.t>.4){p.st='idle';p.rot=0;}break;
    case 'ko':p.rotT=-1.5;if(p.t>.3)setPose(p,DOWN,150,.8);break;
    case 'win':setPose(p,WIN[p.style],120,.6);p.rot=0;p.spin=0;break;
   }
-  p.inv=p.st==='dash'||p.st==='dodge'||(p.st==='atk'&&p.kind!=='norm')||p.st==='down'||p.st==='getup';
+  // o dash comum não é invulnerável: avançar amassando o botão contra o golpe blindado leva o golpe (FREE-1)
+  p.inv=p.st==='dash'&&p.dash.kind!=='norm'||p.st==='dodge'||(p.st==='atk'&&p.kind!=='norm')||p.st==='down'||p.st==='getup';
   if(p.st==='dash'||p.st==='dodge'||(p.st==='atk'&&(p.t<p.mv.hl+.05||p.kind!=='norm'))){p.trailT-=rdt;if(p.trailT<=0){p.trailT=.022;trails.push({f:snap(p),l:.18,c:p.flow>=3?'#f2a93b':p.pal.trail});}}
   return dt;
 }
 
 // ---------- rival ----------
 function eStart(e,st){
-  e.st=st;e.t=0;
+  e.st=st;e.t=0;if(st==='evade'||st==='guard')e.stun=0;
   if(st==='evade'){e.ev=e.style==='box'?(Math.random()<.5?DUCK:PULL):HOP;setPose(e,e.ev,900,.55);e.vx=-e.face*(e.style==='box'?70:150);if(e.style==='tkd')e.vy=60;}
   if(st==='guard'){e.gh=0;e.gd=rnd(.8,1.4);setPose(e,BLOCK[e.style],800,.6);}
   if(st==='stagger'){e.sd=.95;}
@@ -653,7 +737,7 @@ function eStart(e,st){
 function eAttack(e,first){
   if(first){e.chain=pick(ESEQ[e.style]).slice();}
   const k=e.chain.shift();e.mv=MOV[e.style][k];
-  e.st='wind';e.t=0;e.wd=first?Math.max(.38,.75-round*.1):Math.max(.26,.42-round*.05);
+  e.st='wind';e.t=0;e.armor=false;e.stun=0;e.wd=first?Math.max(.38,.75-round*.1):Math.max(.26,.42-round*.05);
   e.feint=round>=2&&first&&Math.random()<.12+round*.04;
   setPose(e,e.mv.A,first?420:700,.7);
 }
@@ -662,6 +746,10 @@ function updEnemy(e,dt){
   const aggr=.75+round*.15;
   e.tw=lerp(e.tw,0,1-Math.exp(-dt*10));
   if(e.st!=='rec')e.punish=false;
+  // a armadura só vale da ruptura até o fim do golpe blindado; o atordoamento some depois de 1,2 s sem apanhar, contando
+  // só o tempo em pé (como o combo, ele atravessa o knockdown e o juggle)
+  if(e.armor&&e.st!=='brk'&&e.st!=='wind'&&e.st!=='strike')e.armor=false;
+  if(e.stun&&!isDown(e)&&e.st!=='air'&&(e.stunT+=dt)>1.2)e.stun=0;
   if(e.spin&&e.st!=='strike'&&e.st!=='countered'&&e.st!=='wind')unspin(e);
   if(canAct(e)&&e.st!=='strike'&&e.st!=='countered'&&e.st!=='guard'&&e.st!=='air'&&!(e.st==='wind'&&e.spin)&&dx*e.face<-6)setFace(e,Math.sign(dx));
   if(e.st==='guard'&&e.t>.5&&dx*e.face<-4)setFace(e,Math.sign(dx));
@@ -688,12 +776,20 @@ function updEnemy(e,dt){
     setPose(e,e.style==='tkd'?HOP:walkPose(e,DASHP.box,.8,true),600,.7);
     if(d<8||e.t>1.2){const c=e.chain;e.chain=[];eAttack(e,true);e.chain=c.slice(1);e.mv=MOV[e.style][c[0]];setPose(e,e.mv.A,420,.7);}
     break;}
+   case 'brk':{
+    // RUPTURA: sacode o golpe (guarda) e já parte blindado para o ataque
+    const tx=p.x-e.face*(e.mv.r-3);e.x=lerp(e.x,tx,1-Math.exp(-dt*3));
+    if(e.t>=.14){e.st='wind';e.t=0;setPose(e,e.mv.A,800,.6);}
+    break;}
    case 'wind':{
     const tx=p.x-e.face*(e.mv.r-3);e.x=lerp(e.x,tx,1-Math.exp(-dt*3));e.z=lerp(e.z,p.z,1-Math.exp(-dt*3));
     // chute giratório: o giro começa na preparação e chega ao valor do início do strike (t=mv.a) sem estalo
     e.spin=spinAt(e.mv,e.mv.a)*ease(clamp(e.t/e.wd,0,1));
     if(e.t>=e.wd){
-      if(e.feint){e.feint=false;e.st='rec';e.t=0;setPose(e,G[e.style],300,.7);e.cd=.3;pop('finta',e,'#cfc6b6');break;}
+      if(e.feint){e.feint=false;e.st='rec';e.t=0;setPose(e,G[e.style],300,.7);e.cd=.3;pop('finta',e,'#cfc6b6');
+        // não mordeu a isca: leitura recompensada (INTE-14)
+        if(canAct(p)&&p.st!=='hurt'&&p.st!=='dodge'&&ad<110&&running&&!roundOver){pop('LEU A FINTA',p,'#7fd6ff');gainImp(p,8);}
+        break;}
       e.st='strike';e.t=e.mv.a;e.hi=0;e.ki=-1;e.smear=[];sfx.swoosh();}
     break;}
    case 'strike':{
@@ -707,10 +803,10 @@ function updEnemy(e,dt){
     if(t<mv.hl+.07){const S=skel(e),h=mv.hits[0],L=S[h.lim]||S.fh;e.smear.push([e.x+L[0]*e.face,L[1],e.z,time]);}
     if(e.hi===0&&t>=mv.h0){e.hi=1;const fx=(p.x-e.x)*e.face,inR=fx>-6&&fx<mv.r+10&&Math.abs(p.z-e.z)<18&&p.y<30;
       if(inR&&p.st!=='ko'){
-        if(p.st==='dodge'){pop('ESQUIVA PERFEITA',p,'#7fd6ff');slow(.2,.6);p.streak+=2;p.flow=Math.min(3,Math.floor(p.streak/4));e.st='rec';e.t=-.6;e.punish=true;e.chain=[];setPose(e,STAG,300,.5);sfx.perfect();}
+        if(p.st==='dodge'){pop('ESQUIVA PERFEITA',p,'#7fd6ff');slow(.2,.6);gainImp(p,20);e.st='rec';e.t=-.6;e.punish=true;e.armor=false;e.stun=0;e.chain=[];setPose(e,STAG,300,.5);sfx.perfect();}
         else if(!p.inv){const h=Object.assign({},mv.hits[0],{dmg:5+round*2+(mv.hits[0].react!=='hit'?3:0)});applyHit(e,p,h,mv);if(p.hp<=0){p.st='ko';p.t=0;p.vx=e.face*130;p.vy=160;}}
       }}
-    if(e.st==='strike'&&t>=mv.d){unspin(e);e.y=0;if(e.chain&&e.chain.length&&p.st!=='ko'){eAttack(e,false);}else{e.st='rec';e.t=0;}}
+    if(e.st==='strike'&&t>=mv.d){unspin(e);e.y=0;e.armor=false;if(e.chain&&e.chain.length&&p.st!=='ko'){eAttack(e,false);}else{e.st='rec';e.t=0;}}
     break;}
    case 'rec':
     // depois da esquiva perfeita o rival cambaleia (STAG) durante a janela de punição (INTE-8)
@@ -721,9 +817,20 @@ function updEnemy(e,dt){
    case 'guard':setPose(e,BLOCK[e.style],600,.7);if(e.t>e.gd){e.st='stalk';e.cd=.4;}break;
    case 'stagger':{const w=Math.sin(e.t*9);const o=STAG.slice();o[0]+=w*.2;o[1]-=w*.3;setPose(e,o,200,.4);e.spin=0;e.x+=Math.sin(e.t*5)*10*dt;if(e.t>e.sd){e.st='stalk';e.cd=.5;}break;}
    case 'countered':e.spin=lerp(e.spin,e.spinT||0,1-Math.exp(-dt*12));if(e.t>.9&&!p.inScene){e.st='stalk';e.spinT=0;}break;
-   case 'air':e.spin=0;e.rotT=-.9;if(e.y<=0&&e.t>.1){e.st='down';e.t=0;e.airHits=0;dust(e.x,e.z,10,80);shake=Math.max(shake,3);}break;
+   case 'air':e.spin=0;e.rotT=-.9;
+    if(e.y<=0&&e.t>.1){
+      // queda forte (spike ou juggle longo) quica uma vez, ainda acertável; depois cai de vez (FREE-6)
+      if(!e.bounced&&(e.spk||e.landV<-230)){e.bounced=true;e.jg=330;e.vy=Math.min(120,-e.landV*.42);
+        dust(e.x,e.z,14,110);shake=Math.max(shake,e.spk?4:2.5);kick(e,0,-8);if(e.spk){pop('QUIQUE',e,'#f2a93b');sfx.heavy();ring(e.x,e.z,30);}}
+      else{e.st='down';e.t=0;e.airHits=0;e.jg=0;e.spk=false;e.bounced=false;e.landV=0;dust(e.x,e.z,10,80);shake=Math.max(shake,3);}}
+    break;
    case 'down':e.rotT=-1.45;if(e.t>.2)setPose(e,DOWN,200,.8);e.spin=0;if(e.t>1.1&&e.y<=0){e.st='getup';e.t=0;}break;
-   case 'getup':e.rotT=0;setPose(e,G[e.style],240,.7);if(e.t>.45){e.st='stalk';e.rot=0;e.cd=rnd(.5,1.2);}break;
+   case 'getup':e.rotT=0;setPose(e,G[e.style],240,.7);
+    if(e.t>.45){e.rot=0;
+      // levantada com ruptura: depois de um combo longo (ou de botão amassado no chão) ele levanta já atacando blindado
+      if(running&&!roundOver&&p.st!=='ko'&&(e.stun>=5-round||p.mash>3.2)&&Math.random()<.7)eBreak(e,p);
+      else{e.st='stalk';e.cd=rnd(.5,1.2);}}
+    break;
    case 'ko':e.rotT=-1.5;if(e.t>.3)setPose(e,DOWN,150,.8);e.spin=0;break;
    case 'win':setPose(e,WIN[e.style],120,.6);e.rot=0;break;
   }
@@ -733,7 +840,9 @@ function updEnemy(e,dt){
 const KJ=[1,.6,.9,.9,.9,.9,1,1,1,1],ZJ=[1,.65,.9,.9,.9,.9,1,1,1,1];
 function phys(f,dt){
   const ctl=f.st==='atk'||f.st==='dash'||f.st==='dodge'||(f.st==='strike');
-  if(!ctl){if(f.y>0||f.vy>0){f.vy-=(f.st==='air'?330:440)*dt;f.y+=f.vy*dt;if(f.y<=0){f.y=0;if(f.vy<-130){dust(f.x,f.z,8,70);shake=Math.max(shake,2);}f.vy=0;}}}
+  // no ar a gravidade cresce com os acertos do juggle (jg); a velocidade de pouso fica guardada para o quique (landV)
+  // (com dt=0 — hitstop — não integra: um lançamento a partir do chão não pode ser lido como pouso e perder o vy)
+  if(!ctl&&dt>0){if(f.y>0||f.vy>0){f.vy-=(f.st==='air'?(f.jg||330):440)*dt;f.y+=f.vy*dt;if(f.y<=0){f.y=0;f.landV=f.vy;if(f.vy<-130){dust(f.x,f.z,8,70);shake=Math.max(shake,2);}f.vy=0;}}}
   f.x+=f.vx*dt;f.z+=f.vz*dt;const fr=Math.exp(-dt*(f.y>0?1.5:7));f.vx*=fr;f.vz*=fr;
   if(f.st==='down'||f.st==='ko'||f.st==='getup'||f.st==='air')f.rot=lerp(f.rot,f.rotT,1-Math.exp(-dt*(f.st==='getup'?12:6)));
   f.x=clamp(f.x,-AX,AX);f.z=clamp(f.z,Z0,Z1);
@@ -745,9 +854,12 @@ function phys(f,dt){
 }
 
 function update(dt,rdt){
-  time+=dt;
+  time+=dt;rclock+=rdt;
   // o combo atravessa o knockdown: o tempo do combo para enquanto o rival está no chão (INTE-12/FREE-2)
-  if(comboT>0&&!isDown(enemy)){comboT-=dt;if(comboT<=0){combo=0;player.streak=0;player.flow=0;updHud();}}
+  if(comboT>0&&!isDown(enemy)){comboT-=dt;if(comboT<=0){combo=0;updHud();}}
+  // ÍMPETO decai 6/s depois de .8 s sem ganho (parado com o rival no chão, nas cenas e no especial); amassar decai em tempo real
+  const pl=player;pl.mash*=Math.exp(-rdt*2.3);
+  if(pl.imp>0&&time-pl.impT>.8&&!isDown(enemy)&&!pl.inScene&&!(pl.st==='atk'&&pl.kind==='fin')){pl.imp=Math.max(0,pl.imp-6*dt);setFlowLv(pl);}
   const pdt=updPlayer(player,dt);updEnemy(enemy,dt);
   phys(player,pdt);phys(enemy,dt);
   if(player.y<8&&enemy.y<8&&canAct(enemy)&&player.st!=='dodge'&&player.st!=='dash'){
@@ -779,7 +891,7 @@ function endMatch(won){
 }
 
 // ---------- HUD ----------
-let lastCombo=-1,lastFlow=-1;
+let lastCombo=-1,lastFlow=-1,lastImp=-1;
 function updHud(force){
   if(!player)return;
   const pp=Math.max(0,player.hp/player.max*100)+'%',ep=Math.max(0,enemy.hp/enemy.max*100)+'%';
@@ -788,7 +900,8 @@ function updHud(force){
   [...$('eWins').children].forEach((s,i)=>s.classList.toggle('on',i<wins[1]));
   $('rlabel').textContent='ROUND '+round;$('score').textContent=score;
   if(combo!==lastCombo||force){lastCombo=combo;$('cNum').textContent=combo;$('combo').classList.toggle('on',combo>=2);}
-  if(player.flow!==lastFlow||force){lastFlow=player.flow;[...$('flow').children].forEach((s,i)=>s.classList.toggle('on',i<player.flow));$('flow').classList.toggle('max',player.flow>=3);}
+  if(player.flow!==lastFlow||force){lastFlow=player.flow;[...$('flow').querySelectorAll('i')].forEach((s,i)=>s.classList.toggle('on',i<player.flow));$('flow').classList.toggle('max',player.flow>=3);}
+  const im=Math.round(player.imp);if(im!==lastImp||force){lastImp=im;$('impF').style.width=im+'%';$('flow').classList.toggle('on',im>0||player.flow>0);}
   // pronto (pulsando) só quando o especial sai de fato; carregado mas bloqueado (rival no ar/caído) fica aceso sem pulso
   const live=running&&!roundOver,ready=live&&finOpen(player),chg=live&&player.fc>=5&&!ready;
   $('bFin').classList.toggle('ready',ready);$('bFin').classList.toggle('chg',chg);$('bFin').classList.toggle('super',player.fc>=12);$('bFin').textContent=player.fc>=12?'SUPER':'ESPECIAL';
@@ -876,12 +989,12 @@ function drawFighter(c,f,bx,by,s,S){
   if(S.armSwap&&!swap){legB();torso();armB();legF();head();armF();}
   else{armB();legB();torso();legF();head();armF();}
 }
-function drawGhost(c,g,bx,by,s,col,al){
-  const S=g.S,fc=g.face,X=q=>bx+q[0]*fc*s,Y=q=>by-q[1]*s;
+function drawGhost(c,g,bx,by,s,col,al,wa){
+  const S=g.S,fc=g.face,X=q=>bx+q[0]*fc*s,Y=q=>by-q[1]*s;wa=wa||0;
   c.globalAlpha=al;c.strokeStyle=col;c.lineCap='round';
-  const L=(a,b,w)=>{c.lineWidth=w*s;c.beginPath();c.moveTo(X(a),Y(a));c.lineTo(X(b),Y(b));c.stroke();};
+  const L=(a,b,w)=>{c.lineWidth=(w+wa)*s;c.beginPath();c.moveTo(X(a),Y(a));c.lineTo(X(b),Y(b));c.stroke();};
   L(S.hip,S.sh,7);L(S.sh,S.fe,4);L(S.fe,S.fh,4);L(S.sh,S.be,4);L(S.be,S.bh,4);L(S.hip,S.fk,5);L(S.fk,S.ff,5);L(S.hip,S.bk,5);L(S.bk,S.bf,5);
-  c.fillStyle=col;c.beginPath();c.arc(X(S.hd),Y(S.hd),5*s,0,TAU);c.fill();c.globalAlpha=1;
+  c.fillStyle=col;c.beginPath();c.arc(X(S.hd),Y(S.hd),(5+wa*.5)*s,0,TAU);c.fill();c.globalAlpha=1;
 }
 // rastro do golpe (smear): arco do punho/pé
 function drawSmear(f){
@@ -998,17 +1111,20 @@ function render(rdt){
   ctx.imageSmoothingEnabled=false;
   drawBG();
   for(const f of fs){const q=P(f.x,0,f.z);ctx.fillStyle=`rgba(0,0,0,${.5*(1-Math.min(f.y/80,.7))})`;ctx.beginPath();ctx.ellipse(q[0],q[1],(f.st==='ko'||f.st==='down'?22:13)*q[2],3.4*q[2],0,0,TAU);ctx.fill();}
-  const threat=enemy.st==='wind'||(enemy.st==='strike'&&enemy.hi===0);
+  const threat=isThreat(enemy);
   if(threat){const q=P(enemy.x,0,enemy.z),k=.5+.5*Math.sin(time*40);ctx.strokeStyle=enemy.feint?`rgba(255,255,255,${.4+.4*k})`:`rgba(255,93,58,${.5+.5*k})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(q[0],q[1],(16+k*4)*q[2],(4+k)*q[2],0,0,TAU);ctx.stroke();}
   {const q=P(player.x,0,player.z);ctx.strokeStyle=player.flow>=3?'rgba(242,169,59,.6)':'rgba(127,214,255,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(q[0],q[1],12*q[2],3*q[2],0,0,TAU);ctx.stroke();}
   for(const r of parts)if(r.t==='r'){const q=P(r.x,0,r.z),k=1-r.l/r.ml;ctx.strokeStyle=r.c;ctx.globalAlpha=1-k;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(q[0],q[1],r.r*k*q[2],r.r*k*.3*q[2],0,0,TAU);ctx.stroke();ctx.globalAlpha=1;}
   for(const t of trails){const q=P(t.f.x,0,t.f.z);drawGhost(ctx,t.f,q[0],q[1],q[2],t.c,t.l/.18*.45);}
   const sorted=fs.slice().sort((a,b)=>b.z-a.z);
-  for(const f of sorted){const q=P(f.x,0,f.z);drawFighter(ctx,f,q[0],q[1],q[2]);drawSmear(f);}
+  for(const f of sorted){const q=P(f.x,0,f.z);
+    // armadura da ruptura: contorno laranja pulsando atrás do corpo (o golpe livre não interrompe)
+    if(f.armor){const k=.5+.5*Math.sin(time*26);drawGhost(ctx,snap(f),q[0],q[1],q[2],k>.5?'#ff5d3a':'#ffb347',.45+.3*k,4+k*1.5);}
+    drawFighter(ctx,f,q[0],q[1],q[2]);drawSmear(f);}
   // escudo da guarda
   if(enemy.st==='guard'){const S=skel(enemy),q=P(enemy.x,0,enemy.z),hx=q[0]+(S.hd[0]+6)*enemy.face*q[2],hy=q[1]-S.hd[1]*q[2];ctx.strokeStyle='rgba(160,200,255,.7)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(hx,hy,9*q[2],-1.2,1.2);if(enemy.face<0){ctx.beginPath();ctx.arc(hx,hy,9*q[2],PI-1.2,PI+1.2);}ctx.stroke();}
   // indicador ⚡ (amarelo = real, branco = finta)
-  if(threat){const S=skel(enemy);const q=P(enemy.x,0,enemy.z),hx=q[0]+S.hd[0]*enemy.face*q[2],hy=q[1]-(S.hd[1]+14)*q[2],s=q[2]*1.4;
+  if(threat){const S=skel(enemy);const q=P(enemy.x,0,enemy.z),hx=q[0]+S.hd[0]*enemy.face*q[2],hy=q[1]-(S.hd[1]+14)*q[2],s=q[2]*(enemy.armor?1.9:1.4);
     const on=Math.sin(time*40)>0;ctx.fillStyle=enemy.feint?(on?'#ffffff':'#bfbfbf'):(on?'#ffd23f':'#ff5d3a');ctx.strokeStyle=OL;ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(hx+1*s,hy-6*s);ctx.lineTo(hx-3*s,hy+1*s);ctx.lineTo(hx,hy+1*s);ctx.lineTo(hx-1.5*s,hy+6*s);ctx.lineTo(hx+3.5*s,hy-1*s);ctx.lineTo(hx+.5*s,hy-1*s);ctx.lineTo(hx+2*s,hy-6*s);ctx.closePath();ctx.fill();ctx.stroke();}
   for(const p of parts){if(p.t==='r')continue;const q=P(p.x,p.y,p.z);const al=Math.max(0,p.l/p.ml);
@@ -1048,7 +1164,10 @@ function loop(now){
   if(bannerT>0){bannerT-=rdt;if(bannerT<=0)$('banner').classList.remove('on');}
   update(gdt,rdt);
   if(running||matchOver)updHud();
-  $('bCnt').classList.toggle('alert',enemy.st==='wind'||(enemy.st==='strike'&&enemy.hi===0));
+  // CONTRA acende amarelo só no golpe real; na finta fica branco e parado; no tropeço da finta quem pulsa é a ESQUIVA (INTE-14)
+  {const th=isThreat(enemy),stum=player.st==='hurt'&&player.stum;
+   $('bCnt').classList.toggle('alert',th&&!enemy.feint&&!stum);$('bCnt').classList.toggle('feint',th&&enemy.feint);
+   $('bDod').classList.toggle('alert',stum&&th&&player.t>.15);}
   render(rdt);
   requestAnimationFrame(loop);
 }
@@ -1056,7 +1175,8 @@ function loop(now){
 // ---------- controles ----------
 const stick=$('stick'),knob=$('knob');let sid=null,sox=0,soy=0;
 // toques fora da luta (KO, fim de partida) são descartados; g = tempo de jogo do toque (INTE-4/INTE-9)
-function act(k){au();if(!running||roundOver>0)return;inp.act={k,t:performance.now(),g:time};}
+// cada toque de ataque soma no medidor de amassar (decai em tempo real), que alimenta a RUPTURA (FREE-1)
+function act(k){au();if(!running||roundOver>0)return;inp.act={k,t:performance.now(),g:time};if(player&&(k==='atk'||k[0]==='b'))player.mash+=1;}
 document.addEventListener('pointerdown',e=>{
   if(!running||e.target.closest('button'))return;
   if(e.clientX<innerWidth*.55&&sid===null){sid=e.pointerId;sox=e.clientX;soy=e.clientY;stick.style.left=sox+'px';stick.style.top=soy+'px';stick.classList.add('on');knob.style.transform='';}
