@@ -26,6 +26,10 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 .hp i{position:absolute;top:0;bottom:0;left:0;width:100%;background:var(--amber);transition:width .12s steps(6)}
 .hp b{position:absolute;top:0;bottom:0;left:0;width:100%;background:var(--blood);transition:width .7s .25s}
 .fbar.r .hp i,.fbar.r .hp b{left:auto;right:0}
+.erow{display:flex;align-items:center;gap:calc(8px*var(--t));flex-direction:row-reverse}
+.ai{display:flex;align-items:center;gap:calc(4px*var(--t));font-family:var(--display);font-size:calc(8px*var(--t));letter-spacing:.1em;color:#ff9a5a;text-shadow:0 2px 0 var(--ink)}
+.aib{width:calc(54px*var(--t));height:calc(6px*var(--t));border:2px solid #ff9a5a;background:var(--ink);overflow:hidden}
+.aib i{display:block;height:100%;width:0;background:#ff5d3a;transition:width .4s}
 .wins{display:flex;gap:calc(4px*var(--t))}
 .wins span{width:calc(8px*var(--t));height:calc(8px*var(--t));border:2px solid var(--paper);background:transparent}
 .wins span.on{background:var(--amber)}
@@ -112,6 +116,12 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 .exit:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 .screen.pz{background:rgba(13,11,18,.78)}
 .cine .exit{opacity:.25}
+.difs{display:flex;gap:calc(8px*var(--m));justify-content:center;flex-wrap:wrap}
+.dif{font-family:var(--display);font-size:calc(11px*var(--m));letter-spacing:.08em;padding:calc(8px*var(--m)) calc(14px*var(--m));min-height:44px;background:rgba(13,11,18,.55);color:var(--paper);border:2px solid rgba(239,230,210,.45);cursor:pointer}
+.dif.on{background:var(--blood);border-color:var(--paper)}
+.dif[data-d=mestre].on{background:#8a2a14}
+.dif:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.difd{margin:0;font-size:calc(12px*var(--m));opacity:.85;min-height:2.6em;max-width:46ch}
 .kbd{display:none;font-size:calc(12px*var(--m));opacity:.7;margin:0;max-width:60ch;line-height:1.5}
 @media (hover:hover) and (pointer:fine){.kbd{display:block}}
 
@@ -125,7 +135,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
   <div id="hud" hidden>
     <div class="fbar"><div class="fname" id="pName">Jogador</div><div class="hp"><b id="pHpB"></b><i id="pHp"></i></div><div class="wins" id="pWins"><span></span><span></span></div></div>
     <div id="mid"><div id="rlabel">ROUND 1</div><div id="score">0</div></div>
-    <div class="fbar r"><div class="fname" id="eName">Rival</div><div class="hp"><b id="eHpB"></b><i id="eHp"></i></div><div class="wins" id="eWins"><span></span><span></span></div></div>
+    <div class="fbar r"><div class="fname" id="eName">Rival</div><div class="hp"><b id="eHpB"></b><i id="eHp"></i></div><div class="erow"><div class="wins" id="eWins"><span></span><span></span></div><div class="ai" id="ai" hidden title="Adaptação do rival"><b>IA</b><div class="aib"><i id="aiF"></i></div></div></div></div>
   </div>
   <div id="combo"><div id="cWrap"><b id="cNum">0</b><span>HITS</span><em id="cMove"></em></div><div id="flow">FLUXO <i></i><i></i><i></i><div id="imp"><div id="impF"></div></div></div></div>
   <div id="banner"><h2 id="bTitle"></h2><p id="bSub"></p></div>
@@ -143,7 +153,9 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
   </div>
   <div class="screen" id="menu">
     <h1>FLUXO<br>BRUTAL</h1>
-    <p class="sub">Um contra um no subsolo. Escolha seu estilo.</p>
+    <p class="sub">Um contra um no subsolo. Escolha a dificuldade e o seu estilo.</p>
+    <div class="difs" role="radiogroup" aria-label="Dificuldade"><button class="dif" data-d="facil" role="radio">FÁCIL</button><button class="dif" data-d="medio" role="radio">MÉDIO</button><button class="dif" data-d="mestre" role="radio">MESTRE</button></div>
+    <p class="difd" id="difd"></p>
     <div class="cards">
       <button class="card" id="pickBox"><canvas id="pvBox" width="60" height="60"></canvas><strong>BOXEADOR</strong><small>Rocco "Martelo"<br>Jab, direto, gancho, uppercut. Esquiva no pêndulo.</small></button>
       <button class="card" id="pickTkd"><canvas id="pvTkd" width="60" height="60"></canvas><strong>TAEKWONDO</strong><small>Ji-ho "Vendaval"<br>Bandal, dollyo, dwi chagi, tornado. Acrobacias.</small></button>
@@ -368,6 +380,7 @@ function newMatch(style){
   player=mkF(style,true,PAL[style+'P'],-70,225);
   enemy=mkF(es,false,PAL[es+'E'],70,225);
   $('pName').textContent=NAMES[style];$('eName').textContent=NAMES[es];
+  aiReset();DP=aiParams();$('ai').hidden=DIFF!=='mestre';
   wins=[0,0];round=1;score=0;best=0;matchOver=false;decals.length=0;startRound();
 }
 function startRound(){
@@ -500,7 +513,7 @@ function loseImp(p,v){p.imp=Math.max(0,p.imp-v);setFlowLv(p);}
 // Garantida depois de 7-round acertos seguidos (6/5/4); antes disso é rara no ritmo e frequente para quem amassa o botão
 function ruptChance(p,e){
   const cap=7-round;if(e.stun>=cap)return 1;
-  return Math.min(.6,.03+.025*round+Math.min(.36,Math.max(0,p.mash-2.2)*.09)+Math.max(0,e.stun-(cap-3))*.06);
+  return Math.min(.8,DP.rupM*(.03+.025*round+Math.min(.36,Math.max(0,p.mash-2.2)*.09)+Math.max(0,e.stun-(cap-3))*.06));
 }
 function eBreak(e,p){
   e.stun=0;e.st='brk';e.t=0;e.armor=true;e.feint=false;e.chain=[];e.punish=false;e.cd=0;
@@ -585,9 +598,9 @@ function startMove(f,mv,kind){
   if(f.isP){$('cMove').textContent=mv.n;f.tgtOk=hittable(enemy);
     // rival atordoado pela esquiva perfeita (punish) não esquiva nem defende a punição (INTE-8)
     if(kind==='norm'&&hittable(enemy)&&(enemy.st==='stalk'||enemy.st==='rec'&&!enemy.punish&&enemy.t>.25||enemy.st==='idle')){
-      const ch=.05+.07*round+(f.early?.4:0)-f.flow*.06;
+      const ch=(.05+.07*round+(f.early?.4:0)-f.flow*.06)*DP.evM;
       if(Math.random()<ch){eStart(enemy,'evade');}
-      else if(Math.random()<(enemy.style==='box'?.18:.08)*round&&!f.early){eStart(enemy,'guard');}
+      else if(Math.random()<(enemy.style==='box'?.18:.08)*round*DP.grdM&&!f.early){eStart(enemy,'guard');}
     }
     f.early=false;
   }
@@ -878,6 +891,55 @@ function updPlayer(p,rdt){
 }
 
 // ---------- rival ----------
+// ---------- dificuldade e IA do rival ----------
+// FÁCIL = o rival de sempre. MÉDIO = mais agressivo e reativo. MESTRE = o rival aprende com o jogador durante a luta:
+// observa o que ele faz (contra, esquiva, flanco, golpes repetidos, botão amassado, passividade), explora os hábitos e
+// fica mais forte aos poucos (habilidade 0-1). A habilidade sobe com o tempo e com os rounds, e recua se o jogador estiver apanhando muito
+let DIFF='facil';
+const DNAMES={facil:'FÁCIL',medio:'MÉDIO',mestre:'MESTRE'};
+const D_NEUTRO={agg:1,cdM:1,wdM:1,evM:1,grdM:1,rupM:1,dmgM:1,react:0,chainX:0};
+const D_MEDIO={agg:1.25,cdM:.6,wdM:.82,evM:1.6,grdM:1.4,rupM:1.4,dmgM:1.15,react:.3,chainX:.35};
+let DP=D_NEUTRO;
+const AI={skill:.15,t:0,dash:0,flank:0,dod:0,cnt:0,atk:0,mv:{},last:[],ps:'',pm:null,ins:false,idle:0,lvl:0,pt:-9};
+function aiReset(){Object.assign(AI,{skill:.15,t:0,dash:0,flank:0,dod:0,cnt:0,atk:0,mv:{},last:[],ps:'',pm:null,ins:false,idle:0,lvl:0,pt:-9});}
+const aiSum=()=>AI.dash+AI.flank+AI.dod+AI.cnt+AI.atk+.001;
+// hábito mais repetido entre os golpes que o jogador usa (0 = variado, 1 = sempre o mesmo)
+function aiPred(){let m=0,t=0;for(const k in AI.mv){t+=AI.mv[k];if(AI.mv[k]>m)m=AI.mv[k];}return t>3?m/t:0;}
+function aiParams(){
+  if(DIFF==='medio')return D_MEDIO;
+  if(DIFF!=='mestre')return D_NEUTRO;
+  const k=AI.skill,dodS=AI.dod/aiSum();
+  return {agg:1+.55*k,cdM:lerp(1,.45,k),wdM:lerp(1,.72,k),evM:1+1.2*k,grdM:1+k,rupM:1+.8*k,dmgM:1+.2*k,react:.4*k,chainX:.1+.4*k+dodS*.5*k};
+}
+function aiPop(txt,e){if(rclock-AI.pt>2.5){AI.pt=rclock;pop(txt,e,'#ff9a5a');}}
+// observa o jogador: transições de estado dele (nada no código do jogador precisa avisar)
+function aiObserve(p,e,dt){
+  const f=Math.exp(-dt/22);AI.dash*=f;AI.flank*=f;AI.dod*=f;AI.cnt*=f;AI.atk*=f;for(const k in AI.mv)AI.mv[k]*=f;
+  if(p.st!==AI.ps||p.st==='atk'&&p.mv!==AI.pm){
+    if(p.st==='dash'){if(p.dash&&p.dash.flank)AI.flank++;else AI.dash++;}
+    else if(p.st==='dodge')AI.dod++;
+    else if(p.st==='atk'&&p.kind==='norm'&&p.mv){AI.atk++;AI.mv[p.mv.n]=(AI.mv[p.mv.n]||0)+1;AI.idle=0;
+      // o jogador abriu um golpe previsível: o rival lê o padrão e se antecipa
+      if(DIFF==='mestre'&&running&&!roundOver&&hittable(e)&&(e.st==='stalk'||e.st==='rec'&&!e.punish&&e.t>.25||e.st==='idle')){
+        const pr=aiPred(),c=AI.skill*(.1+.7*Math.max(0,pr-.3));
+        if(Math.random()<c){if(Math.random()<.7)eStart(e,'evade');else eStart(e,'guard');if(pr>.45)aiPop('LEU O SEU PADRÃO',e);}}}
+    // acabou de esquivar: se ele esquiva muito, o rival já fica pronto para castigar
+    if(AI.ps==='dodge'&&p.st!=='dodge'&&DIFF==='mestre'&&running&&!roundOver&&canAct(e)&&(e.st==='stalk'||e.st==='rec'&&e.t>.2)&&Math.random()<AI.skill*Math.min(1,AI.dod/aiSum()*2.2)){
+      e.chain=[];eAttack(e,true);e.wd=Math.max(.2,e.wd*.6);e.feint=false;aiPop('CASTIGA A ESQUIVA',e);}
+  }
+  if(p.inScene&&!AI.ins)AI.cnt++;
+  AI.ins=p.inScene;AI.ps=p.st;AI.pm=p.mv;
+  AI.idle=(p.st==='idle'||p.st==='block')?AI.idle+dt:0;
+}
+// habilidade: cresce com o tempo e com os rounds; cai se o jogador estiver levando surra e sobe se ele estiver dominando
+function aiGrow(p,e,dt){
+  if(DIFF!=='mestre'||!running||roundOver)return;
+  AI.t+=dt;const ph=p.hp/p.max,eh=e.hp/e.max;
+  let r=.004+(eh<ph-.25?.012:0)-(ph<eh-.2?.011:0)-(ph<.35?.008:0)+(eh<.35?.004:0);
+  AI.skill=clamp(AI.skill+r*dt,.12,1);
+  const lv=AI.skill>=.66?2:AI.skill>=.33?1:0;
+  if(lv>AI.lvl){AI.lvl=lv;pop(lv===1?'ELE ESTÁ APRENDENDO':'ELE SE ADAPTOU',e,'#ff5d3a');sfx.rupt();}
+}
 function eStart(e,st){
   e.st=st;e.t=0;if(st==='evade'||st==='guard')e.stun=0;
   if(st==='evade'){e.ev=e.style==='box'?(Math.random()<.5?DUCK:PULL):HOP;setPose(e,e.ev,900,.55);e.vx=-e.face*(e.style==='box'?70:150);if(e.style==='tkd')e.vy=60;}
@@ -887,13 +949,21 @@ function eStart(e,st){
 function eAttack(e,first){
   if(first){e.chain=pick(ESEQ[e.style]).slice();}
   const k=e.chain.shift();e.mv=MOV[e.style][k];
-  e.st='wind';e.t=0;e.armor=false;e.stun=0;e.wd=first?Math.max(.38,.75-round*.1):Math.max(.26,.42-round*.05);
+  e.st='wind';e.t=0;e.armor=false;e.stun=0;e.wd=Math.max(.2,(first?Math.max(.38,.75-round*.1):Math.max(.26,.42-round*.05))*DP.wdM);
   e.feint=round>=2&&first&&Math.random()<.12+round*.04;
+  if(first&&Math.random()<DP.chainX&&e.chain.length<3)e.chain.push(pick(pick(ESEQ[e.style])));
+  if(first&&DIFF==='mestre'){
+    // jogador que contra muito: mais fintas e tempo quebrado (solta cedo ou tarde) para estragar o contra
+    const cs=Math.min(1,AI.cnt/aiSum()*2.5);
+    if(!e.feint&&Math.random()<AI.skill*cs*.55){e.feint=true;}
+    if(Math.random()<AI.skill*(.25+cs*.5))e.wd=Math.max(.2,e.wd*rnd(.55,1.45));
+  }
   setPose(e,e.mv.A,first?420:700,.7);
 }
 function updEnemy(e,dt){
   e.t+=dt;const p=player,dx=p.x-e.x,ad=Math.abs(dx);
-  const aggr=.75+round*.15;
+  DP=aiParams();aiObserve(p,e,dt);aiGrow(p,e,dt);
+  const aggr=(.75+round*.15)*DP.agg;
   e.tw=lerp(e.tw,0,1-Math.exp(-dt*10));
   if(e.st!=='rec')e.punish=false;
   if(e.st!=='wind')e.wx=null;if(e.st!=='stalk'&&e.st!=='appr'){e.lvx=0;e.lvz=0;if(e.st!=='wind')e.gw=0;}
@@ -918,6 +988,9 @@ function updEnemy(e,dt){
     if(running&&!roundOver&&p.st!=='ko'){e.cd-=dt;
       // taekwondista pune quem entra correndo
       if(!box&&p.st==='dash'&&!p.dash.flank&&p.dash.kind==='norm'&&Math.random()<dt*2.5*round){e.chain=[];e.mv=TK.dwi;e.st='wind';e.t=0;e.wd=.3;e.feint=false;setPose(e,e.mv.A,800,.6);}
+      else if(DP.react>0&&p.st==='dash'&&p.dash&&p.dash.kind==='norm'&&Math.random()<dt*DP.react*(1+round)*(DIFF==='mestre'?1+3*AI.dash/aiSum()+2*AI.flank/aiSum():1)){
+        // entrada do jogador lida: contra-golpe rápido (boxeador: jab; taekwondista: bandal)
+        e.chain=[];e.mv=MOV[e.style][box?'jab':'ban'];e.st='wind';e.t=0;e.wd=Math.max(.2,.26*DP.wdM);e.feint=false;setPose(e,e.mv.A,800,.6);}
       else if(e.cd<=0){e.st='appr';e.t=0;}}
     break;}
    case 'appr':{
@@ -929,7 +1002,7 @@ function updEnemy(e,dt){
     e.str=lerp(e.str||STR[e.style],e.style==='tkd'?56:20,1-Math.exp(-dt*8));loco(e,d>3?ddx/d*vs:0,d>3?ddz/d*vs:0,sp,8,dt);
     if(e.style==='tkd'){const hp=Math.abs(Math.sin(e.walk));e.y=hp*6*e.gw;setPose(e,lerpPose(G.tkd,HOP,hp*e.gw),600,.7);e.lk=.6*e.gw;}
     else{setPose(e,lerpPose(DASHP.box,walkPose(e,DASHP.box,1),e.gw),600,.7);e.lk=.85*e.gw;}
-    if(d<8||e.t>1.2){const c=e.chain;e.chain=[];eAttack(e,true);e.chain=c.slice(1);e.mv=MOV[e.style][c[0]];setPose(e,e.mv.A,420,.7);}
+    if(d<8||e.t>1.2){const c=e.chain;e.chain=[];eAttack(e,true);e.chain=c.slice(1);if(Math.random()<DP.chainX&&e.chain.length<3)e.chain.push(pick(pick(ESEQ[e.style])));e.mv=MOV[e.style][c[0]];setPose(e,e.mv.A,420,.7);}
     break;}
    case 'brk':{
     // RUPTURA: sacode o golpe (guarda) e já parte blindado para o ataque
@@ -966,15 +1039,15 @@ function updEnemy(e,dt){
     if(e.hi===0&&t>=mv.h0){e.hi=1;const fx=(p.x-e.x)*e.face,dg=p.st==='dodge',inR=fx>-6&&fx<mv.r+(dg?34:10)&&Math.abs(p.z-e.z)<(dg?30:18)&&(p.y<30||dg);
       if(inR&&p.st!=='ko'){
         if(p.st==='dodge'){pop('ESQUIVA PERFEITA',p,'#7fd6ff');hype(.18,p.x);slow(.2,.6);gainImp(p,20);e.st='rec';e.t=-.6;e.punish=true;e.armor=false;e.stun=0;e.chain=[];setPose(e,STAG,300,.5);sfx.perfect();}
-        else if(!p.inv){const h=Object.assign({},mv.hits[0],{dmg:5+round*2+(mv.hits[0].react!=='hit'?3:0)});applyHit(e,p,h,mv);if(p.hp<=0){p.st='ko';p.t=0;p.vx=e.face*130;p.vy=160;}}
+        else if(!p.inv){const h=Object.assign({},mv.hits[0],{dmg:(5+round*2+(mv.hits[0].react!=='hit'?3:0))*DP.dmgM});applyHit(e,p,h,mv);if(p.hp<=0){p.st='ko';p.t=0;p.vx=e.face*130;p.vy=160;}}
       }}
     if(e.st==='strike'&&t>=mv.d){unspin(e);e.y=0;e.armor=false;if(e.chain&&e.chain.length&&p.st!=='ko'){eAttack(e,false);}else{e.st='rec';e.t=0;}}
     break;}
    case 'rec':
     // depois da esquiva perfeita o rival cambaleia (STAG) durante a janela de punição (INTE-8)
     if(e.punish&&e.t<0){const w=Math.sin(e.t*9),o=STAG.slice();o[0]+=w*.15;o[1]-=w*.25;setPose(e,o,220,.45);}else setPose(e,G[e.style],300,.7);
-    if(e.t>=.42){e.st='stalk';e.punish=false;e.cd=rnd(.9,2.2)/aggr;}break;
-   case 'hit':e.spin=0;if(e.t>=.36){e.st='stalk';e.cd=Math.min(e.cd,rnd(.4,1.1));}break;
+    if(e.t>=.42){e.st='stalk';e.punish=false;e.cd=rnd(.9,2.2)/aggr*DP.cdM;}break;
+   case 'hit':e.spin=0;if(e.t>=.36){e.st='stalk';e.cd=Math.min(e.cd,rnd(.4,1.1)*DP.cdM);}break;
    case 'evade':if(e.t>.34){if(Math.random()<.55+round*.1){e.chain=[pick(ESEQ[e.style])[0]];e.mv=MOV[e.style][e.chain.shift()];e.st='wind';e.t=0;e.wd=.3;e.feint=false;setPose(e,e.mv.A,700,.7);}else{e.st='stalk';e.cd=.8;}}break;
    case 'guard':setPose(e,BLOCK[e.style],600,.7);if(e.t>e.gd){e.st='stalk';e.cd=.4;}break;
    case 'stagger':{const w=Math.sin(e.t*9);const o=STAG.slice();o[0]+=w*.2;o[1]-=w*.3;setPose(e,o,200,.4);e.spin=0;e.x+=Math.sin(e.t*5)*10*dt;if(e.t>e.sd){e.st='stalk';e.cd=.5;}break;}
@@ -991,7 +1064,7 @@ function updEnemy(e,dt){
     if(getupPose(e)){e.rot=0;
       // levantada com ruptura: depois de um combo longo (ou de botão amassado no chão) ele levanta já atacando blindado
       if(running&&!roundOver&&p.st!=='ko'&&(e.stun>=5-round||p.mash>3.2)&&Math.random()<.7)eBreak(e,p);
-      else{e.st='stalk';e.cd=rnd(.5,1.2);}}
+      else{e.st='stalk';e.cd=rnd(.5,1.2)*DP.cdM;}}
     break;
    case 'ko':e.rotT=-1.5;if(e.t>.3)setPose(e,DOWN,150,.8);e.spin=0;break;
    case 'win':setPose(e,WIN[e.style],120,.6);e.rot=0;break;
@@ -1071,7 +1144,7 @@ function update(dt,rdt){
 function endMatch(won){
   running=false;matchOver=true;inp.act=null;
   $('oTitle').textContent=won?'VITÓRIA':'DERROTA';
-  $('oSub').textContent=`${won?'Você venceu':'O rival venceu'} por ${Math.max(...wins)} a ${Math.min(...wins)}. Maior combo: ${best} hits. Pontos: ${score}.`;
+  $('oSub').textContent=`Dificuldade ${DNAMES[DIFF]}. ${won?'Você venceu':'O rival venceu'} por ${Math.max(...wins)} a ${Math.min(...wins)}. Maior combo: ${best} hits. Pontos: ${score}.`;
   const other=chosen==='box'?'tkd':'box';$('swap').textContent='JOGAR DE '+(other==='box'?'BOXEADOR':'TAEKWONDO');
   $('over').hidden=false;$('pad').hidden=true;$('stickHint').hidden=true;$('bExit').hidden=true;
 }
@@ -1084,6 +1157,7 @@ function updHud(force){
   $('pHp').style.width=pp;$('pHpB').style.width=pp;$('eHp').style.width=ep;$('eHpB').style.width=ep;
   [...$('pWins').children].forEach((s,i)=>s.classList.toggle('on',i<wins[0]));
   [...$('eWins').children].forEach((s,i)=>s.classList.toggle('on',i<wins[1]));
+  if(DIFF==='mestre')$('aiF').style.width=Math.round(AI.skill*100)+'%';
   $('rlabel').textContent='ROUND '+round;$('score').textContent=score;
   if(combo!==lastCombo||force){lastCombo=combo;$('cNum').textContent=combo;$('combo').classList.toggle('on',combo>=2);}
   if(player.flow!==lastFlow||force){lastFlow=player.flow;[...$('flow').querySelectorAll('i')].forEach((s,i)=>s.classList.toggle('on',i<player.flow));$('flow').classList.toggle('max',player.flow>=3);}
@@ -2136,6 +2210,12 @@ function begin(style){
   ['b1','b2','b3'].forEach((id,i)=>{$(id).textContent=BLABEL[style][i];$(id).setAttribute('aria-label',BLABEL[style][i]);});
   setTimeout(()=>{if(running)$('stickHint').hidden=true;},9000);
 }
+const DDESC={facil:'O rival de sempre: bom para aprender os golpes.',medio:'Mais agressivo e reativo: ataca mais rápido, esquiva e defende mais.',mestre:'O rival aprende com você durante a luta, explora seus hábitos e fica mais forte aos poucos.'};
+function setDiff(d,save){DIFF=DDESC[d]?d:'facil';DP=aiParams();$('difd').textContent=DDESC[DIFF];
+  document.querySelectorAll('.dif').forEach(b=>{const on=b.dataset.d===DIFF;b.classList.toggle('on',on);b.setAttribute('aria-checked',on);});
+  if(save){try{localStorage.setItem('fb_dif',DIFF);}catch(e){}}}
+document.querySelectorAll('.dif').forEach(b=>b.addEventListener('click',()=>setDiff(b.dataset.d,true)));
+{let d='facil';try{d=localStorage.getItem('fb_dif')||'facil';}catch(e){}setDiff(d,false);}
 let chosen='box';
 $('pickBox').onclick=()=>{chosen='box';begin('box');};
 $('pickTkd').onclick=()=>{chosen='tkd';begin('tkd');};
