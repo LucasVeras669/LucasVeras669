@@ -165,8 +165,6 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
       <button class="card" id="pickBox"><canvas id="pvBox" width="60" height="60"></canvas><strong>BOXEADOR</strong><small>Rocco "Martelo"<br>Jab, direto, gancho, uppercut. Esquiva no pêndulo.</small></button>
       <button class="card" id="pickTkd"><canvas id="pvTkd" width="60" height="60"></canvas><strong>TAEKWONDO</strong><small>Ji-ho "Vendaval"<br>Bandal, dollyo, dwi chagi, tornado. Acrobacias.</small></button>
     </div>
-    <p class="how">Três botões com o nome dos <b>golpes básicos</b> do seu estilo. <b>FLUXO</b> luta sozinho de forma livre: salta até o rival, encadeia golpes e troca de lado pelo flanco (toque logo depois de cada impacto para o PERFEITO e encha o <b>ÍMPETO</b>; quem amassa o botão provoca a <b>RUPTURA</b>: o rival escapa blindado). <b>⚡ BRANCO</b>: dá para <b>CONTRA</b> (ou defender); se o raio aparecer fraquinho é finta. <b>⚡ VERMELHO</b> (o <b>ESPECIAL</b> do rival, a barra ESP dele enche com o tempo e com os golpes que ele acerta): só a <b>ESQUIVA</b> salva, defender não adianta. <b>ARREMESSAR</b> agarra o rival e o joga na direção da câmera (não pega durante o golpe especial dele). <b>ESQUIVA</b> na hora do golpe vira esquiva perfeita. <b>ESPECIAL</b> libera com 5 acertos; com 12 vira SUPER.</p>
-  <p class="kbd"><b>Teclado:</b> setas ou WASD movem · 1, 2, 3 golpes básicos · 4 ou G arremessar · J fluxo · K contra · L esquiva · I especial</p>
   </div>
   <div class="screen pz" id="pause" hidden>
     <h1>PAUSADO</h1>
@@ -753,7 +751,7 @@ function doDodge(p){
   const box=p.style==='box';
   let kind=toward?'over':Math.abs(dz)>.7?'side':'back';
   unrot(p);p.st='dodge';p.t=0;p.buf=null;p.hold=null;p.preK=null;p.rotDir=box?0:kind==='back'?-1:kind==='over'?1:0;
-  if(kind==='over'){const tx=e.x+Math.sign(e.x-p.x)*30;p.dg={kind,sx:p.x,sz:p.z,sy:p.y,tx,tz:e.z,dur:box?.42:.5,zs:dz>0?1:-1};pop(box?'PÊNDULO':'ESTRELA',p,'#7fd6ff');}
+  if(kind==='over'){const tx=clamp(e.x+Math.sign(e.x-p.x)*(box?30:54),-AX,AX);p.dg={kind,sx:p.x,sz:p.z,sy:p.y,tx,tz:e.z,dur:box?.42:.58,zs:dz>0?1:-1};pop(box?'PÊNDULO':'ESTRELA',p,'#7fd6ff');}
   else p.dg={kind,sy:p.y,vx:dx*(box?170:230),vz:dz*(box?140:160),dur:box?.34:.42};
   sfx.swoosh();dust(p.x,p.z,4);
 }
@@ -1003,7 +1001,7 @@ function updPlayer(p,rdt){
    case 'dodge':{
     const D=p.dg,k=Math.min(1,p.t/D.dur),box=p.style==='box',y0=(D.sy||0)*(1-ease(k));
     if(D.kind==='over'){const q=ease(k);p.x=lerp(D.sx,D.tx,q);p.z=lerp(D.sz,D.tz,q)+(box?Math.sin(k*PI)*28*D.zs:0);
-      if(box){p.y=y0;setPose(p,k>.7?G.box:DUCK,k>.7?520:900,.55);}else{p.y=Math.sin(k*PI)*40+y0;p.rot=q*TAU;setPose(p,k>.72?HOP:TUCK,k>.72?700:900,.6);}
+      if(box){p.y=y0;setPose(p,k>.7?G.box:DUCK,k>.7?520:900,.55);}else{p.y=Math.sin(k*PI)*62+y0;p.rot=q*TAU;setPose(p,k>.72?HOP:TUCK,k>.72?700:900,.6);}
       if(k>.55&&canAct(e))setFace(p,Math.sign(e.x-p.x));}
     // arranque explosivo e freada até parar (mesma distância), a pose volta à guarda no último terço (FLUI-11)
     else{const v=1.75*Math.pow(1-k,1.5);p.x+=D.vx*dt*v;p.z+=D.vz*dt*v;
@@ -1040,7 +1038,7 @@ const DNAMES={facil:'FÁCIL',medio:'MÉDIO',mestre:'MESTRE'};
 const D_NEUTRO={agg:1,cdM:1,wdM:1,evM:1,grdM:1,rupM:1,dmgM:1,react:0,chainX:0,recM:1,close:1,hpM:1,getM:1,spR:2.6,spH:26};
 // MÉDIO: ataca sem parar (pausa entre ataques 3x menor), preparação curta, combos longos, esquiva e defende bem, causa mais dano
 const D_MEDIO={agg:1.65,cdM:.2,wdM:.6,evM:2.2,grdM:1.8,rupM:1.8,dmgM:1.4,react:.9,chainX:.8,recM:.45,close:.75,hpM:1.4,getM:.55,spR:5,spH:36};
-const STAT={atk:0,hits:0};window.__stat=STAT;window.__st=()=>[enemy.st,player.st,enemy.cd,enemy.sp];window.__spec=()=>{enemy.sp=100;};window.__red=()=>enemy.red;window.__fix=()=>{enemy.x=player.x+30;enemy.z=player.z;enemy.st="idle";enemy.cd=9;};window.__pm=()=>player.mv&&player.mv.n;window.__mvn=()=>[enemy.mv&&enemy.mv.n,enemy.red,enemy.st,enemy.armor,enemy.feint];window.__php=()=>player.hp;window.__ez=()=>[enemy.st,enemy.x,enemy.z,enemy.y,enemy.hp,0,0,eFin];window.__go=(k,kd)=>{const e=enemy,p=player;e.x=p.x+p.face*34;e.z=p.z;e.st="idle";e.cd=99;e.y=0;p.fc=Math.max(p.fc,0);dashTo(p,kd||"norm",{mv:typeof k==="string"?MOV[p.style][k]:k});};window.__fin=(sup)=>{enemy.x=player.x+player.face*34;enemy.z=player.z;enemy.st="idle";enemy.cd=99;player.fc=sup?12:5;doFinisher(player);};window.__sq=a=>{player.seq=a;player.si=0;};window.__cs=n=>{player.cStreak=n;};window.__tp=()=>{enemy.x=player.x-40;enemy.cd=99;};window.__dbg=()=>({rot:player.rot,rotR:player.rotR,yw:player.yw,spin:player.spin,turn:player.turn,ro:player.ro,tw:player.tw,gz:player.gz});window.__pose=()=>[player.pose.map(v=>+v.toFixed(2)),player.pt.map(v=>+v.toFixed(2)),player.y,player.k];window.__ea=k=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[e.style][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__sk=w=>{const S=skel(w==='e'?enemy:player),o={};for(const k in S)if(Array.isArray(S[k]))o[k]=[S[k][0],S[k][1]];const f=w==='e'?enemy:player;o.x=f.x;return o;};window.__pl=()=>[player.st,player.x,player.y,player.spin,player.turn,player.rot,player.mv&&player.mv.n,player.t];
+const STAT={atk:0,hits:0};window.__stat=STAT;window.__st=()=>[enemy.st,player.st,enemy.cd,enemy.sp];window.__spec=()=>{enemy.sp=100;};window.__red=()=>enemy.red;window.__fix=()=>{enemy.x=player.x+30;enemy.z=player.z;enemy.st="idle";enemy.cd=9;};window.__pm=()=>player.mv&&player.mv.n;window.__mvn=()=>[enemy.mv&&enemy.mv.n,enemy.red,enemy.st,enemy.armor,enemy.feint];window.__php=()=>player.hp;window.__ez=()=>[enemy.st,enemy.x,enemy.z,enemy.y,enemy.hp,0,0,eFin];window.__go=(k,kd)=>{const e=enemy,p=player;e.x=p.x+p.face*34;e.z=p.z;e.st="idle";e.cd=99;e.y=0;p.fc=Math.max(p.fc,0);dashTo(p,kd||"norm",{mv:typeof k==="string"?MOV[p.style][k]:k});};window.__fin=(sup)=>{enemy.x=player.x+player.face*34;enemy.z=player.z;enemy.st="idle";enemy.cd=99;player.fc=sup?12:5;doFinisher(player);};window.__sq=a=>{player.seq=a;player.si=0;};window.__dd=x=>{inp.x=x;inp.z=0;doDodge(player);};window.__cs=n=>{player.cStreak=n;};window.__tp=()=>{enemy.x=player.x-40;enemy.cd=99;};window.__dbg=()=>({rot:player.rot,rotR:player.rotR,yw:player.yw,spin:player.spin,turn:player.turn,ro:player.ro,tw:player.tw,gz:player.gz});window.__pose=()=>[player.pose.map(v=>+v.toFixed(2)),player.pt.map(v=>+v.toFixed(2)),player.y,player.k];window.__ea=k=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[e.style][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__sk=w=>{const S=skel(w==='e'?enemy:player),o={};for(const k in S)if(Array.isArray(S[k]))o[k]=[S[k][0],S[k][1]];const f=w==='e'?enemy:player;o.x=f.x;return o;};window.__pl=()=>[player.st,player.x,player.y,player.spin,player.turn,player.rot,player.mv&&player.mv.n,player.t];
 window.__thr=()=>({t:(enemy.st==="wind"||enemy.st==="brk"||enemy.st==="strike"&&enemy.hi===0),red:enemy.red,feint:enemy.feint,armor:enemy.armor,st:enemy.st,wd:enemy.wd,et:enemy.t});
 let DP=D_NEUTRO;
 const AI0=.6;
