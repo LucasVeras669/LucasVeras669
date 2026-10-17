@@ -906,7 +906,7 @@ const DNAMES={facil:'FÁCIL',medio:'MÉDIO',mestre:'MESTRE'};
 const D_NEUTRO={agg:1,cdM:1,wdM:1,evM:1,grdM:1,rupM:1,dmgM:1,react:0,chainX:0,recM:1,close:1,hpM:1,getM:1,spR:1.1,spH:12};
 // MÉDIO: ataca sem parar (pausa entre ataques 3x menor), preparação curta, combos longos, esquiva e defende bem, causa mais dano
 const D_MEDIO={agg:1.65,cdM:.2,wdM:.6,evM:2.2,grdM:1.8,rupM:1.8,dmgM:1.4,react:.9,chainX:.8,recM:.45,close:.75,hpM:1.4,getM:.55,spR:2.2,spH:20};
-const STAT={atk:0,hits:0};window.__stat=STAT;window.__st=()=>[enemy.st,player.st,enemy.cd];window.__spec=()=>{enemy.sp=100;};window.__red=()=>enemy.red;window.__php=()=>player.hp;
+const STAT={atk:0,hits:0};window.__stat=STAT;window.__st=()=>[enemy.st,player.st,enemy.cd];window.__spec=()=>{enemy.sp=100;};window.__red=()=>enemy.red;window.__php=()=>player.hp;window.__thr=()=>({t:(enemy.st==="wind"||enemy.st==="brk"||enemy.st==="strike"&&enemy.hi===0),red:enemy.red,feint:enemy.feint,armor:enemy.armor,st:enemy.st,wd:enemy.wd,et:enemy.t});
 let DP=D_NEUTRO;
 const AI0=.6;
 const AI={skill:AI0,t:0,dash:0,flank:0,dod:0,cnt:0,atk:0,mv:{},last:[],ps:'',pm:null,ins:false,idle:0,lvl:0,pt:-9};
@@ -2139,8 +2139,8 @@ function render(rdt){
   // brilho vermelho de carga do especial
   if(enemy.red){const q=P(enemy.x,34,enemy.z),k=.55+.45*Math.sin(time*18),r=46*q[2],g=ctx.createRadialGradient(q[0],q[1],0,q[0],q[1],r);g.addColorStop(0,`rgba(255,50,40,${.45*k})`);g.addColorStop(1,'rgba(255,50,40,0)');ctx.globalCompositeOperation='lighter';ctx.fillStyle=g;ctx.fillRect(q[0]-r,q[1]-r,r*2,r*2);ctx.globalCompositeOperation='source-over';}
   // indicador ⚡ (branco = dá para defender e contra-atacar, vermelho = só esquivar; finta fraquinha nos níveis Fácil e Médio)
-  if(threat){const S=SK[1];const q=P(enemy.x,0,enemy.z),hx=q[0]+S.hd[0]*enemy.face*q[2],hy=q[1]-(S.hd[1]+14)*q[2],s=q[2]*(enemy.red?2.3:enemy.armor?1.9:1.4);
-    const on=Math.sin(time*40)>0,fa=enemy.feint&&DIFF!=='mestre';ctx.globalAlpha=fa?.5:1;ctx.fillStyle=enemy.red?(on?'#ff2a2a':'#ff8a5a'):(on?'#ffffff':'#d9e4ea');ctx.strokeStyle=enemy.red?'#3a0000':OL;ctx.lineWidth=1;
+  if(threat){const S=SK[1];const q=P(enemy.x,0,enemy.z),hx=q[0]+S.hd[0]*enemy.face*q[2],hy=q[1]-(S.hd[1]+14)*q[2],s=q[2]*(enemy.red?2.8:enemy.armor?2.3:1.9);
+    const on=Math.sin(time*40)>0,fa=enemy.feint&&DIFF!=='mestre';ctx.globalAlpha=fa?.5:1;ctx.fillStyle=enemy.red?(on?'#ff2a2a':'#ff8a5a'):(on?'#ffffff':'#d9e4ea');ctx.strokeStyle=enemy.red?'#3a0000':OL;ctx.lineWidth=1.5;
     ctx.beginPath();ctx.moveTo(hx+1*s,hy-6*s);ctx.lineTo(hx-3*s,hy+1*s);ctx.lineTo(hx,hy+1*s);ctx.lineTo(hx-1.5*s,hy+6*s);ctx.lineTo(hx+3.5*s,hy-1*s);ctx.lineTo(hx+.5*s,hy-1*s);ctx.lineTo(hx+2*s,hy-6*s);ctx.closePath();ctx.fill();ctx.stroke();ctx.globalAlpha=1;}
   // faíscas e clarões (com bloom: halo branco em 'lighter')
   for(const p of parts){if(p.t!=='s'&&p.t!=='f')continue;const q=P(p.x,p.y,p.z);const al=Math.max(0,p.l/p.ml);
