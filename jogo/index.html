@@ -258,6 +258,9 @@ const BX={
  chk:mk('Check hook',{lim:'fh',d:.46,a:.1,h:.18,A:PULL,S:[.35,-.1,1.5,1.0,.55,2.4,.3,-.4,-.6,-.3],dmg:15,r:22,tw:1.2,spin:PI*.3,sa:1,ret:1,react:'knock',kb:90}),
  fly:mk('Rajada',{lim:'bh',d:.24,a:.04,h:.08,A:[.3,-.1,.9,2.1,.5,2.5,.4,-.5,-.45,-.25],S:[.42,-.12,1.0,2.0,1.6,.05,.45,-.5,-.5,-.15],dmg:4,r:22,tw:.7,kb:12}),
 };
+// golpes ao corpo: direto no estômago (barriga) e gancho no fígado (lateral das costelas)
+BX.est=mk('Direto no estômago',{lim:'bh',d:.32,a:.07,h:.13,A:[.58,-.05,.9,2.05,.4,2.45,.72,-1.15,-.4,-.7],S:[.72,-.05,.85,2.1,1.22,.4,.66,-.95,-.55,-.4],dmg:9,r:23,tw:.9,lv:'body',lunge:8,kb:35});
+BX.fig=mk('Gancho no fígado',{lim:'bh',d:.34,a:.08,h:.14,A:[.55,0,.7,1.8,.4,2.5,.7,-1.1,-.4,-.7],S:[.68,-.05,.85,2.2,1.28,.75,.66,-1.0,-.5,-.55],dmg:10,r:21,tw:1.25,lv:'body',kb:40,react:'stagger'});
 BX.finUpp=mk('Uppercut do Martelo',Object.assign({},{lim:'bh',d:.42,a:.12,h:.19,A:DUCK,S:[.05,-.35,.95,2.05,1.65,1.38,.3,-.2,-.35,-.05],dmg:12,r:20,tw:.7,react:'stagger'}));
 BX.finOvr=mk('MARTELO',{lim:'bh',d:.7,a:.26,h:.36,A:[-.15,-.1,1.1,2.1,1.6,2.9,.4,-.7,-.4,-.4],S:[.85,-.3,.8,2.2,1.9,.3,.65,-.9,-.65,-.05],dmg:22,r:24,tw:1.1,lunge:14,react:'knock',kb:150,jump:8});
 const TK={
@@ -276,13 +279,17 @@ const TK={
  cct:mk('Contra Bandal',{lim:'ft',d:.38,a:.08,h:.13,A:HOP,S:[-.6,.1,.3,1.5,-.2,1.3,1.75,-.05,-.45,-.05],dmg:14,r:28,tw:.7,react:'knock',kb:90}),
  air:mk('Twio Ap Chagi',{lim:'ft',d:.36,a:.08,h:.15,A:TUCK,S:[-.5,.1,.5,1.4,.2,1.5,1.9,-.05,.4,-1.6],dmg:7,r:28,jump:0,react:'launch',kb:20,lv:'head'}),
 };
+// chutes em alturas diferentes: baixo na perna (arae), médio nas costelas (momtong dollyo) e lateral (yeop)
+TK.ara=mk('Arae Chagi',{lim:'ft',d:.28,a:.07,h:.12,A:[-.05,.05,.5,1.4,.25,1.6,.9,-1.9,-.5,-.1],S:[-.3,.1,.4,1.5,0,1.4,1.0,-.1,-.45,-.05],dmg:6,r:28,tw:.4,lv:'body',kb:25,lunge:6});
+TK.mom=mk('Momtong Dollyo',{lim:'bt',d:.36,a:.1,h:.17,A:[-.15,.05,.5,1.4,.1,1.5,-.15,-.2,1.05,-2.2],S:[-.6,.1,.3,1.6,-.3,1.2,-.1,-.15,1.85,-.08],dmg:9,r:28,tw:1.0,lv:'body',kb:45});
+TK.yeop=mk('Yeop Chagi',{lim:'ft',d:.38,a:.1,h:.17,A:[-.2,0,.8,1.4,.3,1.8,1.4,-2.4,-.5,-.1],S:[-.8,.2,.9,1.1,-.4,1.0,1.75,0,-.4,-.05],dmg:10,r:30,lunge:10,kb:80,lv:'body'});
 TK.f540=mk('VENDAVAL 540',{lim:'ft',d:.8,a:.36,h:.48,A:TUCK,S:[.25,-.1,.7,1.5,.35,1.9,1.05,-.2,-.6,-.3],dmg:22,r:26,spin:TAU*1.5,sa:2/3,jump:34,react:'knock',kb:150,ka:900});
 const MOV={box:BX,tkd:TK};
 const SEQ={
-  box:[['jab','dir'],['jab','dir','gan'],['jab','jab','dir'],['jab','dir','gan','dir'],['cor','gan','dir'],['jab','dir','cor','gan'],['jab','dir','upp','gan'],['dir','gan','dir','ovr']],
-  tkd:[['ban','dol'],['ban','ban','dwi'],['mir','hur'],['ban','dol','dwi'],['dub','dol'],['ban','nae'],['ban','dol','hur'],['dub','tor']],
+  box:[['jab','dir'],['jab','dir','gan'],['jab','est','gan'],['cor','gan','dir'],['jab','dir','cor','gan'],['jab','dir','upp','gan'],['dir','gan','dir','ovr'],['est','cor','dir'],['cor','fig','upp'],['jab','fig','dir'],['jab','est','fig','gan'],['cor','est','gan','dir'],['jab','jab','est','dir']],
+  tkd:[['ban','dol'],['ara','mom','dol'],['ban','ara','dwi'],['mir','hur'],['ara','ara','dol'],['mom','yeop','dwi'],['dub','dol'],['ban','nae'],['ara','ban','hur'],['yeop','mom','dol'],['dub','tor']],
 };
-const ESEQ={box:[['jab','dir'],['jab','dir','gan'],['cor','gan'],['jab','jab','dir'],['dir','gan'],['upp']],tkd:[['ban'],['dol'],['ban','dol'],['mir'],['nae'],['dwi'],['ban','ban']]};
+const ESEQ={box:[['jab','est'],['fig','dir'],['jab','dir'],['jab','dir','gan'],['cor','gan'],['jab','jab','dir'],['dir','gan'],['upp']],tkd:[['ara','dol'],['mom'],['ban'],['dol'],['ban','dol'],['mir'],['nae'],['dwi'],['ban','ban']]};
 // ---------- contra-ataques cinematográficos ----------
 // defesas (sem impacto): o rival fica congelado no golpe que errou
 const pm=(n,o)=>mk(n,Object.assign({hits:[]},o));
@@ -745,8 +752,9 @@ function tryAct(p,k){
 
 // ---------- onde o golpe acerta: reação do corpo, rosto, sangue e marcas ----------
 const HURT_CHEST=[-.6,.25,-.2,1,-.5,.8,.4,-.5,-.3,-.2],HURT_BACK=[-.75,.55,-.9,.5,-.8,.4,.5,-.5,-.3,-.25],HURT_ARM=[0,-.1,-.3,1.3,.9,2.2,.35,-.35,-.35,-.25],HURT_LEG=[.25,.3,.8,2,.5,2.4,.3,-1.15,-.5,-.95];
-const HP_={head:HURT_HEAD,chest:HURT_CHEST,belly:HURT_BODY,back:HURT_BACK,arm:HURT_ARM,leg:HURT_LEG};
-const AREAS={'Gancho no corpo':['belly'],'Rajada':['chest','belly'],'Bandal Chagi':['belly','belly','leg'],'Mireo Chagi':['belly','chest'],'Dwi Chagi':['chest','head'],'Contra Dwi Chagi':['chest','head'],
+const HURT_SIDE=[.55,.1,.5,2.2,.35,2.4,.45,-.8,-.3,-.5];
+const HP_={side:HURT_SIDE,head:HURT_HEAD,chest:HURT_CHEST,belly:HURT_BODY,back:HURT_BACK,arm:HURT_ARM,leg:HURT_LEG};
+const AREAS={'Direto no estômago':['belly'],'Gancho no fígado':['side'],'Arae Chagi':['leg'],'Momtong Dollyo':['side','chest'],'Yeop Chagi':['chest','belly','side'],'Gancho no corpo':['belly','side'],'Rajada':['chest','belly'],'Bandal Chagi':['belly','belly','leg'],'Mireo Chagi':['belly','chest'],'Dwi Chagi':['chest','head'],'Contra Dwi Chagi':['chest','head'],
   'Bandal com avanço':['belly','chest'],'Contra Bandal':['belly','chest'],'Dollyo Chagi':['head','head','arm'],'Dwi Huryeo Chagi':['head','chest'],'Twimyo Yeop Chagi':['chest','arm'],'Direto':['head','head','chest'],'Jab':['head','head','arm']};
 function hitArea(mv,hit,fb){
   let a=AREAS[mv&&mv.n];a=a?pick(a):hit.lv==='head'?(Math.random()<.18?'chest':'head'):pick(['chest','belly']);
@@ -759,6 +767,7 @@ function reactArea(d,ar,hv){const m=hv?1.5:1;
     case 'head':kick(d,0,-8*m);kick(d,1,15*m);d.fl=.5;break;
     case 'chest':kick(d,0,-10*m);kick(d,1,5*m);kick(d,2,-6*m);kick(d,4,6*m);d.fl=.2;break;
     case 'belly':kick(d,0,12*m);kick(d,1,14*m);kick(d,7,-8*m);kick(d,9,-7*m);kick(d,2,6*m);kick(d,3,-4*m);d.fl=.35;break;
+    case 'side':kick(d,0,8*m);kick(d,1,6*m);kick(d,2,5*m);kick(d,4,-4*m);kick(d,7,-5*m);d.fl=.3;break;
     case 'back':kick(d,0,-12*m);kick(d,1,12*m);kick(d,2,-9*m);kick(d,4,-8*m);d.fl=.3;break;
     case 'arm':kick(d,2,-10*m);kick(d,3,8*m);kick(d,4,5*m);kick(d,0,-3*m);break;
     case 'leg':kick(d,7,-14*m);kick(d,9,-12*m);kick(d,6,6*m);kick(d,0,5*m);d.vx*=.5;break;
@@ -974,7 +983,7 @@ const DNAMES={facil:'FÁCIL',medio:'MÉDIO',mestre:'MESTRE'};
 const D_NEUTRO={agg:1,cdM:1,wdM:1,evM:1,grdM:1,rupM:1,dmgM:1,react:0,chainX:0,recM:1,close:1,hpM:1,getM:1,spR:2.6,spH:26};
 // MÉDIO: ataca sem parar (pausa entre ataques 3x menor), preparação curta, combos longos, esquiva e defende bem, causa mais dano
 const D_MEDIO={agg:1.65,cdM:.2,wdM:.6,evM:2.2,grdM:1.8,rupM:1.8,dmgM:1.4,react:.9,chainX:.8,recM:.45,close:.75,hpM:1.4,getM:.55,spR:5,spH:36};
-const STAT={atk:0,hits:0};window.__stat=STAT;window.__st=()=>[enemy.st,player.st,enemy.cd,enemy.sp];window.__spec=()=>{enemy.sp=100;};window.__red=()=>enemy.red;window.__mvn=()=>[enemy.mv&&enemy.mv.n,enemy.red,enemy.st,enemy.armor,enemy.feint];window.__php=()=>player.hp;window.__ez=()=>[enemy.st,enemy.x,enemy.z,enemy.y,enemy.hp,0,0,eFin];window.__thr=()=>({t:(enemy.st==="wind"||enemy.st==="brk"||enemy.st==="strike"&&enemy.hi===0),red:enemy.red,feint:enemy.feint,armor:enemy.armor,st:enemy.st,wd:enemy.wd,et:enemy.t});
+const STAT={atk:0,hits:0};window.__stat=STAT;window.__st=()=>[enemy.st,player.st,enemy.cd,enemy.sp];window.__spec=()=>{enemy.sp=100;};window.__red=()=>enemy.red;window.__pm=()=>player.mv&&player.mv.n;window.__mvn=()=>[enemy.mv&&enemy.mv.n,enemy.red,enemy.st,enemy.armor,enemy.feint];window.__php=()=>player.hp;window.__ez=()=>[enemy.st,enemy.x,enemy.z,enemy.y,enemy.hp,0,0,eFin];window.__thr=()=>({t:(enemy.st==="wind"||enemy.st==="brk"||enemy.st==="strike"&&enemy.hi===0),red:enemy.red,feint:enemy.feint,armor:enemy.armor,st:enemy.st,wd:enemy.wd,et:enemy.t});
 let DP=D_NEUTRO;
 const AI0=.6;
 const AI={skill:AI0,t:0,dash:0,flank:0,dod:0,cnt:0,atk:0,mv:{},last:[],ps:'',pm:null,ins:false,idle:0,lvl:0,pt:-9};
