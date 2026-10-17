@@ -436,33 +436,63 @@ function introStep(rdt){
   if(n!==introN&&n>=1){introN=n;banner(String(n),introSub,1);tone(n===1?780:520,n===1?780:520,.1,.14,'square');}
   if(introT<=0){introT=0;introN=0;running=true;player.st='idle';player.t=0;enemy.st='stalk';enemy.t=0;enemy.cd=1.3;player.tw=0;enemy.tw=0;banner('LUTE!','',.8);sfx.bell();}
 }
-// aquecimento: sequência de golpes no ar, com o ritmo defasado entre os dois; no último segundo vira guarda de encarada
-function introAnim(f){
-  const T=introT,el=4-T,box=f.style==='box',seq=box?['jab','jab','dir','gan','jab','upp']:['ban','dol','mir','dol','ara','yeop'];
-  const base=idlePose(f);f.rot=lerp(f.rot,0,.2);
-  if(T<.8){setPose(f,base,220,.75);f.tw=lerp(f.tw,0,.2);return;}
-  const ph=(el+(f.isP?0:.3))/.62,i=Math.floor(ph)%seq.length,u=ph%1,mv=MOV[f.style][seq[i]],k=Math.sin(PI*Math.min(1,u*1.7));
-  if(u<.6){setPose(f,lerpPose(base,mv.S,k),900,.6);f.twS=mv.twS;f.tw=(mv.tw||0)*k*.8;}else{setPose(f,base,300,.65);f.tw=lerp(f.tw,0,.15);}
+// toca um golpe real do repertório (poses, giro, salto, torção) no tempo t: o aquecimento e a comemoração usam os mesmos golpes do jogo
+function sampleMv(f,mv,t){
+  const K=mv.keys;let ki=0;for(let i=0;i<K.length;i++)if(t>=K[i][0])ki=i;
+  if(f._si!==mv.n+ki){f._si=mv.n+ki;setPose(f,K[ki][1],K[ki][2],K[ki][3]);if(ki===0||ki===1)sfx.swoosh();}
+  f.spin=spinAt(mv,t);f.y=mv.jump?Math.sin(Math.min(1,t/(mv.d*.85))*PI)*mv.jump:0;f.twS=mv.twS;
+  f.tw=mv.tw?mv.tw*(t<mv.h0?eout(clamp((t-mv.a*.5)/(mv.h0-mv.a*.5),0,1)):1-ease(clamp((t-mv.h0)/(mv.d-mv.h0),0,1))):0;
 }
-// comemoração da vitória: boxeador agacha, salta de punhos erguidos e soca o ar; taekwondista dá mortal para trás, grita (kihap) e chuta o céu
-function winAnim(f){
-  const t=f.t,box=f.style==='box';f.spin=0;
+// ABERTURA (4 s): cada lutador cumpre o seu ritual. Boxeador: solta pescoço e braços, bate as luvas, faz sombra com combinação e
+// fecha na guarda. Taekwondista: reverência (kyeongrye), alongamento com a perna alta, chute de frente + tornado e postura de luta.
+// A câmera passa pelos dois (ver camUpdate) e fecha na encarada
+const TA=1.2,TB=2.3,TC=3.5;
+function introAnim(f){
+  const el=Math.max(0,4-introT+(f.isP?0:.12)),box=f.style==='box',base=idlePose(f);f.rot=lerp(f.rot,0,.2);f.y=0;
+  if(el>=TC){f._si=null;f.spin=lerp(f.spin,0,.3);f.tw=lerp(f.tw,0,.2);const o=G[f.style].slice(),b=Math.abs(Math.sin(el*8));
+    if(box){o[0]+=.12;o[1]-=.1;o[7]-=.14+b*.14;o[9]-=.1+b*.1;o[2]+=Math.sin(el*9)*.1;}else{o[7]-=.05+b*.3;o[9]-=.05+b*.25;o[6]+=b*.1;}
+    setPose(f,o,260,.7);return;}
   if(box){
-    const air=f.y>1;
-    if(t<.35)setPose(f,[.65,-.2,.5,2.2,.4,2.3,.95,-1.5,-.4,-1.0],500,.6);
-    else{
-      if(f.wj!==1&&(f.wj===undefined||t-f.wjt>1.7)){f.wj=1;f.wjt=t;f.vy=175;f.y=Math.max(f.y,.6);pop('YEAH!',f,'#f2a93b');}
-      if(air)setPose(f,[-.15,-.4,2.9,.3,2.8,.4,.3,-.2,-.3,-.1],260,.5);
-      else{f.wj=2;const b=Math.floor((t-f.wjt)*3.4)%2;setPose(f,b?[-.1,-.4,2.9,.2,1.3,2.3,.4,-.4,-.4,-.2]:[-.1,-.4,1.3,2.3,2.9,.2,.4,-.4,-.4,-.2],240,.5);f.tw=0;}
-    }
+    if(el<TA){const o=[.15,.45,.3,.3,.2,.25,.3,-.4,-.4,-.3];o[1]=.55*Math.sin(el*5.5);o[0]+=.1*Math.sin(el*5.5+1);o[2]+=Math.sin(el*17)*.28;o[4]+=Math.sin(el*17+2)*.28;o[3]+=.3*Math.sin(el*17);o[7]-=Math.abs(Math.sin(el*7))*.3;o[9]-=Math.abs(Math.sin(el*7+1))*.2;setPose(f,o,260,.6);}
+    else if(el<TB){const u=el-TA,tap=Math.abs(Math.sin(u*PI*2.4));setPose(f,[.25,-.1+.15*Math.sin(u*9),1.0+.5*tap,1.9,1.0+.5*tap,1.9,.4,-.7-Math.abs(Math.sin(u*6.5))*.2,-.4,-.4],420,.55);f.tw=0;f._si=null;}
+    else{const u=el-TB,seq=['jab','jab','dir','gan'],dur=[.26,.26,.3,.3];let a=0,i=0;while(i<3&&u>=a+dur[i]){a+=dur[i];i++;}
+      sampleMv(f,MOV.box[seq[i]],Math.min(u-a,MOV.box[seq[i]].d));
+      if(f.pt)f.pt[7]-=Math.abs(Math.sin(u*9))*.2;}
   }else{
-    if(t<.3){setPose(f,[.5,-.1,.6,1.4,.4,1.6,.9,-1.3,-.5,-.9],500,.6);}
-    else if(!f.wj){f.wj=1;f.vy=205;f.rotDir=-1;f.wjt=t;}
-    if(f.wj===1){if(f.y>.5||t<.45){f.rot=-clamp((t-.3)/.72,0,1)*TAU;setPose(f,TUCK,700,.6);}else{f.wj=2;f.rot=0;f.rotDir=0;f.wjt=t;pop('KIHAP!',f,'#f2a93b');land(f,-260);}}
-    else if(f.wj===2){const u=t-f.wjt;f.rot=0;
-      if(u<.55)setPose(f,[-.05,-.3,1.7,.5,.3,2.3,.4,-.3,-.5,-.15],400,.6);
-      else if(u<1.15)setPose(f,[-.5,.1,1.0,1.6,.6,1.8,2.7,-.1,-.4,-.1],700,.5);
-      else setPose(f,WIN.tkd,200,.65);}
+    if(el<TA){const u=clamp(el/TA,0,1),bw=Math.sin(PI*clamp(u*1.15,0,1))*(u<.55?1:1);setPose(f,[1.05*bw,.1+.5*bw,.15,.3,.15,.3,.1,-.1,-.1,-.1],400,.7);}
+    else if(el<TB){const u=el-TA,fr=(u*2.4)%1,i=Math.floor(u*2.4)%2,sn=Math.sin(PI*fr);const o=[-.3*sn,.1,.7,1.4,.4,1.6,.35,-.25,-.5,-.15];
+      if(i===0){o[6]=.35+2.35*sn;o[7]=-.25+.2*sn;}else{o[8]=-.5+3.0*sn;o[9]=-.15+.1*sn;}setPose(f,o,520,.6);f._si=null;}
+    else{const u=el-TB;f.twS=-1;if(u<.3)sampleMv(f,TK.ban,Math.min(u,TK.ban.d));else sampleMv(f,TK.tor,Math.min((u-.3)*.95,TK.tor.d));}
+  }
+}
+// COMEMORAÇÃO: boxeador solta o ar, ergue os punhos pulando, vira para a plateia e faz pose de força, depois solta uma sequência no
+// ar. Taekwondista recompõe a postura, faz a reverência ao rival caído, mortal com kihap, demonstração de chutes (giratório incluso)
+// e termina com o chute ao céu e a saudação
+function winAnim(f){
+  const t=f.t,box=f.style==='box';
+  if(box){
+    if(t<.8){f.spin=0;setPose(f,[.4+.06*Math.sin(t*8),.25,.3,.4,.2,.3,.3,-.4,-.3,-.3],220,.7);}
+    else if(t<2.0){f.spin=lerp(f.spin,0,.1);const u=t-.8;
+      if(f.wj!==1||(u>.46&&f.y<1&&((f.wjt||0)+.46<u))){f.wj=1;f.wjt=u;f.vy=95;f.y=Math.max(f.y,.5);}
+      const b=Math.floor(u*4.4)%2;setPose(f,b?[-.2,-.4,2.8,.3,1.5,2.2,.3,-.3,-.3,-.2]:[-.2,-.4,1.5,2.2,2.8,.3,.3,-.3,-.3,-.2],240,.5);if(!f._wpop){f._wpop=1;pop('YEAH!',f,'#f2a93b');}}
+    else if(t<3.6){const u=t-2.0,k=ease(clamp(u/.5,0,1));f.spin=1.15*k;f.wj=0;
+      if(u<.9)setPose(f,[-.05+.04*Math.sin(u*10),-.3,1.5,2.6,1.5,2.6,.3,-.3,-.3,-.3],300,.55);
+      else setPose(f,[-.1,-.35,1.55,2.5,3.0,.2,.3,-.3,-.3,-.3],300,.55);}
+    else{const u=t-3.6,c=Math.floor(u/1.8)%2;f.spin=lerp(f.spin,c?0:.8,.08);
+      if(c){const seq=['jab','dir','gan','upp'],i=Math.floor((u%1.8)/.45)%4,mv=MOV.box[seq[i]];sampleMv(f,mv,Math.min((u%1.8)%.45*1.4,mv.d));f.spin=lerp(f.spin,.4,.1);}
+      else{f.tw=0;f._si=null;setPose(f,[-.15,-.4,2.9,.3,2.8,.4,.3,-.3,-.3,-.2],260,.5);}}
+  }else{
+    if(t<.6){f.spin=0;setPose(f,[0,-.1,.2,.4,.2,.4,.15,-.15,-.15,-.1],250,.7);}
+    else if(t<1.8){const u=(t-.6)/1.2,bw=Math.sin(PI*clamp(u,0,1));f.spin=0;setPose(f,[1.0*bw,.1+.5*bw,.15,.3,.15,.3,.1,-.1,-.1,-.1],380,.7);if(u>.45&&!f._wpop){f._wpop=1;pop('RESPEITO',f,'#cfe3ff');}}
+    else if(t<2.8){f.tw=0;
+      if(!f.wj){f.wj=1;f.vy=205;f.rotDir=-1;f.wjt=t;}
+      if(f.wj===1){if(f.y>.5||t<f.wjt+.14){f.rot=-clamp((t-f.wjt)/.72,0,1)*TAU;setPose(f,TUCK,700,.6);}else{f.wj=2;f.rot=0;f.rotDir=0;f.wjt=t;pop('KIHAP!',f,'#f2a93b');land(f,-260);}}
+      else{f.rot=0;setPose(f,[-.05,-.3,1.7,.5,.3,2.3,.4,-.3,-.5,-.15],400,.6);}}
+    else if(t<4.2){f.rot=0;f.rotDir=0;const u=t-2.8,seq=[[TK.ban,.3],[TK.dol,.36],[TK.hur,.72]];let a=0,i=0;while(i<2&&u>=a+seq[i][1]){a+=seq[i][1];i++;}
+      sampleMv(f,seq[i][0],Math.min(u-a,seq[i][0].d));}
+    else{f._si=null;f.tw=0;f.spin=lerp(f.spin,0,.2);const u=t-4.2;
+      if(u<1.2)setPose(f,[-.5,.1,1.0,1.6,.6,1.8,2.7,-.1,-.4,-.1],600,.5);
+      else setPose(f,[-.05,-.2,1.5,2.3,1.4,2.2,.35,-.3,-.5,-.15],300,.65);}
   }
 }
 
@@ -1028,7 +1058,7 @@ function updPlayer(p,rdt){
   // toque segurado com o rival no chão: golpe na levantada assim que ele ficar acertável (nunca contra a armadura da ruptura)
   if(p.hold){if(!live||time-p.hold.g>2.6||!canAct(p))p.hold=null;else if(free&&hittable(e)&&!e.armor){const k=p.hold.k;p.hold=null;pop('NA LEVANTADA',p,'#7fd6ff');dashTo(p,'norm',optK(p,k));}}
   // fora do golpe (e do flanco, que gira por k) o giro não fica congelado: o resíduo vira turn e se desfaz (INTE-10)
-  if(p.spin&&p.st!=='atk'&&p.st!=='defend'&&!(p.st==='dash'&&p.dash.flank))unspin(p);
+  if(p.spin&&p.st!=='atk'&&p.st!=='defend'&&p.st!=='intro'&&p.st!=='win'&&!(p.st==='dash'&&p.dash.flank))unspin(p);
   const jm=Math.hypot(inp.x,inp.z);
   p.tw=lerp(p.tw,0,1-Math.exp(-dt*10));if(p.st!=='idle')p.gw=0;
   switch(p.st){
@@ -1167,7 +1197,7 @@ const DNAMES={facil:'FÁCIL',medio:'MÉDIO',mestre:'MESTRE'};
 const D_NEUTRO={agg:1,cdM:1,wdM:1,evM:1,grdM:1,rupM:1,dmgM:1,react:0,chainX:0,recM:1,close:1,hpM:1,getM:1,spR:2.6,spH:26};
 // MÉDIO: ataca sem parar (pausa entre ataques 3x menor), preparação curta, combos longos, esquiva e defende bem, causa mais dano
 const D_MEDIO={agg:1.65,cdM:.2,wdM:.6,evM:2.2,grdM:1.8,rupM:1.8,dmgM:1.4,react:.9,chainX:.8,recM:.45,close:.75,hpM:1.4,getM:.55,spR:5,spH:36};
-const STAT={atk:0,hits:0};window.__stat=STAT;window.__st=()=>[enemy.st,player.st,enemy.cd,enemy.sp];window.__spec=()=>{enemy.sp=100;};window.__red=()=>enemy.red;window.__fix=()=>{enemy.x=player.x+30;enemy.z=player.z;enemy.st="idle";enemy.cd=9;};window.__pm=()=>player.mv&&player.mv.n;window.__mvn=()=>[enemy.mv&&enemy.mv.n,enemy.red,enemy.st,enemy.armor,enemy.feint];window.__php=()=>player.hp;window.__ez=()=>[enemy.st,enemy.x,enemy.z,enemy.y,enemy.hp,0,0,eFin];window.__go=(k,kd)=>{const e=enemy,p=player;e.x=p.x+p.face*34;e.z=p.z;e.st="idle";e.cd=99;e.y=0;p.fc=Math.max(p.fc,0);dashTo(p,kd||"norm",{mv:typeof k==="string"?MOV[p.style][k]:k});};window.__fin=(sup)=>{enemy.x=player.x+player.face*34;enemy.z=player.z;enemy.st="idle";enemy.cd=99;player.fc=sup?12:5;doFinisher(player);};window.__dmn=()=>player.dm&&player.dm.v.n;window.__ea2=(st,k)=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[st][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__sq=a=>{player.seq=a;player.si=0;};window.__def=v=>{inp.def=v;};window.__eg=()=>{enemy.x=player.x+player.face*40;enemy.z=player.z;enemy.cd=99;eGrab(enemy);};window.__es=()=>{enemy.x=player.x+player.face*50;enemy.z=player.z;eSpecial(enemy);};window.__hp=()=>[player.hp,enemy.hp,player.st,enemy.st];window.__dd=x=>{inp.x=x;inp.z=0;doDodge(player);};window.__cs=n=>{player.cStreak=n;};window.__tp=()=>{enemy.x=player.x-40;enemy.cd=99;};window.__dbg=()=>({rot:player.rot,rotR:player.rotR,yw:player.yw,spin:player.spin,turn:player.turn,ro:player.ro,tw:player.tw,gz:player.gz});window.__pose=()=>[player.pose.map(v=>+v.toFixed(2)),player.pt.map(v=>+v.toFixed(2)),player.y,player.k];window.__ea=k=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[e.style][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__sk=w=>{const S=skel(w==='e'?enemy:player),o={};for(const k in S)if(Array.isArray(S[k]))o[k]=[S[k][0],S[k][1]];const f=w==='e'?enemy:player;o.x=f.x;return o;};window.__pl=()=>[player.st,player.x,player.y,player.spin,player.turn,player.rot,player.mv&&player.mv.n,player.t];
+const STAT={atk:0,hits:0};window.__stat=STAT;window.__st=()=>[enemy.st,player.st,enemy.cd,enemy.sp];window.__spec=()=>{enemy.sp=100;};window.__red=()=>enemy.red;window.__fix=()=>{enemy.x=player.x+30;enemy.z=player.z;enemy.st="idle";enemy.cd=9;};window.__pm=()=>player.mv&&player.mv.n;window.__mvn=()=>[enemy.mv&&enemy.mv.n,enemy.red,enemy.st,enemy.armor,enemy.feint];window.__php=()=>player.hp;window.__ez=()=>[enemy.st,enemy.x,enemy.z,enemy.y,enemy.hp,0,0,eFin];window.__go=(k,kd)=>{const e=enemy,p=player;e.x=p.x+p.face*34;e.z=p.z;e.st="idle";e.cd=99;e.y=0;p.fc=Math.max(p.fc,0);dashTo(p,kd||"norm",{mv:typeof k==="string"?MOV[p.style][k]:k});};window.__fin=(sup)=>{enemy.x=player.x+player.face*34;enemy.z=player.z;enemy.st="idle";enemy.cd=99;player.fc=sup?12:5;doFinisher(player);};window.__dmn=()=>player.dm&&player.dm.v.n;window.__ea2=(st,k)=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[st][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__ri=()=>{introT=4;introN=99;player.st="intro";enemy.st="intro";running=false;player.t=enemy.t=0;banner("","",.01);};window.__sq=a=>{player.seq=a;player.si=0;};window.__def=v=>{inp.def=v;};window.__eg=()=>{enemy.x=player.x+player.face*40;enemy.z=player.z;enemy.cd=99;eGrab(enemy);};window.__es=()=>{enemy.x=player.x+player.face*50;enemy.z=player.z;eSpecial(enemy);};window.__hp=()=>[player.hp,enemy.hp,player.st,enemy.st];window.__dd=x=>{inp.x=x;inp.z=0;doDodge(player);};window.__cs=n=>{player.cStreak=n;};window.__tp=()=>{enemy.x=player.x-40;enemy.cd=99;};window.__dbg=()=>({rot:player.rot,rotR:player.rotR,yw:player.yw,spin:player.spin,turn:player.turn,ro:player.ro,tw:player.tw,gz:player.gz});window.__pose=()=>[player.pose.map(v=>+v.toFixed(2)),player.pt.map(v=>+v.toFixed(2)),player.y,player.k];window.__ea=k=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[e.style][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__sk=w=>{const S=skel(w==='e'?enemy:player),o={};for(const k in S)if(Array.isArray(S[k]))o[k]=[S[k][0],S[k][1]];const f=w==='e'?enemy:player;o.x=f.x;return o;};window.__pl=()=>[player.st,player.x,player.y,player.spin,player.turn,player.rot,player.mv&&player.mv.n,player.t];
 window.__thr=()=>({t:(enemy.st==="wind"||enemy.st==="brk"||enemy.st==="strike"&&enemy.hi===0),red:enemy.red,feint:enemy.feint,armor:enemy.armor,st:enemy.st,wd:enemy.wd,et:enemy.t});
 let DP=D_NEUTRO;
 const AI0=.6;
@@ -1266,7 +1296,7 @@ function updEnemy(e,dt){
   if(eFin&&e.st!=='wind'&&e.st!=='strike')eFin=false;
   if(running&&!roundOver&&p.st!=='ko'&&canAct(e))e.sp=Math.min(100,e.sp+dt*DP.spR);
   if(e.stun&&!isDown(e)&&e.st!=='air'&&(e.stunT+=dt)>1.2)e.stun=0;
-  if(e.spin&&e.st!=='strike'&&e.st!=='countered'&&e.st!=='wind')unspin(e);
+  if(e.spin&&e.st!=='strike'&&e.st!=='countered'&&e.st!=='wind'&&e.st!=='intro'&&e.st!=='win')unspin(e);
   if(canAct(e)&&e.st!=='strike'&&e.st!=='countered'&&e.st!=='guard'&&e.st!=='air'&&!(e.st==='wind'&&e.spin)&&dx*e.face<-6)setFace(e,Math.sign(dx));
   if(e.st==='guard'&&e.t>.5&&dx*e.face<-4)setFace(e,Math.sign(dx));
   switch(e.st){
@@ -1383,7 +1413,7 @@ function updEnemy(e,dt){
 // ---------- física e animação por molas ----------
 const KJ=[1,.6,.9,.9,.9,.9,1,1,1,1],ZJ=[1,.65,.9,.9,.9,.9,1,1,1,1];
 function phys(f,dt){
-  const ctl=f.st==='atk'||f.st==='dash'||f.st==='dodge'||f.st==='strike'||f.st==='appr'||f.st==='held'||f.st==='thrown',dn=f.st==='down'||f.st==='ko';
+  const ctl=f.st==='intro'||f.st==='atk'||f.st==='dash'||f.st==='dodge'||f.st==='strike'||f.st==='appr'||f.st==='held'||f.st==='thrown',dn=f.st==='down'||f.st==='ko';
   if(!dn)f.fb=0;
   // no ar a gravidade cresce com os acertos do juggle (jg); a velocidade de pouso fica guardada para o quique (landV)
   // (com dt=0 — hitstop — não integra: um lançamento a partir do chão não pode ser lido como pouso e perder o vy)
@@ -1449,11 +1479,11 @@ function update(dt,rdt){
   for(const t of trails)t.l-=rdt;trails=trails.filter(t=>t.l>0);
   for(const q of pops){q.l-=rdt;q.y+=rdt*22;}pops=pops.filter(q=>q.l>0);
   if(running&&!roundOver&&(enemy.st==='ko'||player.st==='ko')){
-    const pw=enemy.st==='ko';wins[pw?0:1]++;roundMsg=pw;const fin=wins[pw?0:1]>=2;roundOver=fin?5.4:3.4;winAt=fin?4.4:2.4;updHud();
+    const pw=enemy.st==='ko';wins[pw?0:1]++;roundMsg=pw;const fin=wins[pw?0:1]>=2;roundOver=fin?7.6:4.6;winAt=fin?6.8:3.8;updHud();
     setTimeout(()=>{banner(pw?'NOCAUTE!':'VOCÊ CAIU',pw?'Round seu':'Round do rival');sfx.bell();},350);
   }
   if(roundOver>0){roundOver-=rdt;
-    if(roundOver<winAt){const w=roundMsg?player:enemy;if(w.st==='idle'||w.st==='stalk'||w.st==='rec'||w.st==='hurt'){w.st='win';w.t=0;w.wj=undefined;w.rot=0;}}
+    if(roundOver<winAt){const w=roundMsg?player:enemy;if(w.st==='idle'||w.st==='stalk'||w.st==='rec'||w.st==='hurt'){w.st='win';w.t=0;w.wj=undefined;w._wpop=0;w.rot=0;}}
     if(roundOver<=0){if(wins[0]>=2||wins[1]>=2)endMatch(wins[0]>=2);else{round++;startRound();}}}
 }
 function endMatch(won){
@@ -2324,11 +2354,19 @@ function camUpdate(rdt,SK){
   // antecipação: a velocidade do jogador (suavizada) adianta o foco no sentido do movimento
   const vx=rdt>0?(p.x-CAM.lpx)/rdt:0;CAM.lpx=p.x;CAM.pvx=cut?0:CAM.pvx+(clamp(vx,-700,700)-CAM.pvx)*Math.min(1,rdt*8);
   const cyB=PORT?135:80,zB=PORT?1.5:1,side=(a,b)=>Math.sign(a.x-b.x)||1;
-  let m,cy,cz,yaw=0,tl=0,fx,fz,fy,ax=.5,ay=PORT?.58:.56,crop=0,wF=9;
+  let m,cy,cz,yaw=0,tl=0,fx,fz,fy,ax=.5,ay=PORT?.58:.56,crop=0,wF=9,solo=null;
   if(koCam){const w=koCam.who,v=koCam.win;wF=7;
     // órbita de .6 s em volta de quem cai; depois o vencedor de baixo para cima, no terço do lado dele, com o corpo caído no outro
     if(!koCam.ph){m=1.55;cy=cyB-22;cz=40;yaw=lerp(-.07,.07,ease(Math.min(1,koCam.t/.6)))*side(v,w);tl=.05*w.face;fx=w.x;fz=w.z;fy=w.y*.8+16;ay=.5;}
+    else if(v.st==='win'){const wt=v.t,k=ease(clamp(wt/2.4,0,1));wF=5;solo=v;
+      // vencedor em plano heroico: contra-plongée com órbita lenta e aproximação; acompanha o salto
+      m=1.25+.45*k;cy=cyB-52+14*k;cz=34+20*k;yaw=(.16*Math.sin(wt*.8)-.04)*side(v,w);tl=.035*Math.sin(wt*.7)*side(v,w);fx=v.x;fz=v.z;fy=40+Math.max(0,v.y)*.55;ax=.5+.1*side(v,w);}
     else{m=1.3;cy=cyB-46;cz=30;fx=v.x;fz=v.z;fy=40;ax=.5+.14*side(v,w);}}
+  else if(introT>0&&!shot){const el=4-introT,seg=el<TA?0:el<TB?1:el<TC?2:3,sub=seg===0?p:seg===1?e:null;wF=5;
+    // abertura: plano no ritual de cada um, abre para o combo e fecha na encarada
+    if(sub){solo=sub;const o=sub===p?e:p;m=zB*(1.5+.1*Math.min(1,(el-(seg?TA:0))/1.2));cy=cyB-34;cz=34;yaw=(seg?.08:-.08)*face;fx=sub.x;fz=sub.z;fy=38+sub.y*.5;ax=.5+.1*side(sub,o);}
+    else if(seg===2){m=zB*1.12;cy=cyB-6;cz=0;fx=(p.x+e.x)/2;fz=(p.z+e.z)/2;fy=36+Math.max(p.y,e.y)*.45;}
+    else{const u=clamp((el-TC)/.5,0,1);m=zB*(1.3+.12*u);cy=cyB-18;cz=22;yaw=.03*Math.sin(el*2);fx=(p.x+e.x)/2;fz=(p.z+e.z)/2;fy=40;}}
   else if(shot){const sub=shot.f==='p'?p:shot.f==='e'?e:null;wF=6;
     m=shot.m;cy=shot.cy+(cyB-80)*.3;cz=shot.cz;yaw=shot.yaw*face;tl=shot.t*face;crop=shot.crop;ay=shot.ay;
     // quem está no ar leva o foco junto (INTE-5)
@@ -2357,7 +2395,7 @@ function camUpdate(rdt,SK){
   const A=[X0+CAM.ax.x*(X1-X0),T+CAM.ay.x*(B-T)],rot=CAM.tilt.x+CAM.roll.x,c=Math.cos(rot),s=Math.sin(rot);
   // pontos reais do esqueleto (com o raio de cada junta), relativos ao foco e já girados pela inclinação (CAME-3)
   const Q=[];let bx0=1e9,by0=1e9,bx1=-1e9,by1=-1e9;
-  for(let i=0;i<2;i++){const f=fs[i],Sk=SK[i],q=P(f.x,0,f.z),cr=f.y>20||!canAct(f)||f.st==='air'?0:crop;
+  for(let i=0;i<2;i++){const f=fs[i],Sk=SK[i];if(solo&&f!==solo)continue;const q=P(f.x,0,f.z),cr=f.y>20||!canAct(f)||f.st==='air'?0:crop;
     for(const k in Sk){const v=Sk[k];if(!Array.isArray(v))continue;
       const X=q[0]+v[0]*f.face*q[2],Y=q[1]-v[1]*q[2],r=(k==='hd'?6:k==='fh'||k==='bh'?3:2)*q[2];
       if(X-r<bx0)bx0=X-r;if(X+r>bx1)bx1=X+r;if(Y-r<by0)by0=Y-r;if(Y+r>by1)by1=Y+r;
@@ -2506,7 +2544,7 @@ function frame(rdt){
   render(rdt);
 }
 const SKI=()=>{if(introT>0){introT=0;introN=0;running=true;player.st='idle';enemy.st='stalk';player.t=0;enemy.t=0;player.tw=0;enemy.tw=0;banner('','',.01);}};
-window.__kod=w=>{SKI();(w==='e'?enemy:player).st='ko';(w==='e'?enemy:player).t=0;};
+window.__kod=w=>{SKI();const k=w==='e'?enemy:player,v=w==='e'?player:enemy;k.st='ko';k.t=0;koCam={t:0,who:k,win:v,ph:0};camCut=true;};
 for(const k of ['__fix','__go','__ea','__ea2','__fin','__eg','__es','__def','__dd','__sq','__tp','__cs']){const f=window[k];window[k]=(...a)=>{SKI();return f(...a);};}
 let HOLD=false;window.__tick=dt=>{HOLD=true;frame(dt);};window.__free=()=>{HOLD=false;};
 function loop(now){
