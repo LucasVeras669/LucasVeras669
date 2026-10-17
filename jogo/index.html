@@ -443,28 +443,29 @@ function sampleMv(f,mv,t){
   f.spin=spinAt(mv,t);f.y=mv.jump?Math.sin(Math.min(1,t/(mv.d*.85))*PI)*mv.jump:0;f.twS=mv.twS;
   f.tw=mv.tw?mv.tw*(t<mv.h0?eout(clamp((t-mv.a*.5)/(mv.h0-mv.a*.5),0,1)):1-ease(clamp((t-mv.h0)/(mv.d-mv.h0),0,1))):0;
 }
-// ABERTURA (5 s): o boxeador golpeia o ar sem parar (combinação agressiva em repetição: jab, jab, direto, gancho, gancho ao corpo,
-// direto, uppercut, overhand) e o taekwondista cumprimenta: reverência, saudação de punho na palma e uma segunda inclinação de
-// cabeça; nos últimos 0,6 s os dois ficam em guarda de encarada. A câmera passa pelos dois (ver camUpdate)
-const INTRO=5,T0=.8,T1=2.6,T2=4.4;
+// ABERTURA (4 s): uma coisa por vez. Primeiro o jogador faz a sua entrada, depois o rival, e os dois fecham na encarada. Quem espera
+// fica em guarda, quicando. Boxeador: combinação agressiva no ar (jab, jab, direto, gancho, uppercut, overhand). Taekwondista:
+// reverência ao oponente e saudação de punho na palma. A câmera acompanha quem está em cena (ver camUpdate)
+const INTRO=4,T0=.25,T1=1.85,T2=3.45,TW=1.6;
 function introAnim(f){
   const el=Math.max(0,INTRO-introT),box=f.style==='box';f.rot=lerp(f.rot,0,.2);f.y=0;
-  if(el>=T2){f._si=null;f.spin=lerp(f.spin,0,.3);f.tw=lerp(f.tw,0,.2);const o=G[f.style].slice(),b=Math.abs(Math.sin(el*8));
-    if(box){o[0]+=.14;o[1]-=.12;o[7]-=.14+b*.14;o[9]-=.1+b*.1;o[2]+=Math.sin(el*9)*.1;}else{o[7]-=.05+b*.3;o[9]-=.05+b*.25;o[6]+=b*.1;}
-    setPose(f,o,260,.7);return;}
+  const a=f.isP?T0:T1,u=el-a,b=Math.abs(Math.sin(el*8)),gd=G[f.style].slice();
+  const guard=(k)=>{f._si=null;f.spin=lerp(f.spin,0,.3);f.tw=lerp(f.tw,0,.2);
+    if(box){gd[0]+=.14;gd[1]-=.12;gd[7]-=.14+b*.14;gd[9]-=.1+b*.1;gd[2]+=Math.sin(el*9)*.1;}else{gd[7]-=.05+b*.3;gd[9]-=.05+b*.25;gd[6]+=b*.1;}
+    setPose(f,gd,k||260,.7);};
+  if(el<a||el>=a+TW||el>=T2){guard();return;}
   if(box){
-    const seq=['jab','jab','dir','gan','cor','dir','upp','ovr'],L=seq.map(k=>MOV.box[k].d*.72),P=L.reduce((a,b)=>a+b,0),u=el+(f.isP?0:.2);
-    let w=u%P,i=0;while(i<7&&w>=L[i]){w-=L[i];i++;}
+    const seq=['jab','jab','dir','gan','upp','ovr'],L=seq.map(k=>MOV.box[k].d*.72);let w=u,i=0;
+    while(i<5&&w>=L[i]){w-=L[i];i++;}
+    if(u>=L.reduce((x,y)=>x+y,0)){guard();return;}
     const mv=MOV.box[seq[i]];sampleMv(f,mv,Math.min(w/.72,mv.d));
     f.tw=Math.max(f.tw,.25);f.pt[7]-=Math.abs(Math.sin(el*11))*.25;f.pt[9]-=Math.abs(Math.sin(el*11+1))*.2;
   }else{
     f._si=null;f.spin=0;f.tw=0;
-    // reverência: desce, segura, sobe; depois saudação e uma segunda inclinação curta
-    const bow=(a,d,h)=>{const u=el-a;if(u<0||u>d)return 0;const r=Math.min(.45,d*.4);return u<r?ease(u/r):u>d-r?ease((d-u)/r):1;};
-    const b=Math.max(bow(.5,1.4),.55*bow(3.4,.9)),br=Math.sin(el*3)*.02;
+    // reverência: desce, segura, sobe, e fecha com a saudação de punho na palma
+    const d=1.1,r=.4,bow=u<0||u>d?0:u<r?ease(u/r):u>d-r?ease((d-u)/r):1,br=Math.sin(el*3)*.02;
     const salute=[-.02+br,-.2,1.2,2.1,1.2,2.2,.3,-.2,-.4,-.1],stand=[br,-.1,.2,.4,.2,.4,.15,-.15,-.15,-.1],down=[1.05,.55,.2,.35,.2,.35,.1,-.1,-.1,-.1];
-    const base=el<.5?stand:lerpPose(stand,salute,clamp((el-1.5)/.5,0,1));
-    setPose(f,lerpPose(base,down,b),420,.7);
+    setPose(f,lerpPose(lerpPose(stand,salute,clamp((u-d+.2)/.3,0,1)),down,bow),420,.7);
   }
 }
 // COMEMORAÇÃO: boxeador solta o ar, ergue os punhos pulando, vira para a plateia e faz pose de força, depois solta uma sequência no
@@ -2366,7 +2367,7 @@ function camUpdate(rdt,SK){
     else{m=1.3;cy=cyB-46;cz=30;fx=v.x;fz=v.z;fy=40;ax=.5+.14*side(v,w);}}
   else if(introT>0&&!shot){const el=INTRO-introT,seg=el<T0?0:el<T1?1:el<T2?2:3,sub=seg===1?p:seg===2?e:null;wF=5;
     // abertura: plano aberto que aproxima, depois plano fechado no destaque de cada um (órbita lenta, contra-plongée) e a encarada
-    if(sub){solo=sub;const o=sub===p?e:p,k=clamp((el-(seg===1?T0:T1))/1.8,0,1);m=zB*(1.55+.25*Math.sin(PI*k));cy=cyB-38+10*k;cz=36;yaw=(-.2+.4*k)*(sub===p?1:-1)*face;tl=.03*Math.sin(k*PI*2)*face;fx=sub.x;fz=sub.z;fy=38+sub.y*.6;ax=.5+.1*side(sub,o);}
+    if(sub){solo=sub;const o=sub===p?e:p,k=clamp((el-(seg===1?T0:T1))/TW,0,1);m=zB*(1.55+.25*Math.sin(PI*k));cy=cyB-38+10*k;cz=36;yaw=(-.2+.4*k)*(sub===p?1:-1)*face;tl=.03*Math.sin(k*PI*2)*face;fx=sub.x;fz=sub.z;fy=38+sub.y*.6;ax=.5+.1*side(sub,o);}
     else if(seg===0){const k=el/T0;m=zB*(1.05+.12*k);cy=cyB-8;cz=0;fx=(p.x+e.x)/2;fz=(p.z+e.z)/2;fy=36;}
     else{const k=clamp((el-T2)/.6,0,1);m=zB*(1.3+.14*k);cy=cyB-18;cz=22;yaw=.03*Math.sin(el*2);fx=(p.x+e.x)/2;fz=(p.z+e.z)/2;fy=40;}}
   else if(shot){const sub=shot.f==='p'?p:shot.f==='e'?e:null;wF=6;
