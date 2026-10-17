@@ -425,9 +425,47 @@ function startRound(){
   inp.act=null;hitstop=0;timeScale=1;slowT=0;cine=0;tiltT=0;sceneName='';sceneRed=false;
   // câmera do round novo: nada do KO (plano, zoom, inclinação, tarjas, tremor) vaza; corte com fade a partir do preto (CAME-8)
   camReset=true;koCam=null;fadeA=1;trauma=0;lbox=0;flashA=0;
-  running=true;updHud(true);
-  banner(round===3?'ROUND FINAL':'ROUND '+round,round===1?'Lute no ritmo.':'');sfx.bell();
+  // contagem regressiva 4-3-2-1: os dois se aquecem (socam/chutam o ar) e na virada para a luta ficam em guarda
+  running=false;introT=4;introN=99;introSub=(round===3?'ROUND FINAL':'ROUND '+round);
+  player.st='intro';enemy.st='intro';player.t=0;enemy.t=0;
+  updHud(true);
 }
+let introT=0,introN=0,introSub='',winAt=1.4;
+function introStep(rdt){
+  introT-=rdt;const n=Math.max(0,Math.ceil(introT));
+  if(n!==introN&&n>=1){introN=n;banner(String(n),introSub,1);tone(n===1?780:520,n===1?780:520,.1,.14,'square');}
+  if(introT<=0){introT=0;introN=0;running=true;player.st='idle';player.t=0;enemy.st='stalk';enemy.t=0;enemy.cd=1.3;player.tw=0;enemy.tw=0;banner('LUTE!','',.8);sfx.bell();}
+}
+// aquecimento: sequência de golpes no ar, com o ritmo defasado entre os dois; no último segundo vira guarda de encarada
+function introAnim(f){
+  const T=introT,el=4-T,box=f.style==='box',seq=box?['jab','jab','dir','gan','jab','upp']:['ban','dol','mir','dol','ara','yeop'];
+  const base=idlePose(f);f.rot=lerp(f.rot,0,.2);
+  if(T<.8){setPose(f,base,220,.75);f.tw=lerp(f.tw,0,.2);return;}
+  const ph=(el+(f.isP?0:.3))/.62,i=Math.floor(ph)%seq.length,u=ph%1,mv=MOV[f.style][seq[i]],k=Math.sin(PI*Math.min(1,u*1.7));
+  if(u<.6){setPose(f,lerpPose(base,mv.S,k),900,.6);f.twS=mv.twS;f.tw=(mv.tw||0)*k*.8;}else{setPose(f,base,300,.65);f.tw=lerp(f.tw,0,.15);}
+}
+// comemoração da vitória: boxeador agacha, salta de punhos erguidos e soca o ar; taekwondista dá mortal para trás, grita (kihap) e chuta o céu
+function winAnim(f){
+  const t=f.t,box=f.style==='box';f.spin=0;
+  if(box){
+    const air=f.y>1;
+    if(t<.35)setPose(f,[.65,-.2,.5,2.2,.4,2.3,.95,-1.5,-.4,-1.0],500,.6);
+    else{
+      if(f.wj!==1&&(f.wj===undefined||t-f.wjt>1.7)){f.wj=1;f.wjt=t;f.vy=175;f.y=Math.max(f.y,.6);pop('YEAH!',f,'#f2a93b');}
+      if(air)setPose(f,[-.15,-.4,2.9,.3,2.8,.4,.3,-.2,-.3,-.1],260,.5);
+      else{f.wj=2;const b=Math.floor((t-f.wjt)*3.4)%2;setPose(f,b?[-.1,-.4,2.9,.2,1.3,2.3,.4,-.4,-.4,-.2]:[-.1,-.4,1.3,2.3,2.9,.2,.4,-.4,-.4,-.2],240,.5);f.tw=0;}
+    }
+  }else{
+    if(t<.3){setPose(f,[.5,-.1,.6,1.4,.4,1.6,.9,-1.3,-.5,-.9],500,.6);}
+    else if(!f.wj){f.wj=1;f.vy=205;f.rotDir=-1;f.wjt=t;}
+    if(f.wj===1){if(f.y>.5||t<.45){f.rot=-clamp((t-.3)/.72,0,1)*TAU;setPose(f,TUCK,700,.6);}else{f.wj=2;f.rot=0;f.rotDir=0;f.wjt=t;pop('KIHAP!',f,'#f2a93b');land(f,-260);}}
+    else if(f.wj===2){const u=t-f.wjt;f.rot=0;
+      if(u<.55)setPose(f,[-.05,-.3,1.7,.5,.3,2.3,.4,-.3,-.5,-.15],400,.6);
+      else if(u<1.15)setPose(f,[-.5,.1,1.0,1.6,.6,1.8,2.7,-.1,-.4,-.1],700,.5);
+      else setPose(f,WIN.tkd,200,.65);}
+  }
+}
+
 let bannerT=0;
 let bannerB=0; // base do letreiro em pixels do canvas (a câmera deixa os lutadores abaixo dela)
 function banner(t,s,dur){$('bTitle').textContent=t;$('bSub').textContent=s||'';$('banner').classList.add('on');bannerT=dur||1.6;
@@ -1108,7 +1146,8 @@ function updPlayer(p,rdt){
    case 'down':p.rotT=-1.45;if(p.t>.25)setPose(p,DOWN,200,.8);if(p.t>1&&p.y<=0){p.st='getup';p.t=0;}break;
    case 'getup':if(getupPose(p))p.st='idle';break;
    case 'ko':p.rotT=-1.5;if(p.t>.3)setPose(p,DOWN,150,.8);break;
-   case 'win':setPose(p,WIN[p.style],120,.6);p.rot=0;p.spin=0;break;
+   case 'win':winAnim(p);break;
+   case 'intro':introAnim(p);break;
   }
   // pouso do golpe com salto ou da queda do juggle dentro do golpe: amortece nos joelhos (FLUI-2)
   if(dt>0){if(p.st==='atk'&&p.yl>2&&p.y<=.5)land(p,-(p.yl-p.y)/dt);p.yl=p.y;}
@@ -1336,7 +1375,8 @@ function updEnemy(e,dt){
    case 'throw':throwStep(e,dt);break;
    case 'thrown':e.spin=0;thrownStep(e,dt);break;
    case 'ko':e.rotT=-1.5;if(e.t>.3)setPose(e,DOWN,150,.8);e.spin=0;break;
-   case 'win':setPose(e,WIN[e.style],120,.6);e.rot=0;break;
+   case 'win':winAnim(e);break;
+   case 'intro':introAnim(e);break;
   }
 }
 
@@ -1409,11 +1449,11 @@ function update(dt,rdt){
   for(const t of trails)t.l-=rdt;trails=trails.filter(t=>t.l>0);
   for(const q of pops){q.l-=rdt;q.y+=rdt*22;}pops=pops.filter(q=>q.l>0);
   if(running&&!roundOver&&(enemy.st==='ko'||player.st==='ko')){
-    roundOver=2.6;const pw=enemy.st==='ko';wins[pw?0:1]++;roundMsg=pw;updHud();
+    const pw=enemy.st==='ko';wins[pw?0:1]++;roundMsg=pw;const fin=wins[pw?0:1]>=2;roundOver=fin?5.4:3.4;winAt=fin?4.4:2.4;updHud();
     setTimeout(()=>{banner(pw?'NOCAUTE!':'VOCÊ CAIU',pw?'Round seu':'Round do rival');sfx.bell();},350);
   }
   if(roundOver>0){roundOver-=rdt;
-    if(roundOver<1.4){const w=roundMsg?player:enemy;if(w.st==='idle'||w.st==='stalk'||w.st==='rec')w.st='win';}
+    if(roundOver<winAt){const w=roundMsg?player:enemy;if(w.st==='idle'||w.st==='stalk'||w.st==='rec'||w.st==='hurt'){w.st='win';w.t=0;w.wj=undefined;w.rot=0;}}
     if(roundOver<=0){if(wins[0]>=2||wins[1]>=2)endMatch(wins[0]>=2);else{round++;startRound();}}}
 }
 function endMatch(won){
@@ -2457,6 +2497,7 @@ function frame(rdt){
   if(slowT>0){slowT-=rdt;}else timeScale+=(1-timeScale)*Math.min(1,rdt*6);
   let gdt=rdt*timeScale;if(hitstop>0){hitstop-=rdt;gdt=0;}
   if(bannerT>0){bannerT-=rdt;if(bannerT<=0)$('banner').classList.remove('on');}
+  if(introT>0)introStep(rdt);
   update(gdt,rdt);
   if(running||matchOver)updHud();
   // modo cinema na interface: entrada travada na cena e no ESPECIAL (CAME-4)
@@ -2464,6 +2505,9 @@ function frame(rdt){
    if(c!==cineOn){cineOn=c;$('game').classList.toggle('cine',c);}}
   render(rdt);
 }
+const SKI=()=>{if(introT>0){introT=0;introN=0;running=true;player.st='idle';enemy.st='stalk';player.t=0;enemy.t=0;player.tw=0;enemy.tw=0;banner('','',.01);}};
+window.__kod=w=>{SKI();(w==='e'?enemy:player).st='ko';(w==='e'?enemy:player).t=0;};
+for(const k of ['__fix','__go','__ea','__ea2','__fin','__eg','__es','__def','__dd','__sq','__tp','__cs']){const f=window[k];window[k]=(...a)=>{SKI();return f(...a);};}
 let HOLD=false;window.__tick=dt=>{HOLD=true;frame(dt);};window.__free=()=>{HOLD=false;};
 function loop(now){
   const rdt=Math.min(.05,(now-last)/1000);last=now;
@@ -2518,7 +2562,7 @@ $('pickBox').onclick=()=>{chosen='box';begin('box');};
 $('pickTkd').onclick=()=>{chosen='tkd';begin('tkd');};
 $('again').onclick=()=>begin(chosen);
 // pausa e saída: o botão SAIR pausa a luta e pergunta (sem diálogos do navegador); Esc faz o mesmo no PC
-function setPause(v){if(!running&&!v&&!paused)return;if(v&&!running)return;paused=v;$('pause').hidden=!v;if(v){inp.x=0;inp.z=0;inp.act=null;sid=null;stick.classList.remove('on');for(const k in keys)keys[k]=0;$('resume').focus();}}
+function setPause(v){if(!running&&!v&&!paused)return;if(v&&!running&&!(introT>0))return;paused=v;$('pause').hidden=!v;if(v){inp.x=0;inp.z=0;inp.act=null;sid=null;stick.classList.remove('on');for(const k in keys)keys[k]=0;$('resume').focus();}}
 function showMenu(){
   paused=false;running=false;matchOver=false;roundOver=0;inp.act=null;inp.x=0;inp.z=0;sid=null;stick.classList.remove('on');
   for(const id of ['over','pause','hud','pad','stickHint','bExit'])$(id).hidden=true;
@@ -2528,7 +2572,7 @@ function showMenu(){
   $('menu').hidden=false;preview('pvBox','box',PAL.boxP);preview('pvTkd','tkd',PAL.tkdP);$('pickBox').focus();
 }
 $('bExit').onclick=()=>setPause(true);$('resume').onclick=()=>setPause(false);$('quit').onclick=showMenu;$('quit2').onclick=showMenu;
-addEventListener('keydown',e=>{if(e.code==='Escape'&&!e.repeat&&running)setPause(!paused);});
+addEventListener('keydown',e=>{if(e.code==='Escape'&&!e.repeat&&(running||introT>0))setPause(!paused);});
 $('swap').onclick=()=>{chosen=chosen==='box'?'tkd':'box';begin(chosen);};
 
 // prévias animadas no menu (mostram golpes do estilo)
