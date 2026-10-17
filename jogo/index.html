@@ -382,20 +382,17 @@ function ambInit(){if(!AC||AMB)return;AMB={buf:ambBuf(4),master:AC.createGain()}
   AMB.sea=ambNode('lowpass',560,.6,0,[.11,.7]);AMB.sea2=ambNode('bandpass',2600,.9,0,[.13,.6]);AMB.hum=ambNode('lowpass',90,1,0);AMB.crowd=ambNode('bandpass',680,.55,0,[.23,.25]);AMB.crowd2=ambNode('bandpass',1700,.7,0,[.31,.3]);}
 let ambT0=0;
 function ambSet(st){ambStage=st;ambT0=time;if(!AC)return;ambInit();if(!AMB)return;const t=AC.currentTime,r=(g,v)=>{g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(v,t+.6);};
-  r(AMB.rain,st===1?.16:0);r(AMB.rain2,st===1?.07:0);r(AMB.rumb,st===1?.05:0);r(AMB.sea,st===2?.3:0);r(AMB.sea2,st===2?.08:0);r(AMB.hum,st===0?.025:0);r(AMB.crowd,st===0?.11:0);r(AMB.crowd2,st===0?.04:0);
+  r(AMB.rain,st===1?.055:0);r(AMB.rain2,st===1?.022:0);r(AMB.rumb,st===1?.016:0);r(AMB.sea,st===2?.11:0);r(AMB.sea2,st===2?.03:0);r(AMB.hum,0);r(AMB.crowd,0);r(AMB.crowd2,0);
   AMB.master.gain.setTargetAtTime(ambPause?0:1,t,.2);}
 function ambMute(v){ambPause=v;if(AMB&&AC)AMB.master.gain.setTargetAtTime(v?0:1,AC.currentTime,.15);}
 let ambNext=3;
 // gotas isoladas na chuva e gaivotas na praia (chamado a cada quadro)
 function ambTick(rdt){if(!AC||ambPause||!AMB)return;if(ambStage!==STAGE)ambSet(STAGE);if((ambNext-=rdt)>0)return;
-  if(STAGE===1){tone(2800+Math.random()*1800,1400,.03,.05,'sine');ambNext=rnd(.15,.5);}
+  if(STAGE===1){tone(2800+Math.random()*1800,1400,.03,.018,'sine');ambNext=rnd(.15,.5);}
   else if(STAGE===2)ambNext=9;
-  else{const f=420+Math.random()*260;
-    // plateia do ringue: vozes esparsas ('aaah', 'ê!') por cima do murmúrio
-    noise(.5+Math.random()*.4,900+Math.random()*500,.05,'bandpass');tone(f,f*1.25,.35,.018,'sawtooth');ambNext=rnd(1.2,3.5);}
-  if(STAGE===0&&ambStage===0&&time-ambT0>.7){const t=AC.currentTime;AMB.crowd.gain.setTargetAtTime(.11+.2*crowdHype,t,.3);AMB.crowd2.gain.setTargetAtTime(.04+.09*crowdHype,t,.3);}}
+  else ambNext=3;}
 // torcida reagindo: explosão de vozes (ruído em banda + dois tons de voz subindo) proporcional à força do momento
-function cheer(v){if(!AC||STAGE!==0||ambPause)return;const a=Math.min(1,v);noise(.7+a*.9,1000+a*600,.09+.13*a,'bandpass');noise(.5+a*.6,500,.07+.1*a,'bandpass');
+function cheer(v){return;if(!AC||STAGE!==0||ambPause)return;const a=Math.min(1,v);noise(.7+a*.9,1000+a*600,.09+.13*a,'bandpass');noise(.5+a*.6,500,.07+.1*a,'bandpass');
   for(const f of [250,380,520]){tone(f*.9,f*1.4,.45+a*.5,.012+.02*a,'sawtooth');}}
 const sfx={
  hit:k=>{noise(.1,2200,.45);tone(170*(1+k*.02),55,.12,.5)},
@@ -2605,7 +2602,7 @@ function rainUpd(dt){
   if(RAIN.fn===undefined)rainInit();
   RAIN.fn-=dt;if(RAIN.fn<=0){RAIN.fl=.55;RAIN.fn=rnd(7,15);RAIN.th=rnd(.25,.7);}
   if(RAIN.fl>0)RAIN.fl-=dt*2.1;
-  if(RAIN.th>0){RAIN.th-=dt;if(RAIN.th<=0){noise(1.4,260,.5);tone(70,34,.9,.35);}}
+  if(RAIN.th>0){RAIN.th-=dt;if(RAIN.th<=0){noise(1.4,260,.22);tone(70,34,.9,.14);}}
   if(dt>0){const n=Math.floor(dt*90+Math.random());for(let i=0;i<n;i++)RAIN.sp.push({x:camX+rnd(-230,230),z:rnd(112,330),l:0,ml:rnd(.28,.5)});
     for(const s of RAIN.sp)s.l+=dt;RAIN.sp=RAIN.sp.filter(s=>s.l<s.ml);}
 }
