@@ -80,8 +80,9 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 #b1,#b2,#b3{width:60px;height:60px;background:rgba(127,214,255,.18)!important;border-color:rgba(239,230,210,.85)!important}
 #b1{right:104px;bottom:4px}#b2{right:110px;bottom:70px}#b3{right:56px;bottom:104px}
 #bCnt{width:56px;height:56px;right:0;bottom:110px;background:rgba(255,255,255,.82)!important;color:#15121c!important;border-color:#fff}
-#bDef small{display:block;font-size:5.8px;line-height:1.15;letter-spacing:0;margin-top:2px;opacity:.9}
-#bDef{width:76px;height:76px;right:0;bottom:176px;background:rgba(60,110,86,.78)!important;color:#fff;border-color:#bfe8cf}
+#bDef{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:0}
+#bDef small{display:block;font-size:7px;line-height:1;letter-spacing:0;margin-top:1px;opacity:1;color:#e9fff1}
+#bDef{width:70px;height:70px;font-size:9px!important;right:0;bottom:176px;background:rgba(60,110,86,.78)!important;color:#fff;border-color:#bfe8cf}
 #bDef.dn,#bDef.on{background:rgba(90,170,126,.95)!important}
 #bDod{width:56px;height:56px;right:176px;bottom:6px;background:rgba(220,40,40,.78)!important;color:#fff;border-color:#ffd0d0}
 #bTh{width:60px;height:60px;right:122px;bottom:134px;font-size:6.5px!important;background:rgba(242,169,59,.28)!important;border-color:#f2a93b!important}
@@ -152,7 +153,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
   <div id="pad" hidden>
     <button id="bFin" aria-label="Especial">ESPECIAL</button>
     <button id="bTh" aria-label="Arremessar">ARREMESSAR</button>
-    <button id="bDef" aria-label="Defesa (mantenha pressionado)">DEFESA<small>(mantenha<br>pressionado)</small></button>
+    <button id="bDef" aria-label="Defesa (mantenha pressionado)">DEFESA<small>PRESSIONADO</small></button>
     <button id="bDod" aria-label="Esquiva">ESQUIVA</button>
     <button id="b2">DIRETO</button>
     <button id="b1">JAB</button>
