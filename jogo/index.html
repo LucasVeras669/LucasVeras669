@@ -751,7 +751,7 @@ function doDodge(p){
   const box=p.style==='box';
   let kind=toward?'over':Math.abs(dz)>.7?'side':'back';
   unrot(p);p.st='dodge';p.t=0;p.buf=null;p.hold=null;p.preK=null;p.rotDir=box?0:kind==='back'?-1:kind==='over'?1:0;
-  if(kind==='over'){const tx=clamp(e.x+Math.sign(e.x-p.x)*(box?30:54),-AX,AX);p.dg={kind,sx:p.x,sz:p.z,sy:p.y,tx,tz:e.z,dur:box?.42:.58,zs:dz>0?1:-1};pop(box?'PÊNDULO':'ESTRELA',p,'#7fd6ff');}
+  if(kind==='over'){const tx=clamp(e.x+Math.sign(e.x-p.x)*(box?30:84),-AX,AX);p.dg={kind,sx:p.x,sz:p.z,sy:p.y,tx,tz:e.z,dur:box?.42:.68,zs:dz>0?1:-1};pop(box?'PÊNDULO':'ESTRELA',p,'#7fd6ff');}
   else p.dg={kind,sy:p.y,vx:dx*(box?170:230),vz:dz*(box?140:160),dur:box?.34:.42};
   sfx.swoosh();dust(p.x,p.z,4);
 }
@@ -1001,7 +1001,7 @@ function updPlayer(p,rdt){
    case 'dodge':{
     const D=p.dg,k=Math.min(1,p.t/D.dur),box=p.style==='box',y0=(D.sy||0)*(1-ease(k));
     if(D.kind==='over'){const q=ease(k);p.x=lerp(D.sx,D.tx,q);p.z=lerp(D.sz,D.tz,q)+(box?Math.sin(k*PI)*28*D.zs:0);
-      if(box){p.y=y0;setPose(p,k>.7?G.box:DUCK,k>.7?520:900,.55);}else{p.y=Math.sin(k*PI)*62+y0;p.rot=q*TAU;setPose(p,k>.72?HOP:TUCK,k>.72?700:900,.6);}
+      if(box){p.y=y0;setPose(p,k>.7?G.box:DUCK,k>.7?520:900,.55);}else{p.y=Math.sin(k*PI)*80+y0;p.rot=q*TAU;setPose(p,k>.72?HOP:TUCK,k>.72?700:900,.6);}
       if(k>.55&&canAct(e))setFace(p,Math.sign(e.x-p.x));}
     // arranque explosivo e freada até parar (mesma distância), a pose volta à guarda no último terço (FLUI-11)
     else{const v=1.75*Math.pow(1-k,1.5);p.x+=D.vx*dt*v;p.z+=D.vz*dt*v;
