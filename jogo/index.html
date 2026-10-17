@@ -79,8 +79,8 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 #bAtk{width:92px;height:92px;right:4px;bottom:8px;background:rgba(216,64,47,.6)!important;font-size:12px!important}
 #b1,#b2,#b3{width:60px;height:60px;background:rgba(127,214,255,.18)!important;border-color:rgba(239,230,210,.85)!important}
 #b1{right:104px;bottom:4px}#b2{right:110px;bottom:70px}#b3{right:56px;bottom:104px}
-#bCnt{width:56px;height:56px;right:0;bottom:110px;background:rgba(242,169,59,.4)!important}
-#bDod{width:56px;height:56px;right:176px;bottom:6px}
+#bCnt{width:56px;height:56px;right:0;bottom:110px;background:rgba(255,255,255,.82)!important;color:#15121c!important;border-color:#fff}
+#bDod{width:56px;height:56px;right:176px;bottom:6px;background:rgba(220,40,40,.78)!important;color:#fff;border-color:#ffd0d0}
 #bFin{width:56px;height:56px;right:180px;bottom:72px;opacity:.4}
 #bFin.chg{opacity:.85;background:rgba(242,169,59,.3)!important}
 #bFin.ready{opacity:1;background:rgba(242,169,59,.75)!important;animation:pulse .5s steps(2) infinite}
@@ -2196,11 +2196,6 @@ function loop(now){
   if(bannerT>0){bannerT-=rdt;if(bannerT<=0)$('banner').classList.remove('on');}
   update(gdt,rdt);
   if(running||matchOver)updHud();
-  // CONTRA acende amarelo só no golpe real; na finta fica branco e parado; no tropeço da finta quem pulsa é a ESQUIVA (INTE-14)
-  {const th=isThreat(enemy),stum=player.st==='hurt'&&player.stum;
-   const fa=enemy.feint&&DIFF!=='mestre';
-   $('bCnt').classList.toggle('alert',th&&!enemy.red&&!fa&&!stum);$('bCnt').classList.toggle('feint',th&&fa&&!enemy.red);$('bCnt').classList.toggle('nocnt',th&&enemy.red);
-   $('bDod').classList.toggle('alert',(stum&&th&&player.t>.15)||(th&&enemy.red));$('bDod').classList.toggle('red',th&&enemy.red);}
   // modo cinema na interface: entrada travada na cena e no ESPECIAL (CAME-4)
   {const c=!!player&&(player.inScene||player.st==='atk'&&player.kind==='fin'||player.st==='dash'&&!!player.dash&&player.dash.kind==='fin');
    if(c!==cineOn){cineOn=c;$('game').classList.toggle('cine',c);}}
