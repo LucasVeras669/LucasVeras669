@@ -172,7 +172,9 @@ const G={box:[.2,-.15,.95,2.05,.55,2.4,.3,-.4,-.35,-.3],tkd:[-.05,.05,.55,1.3,.2
 const HURT_HEAD=[-.55,.65,-.2,.8,-.5,.6,.45,-.5,-.3,-.2];
 const HURT_BODY=[.75,-.25,.6,2.3,.4,2.5,.5,-.95,-.3,-.65];
 const STAG=[-.1,.45,.25,.5,.05,.4,.45,-1.0,-.3,-.75];
-const AIRP=[-.7,.6,-.9,.4,-1.1,.3,.7,-.6,-.2,-.5];
+const AIRP=[-.7,.6,-.9,.4,-1.1,.3,.7,-.6,-.2,-.5],AIRP2=[.4,.5,-.6,1.2,-.8,1.0,1.4,-2.0,.9,-1.8];
+// levantada: sentado com um joelho no chão (FLUI-12)
+const KNEEL=[.9,.2,1.2,2.2,.8,2.3,1.5,-2.3,-.2,-1.7];
 const DOWN=[0,.3,-.5,.4,-.7,.3,.25,-.15,-.15,-.1];
 const DUCK=[.85,-.35,1.0,2.15,.6,2.45,.75,-1.5,-.5,-1.05];
 const PULL=[-.45,.05,1.0,2.05,.6,2.45,.3,-.3,-.65,-.45];
@@ -184,9 +186,16 @@ const WIN={box:[-.1,-.4,2.9,.2,.5,2.3,.2,-.1,-.2,-.1],tkd:[-.05,-.3,.5,1.4,.3,1.
 
 // ---------- golpes ----------
 // keys: [tempo, pose (null = guarda), rigidez da mola, amortecimento]; hits: impactos com membro usado
+// twS: lado que a torção leva à frente (+1 golpe do membro de trás, -1 do da frente) (FLUI-1).
+// Chaves automáticas: antecipação mais firme nos golpes curtos e recâmara logo depois do impacto (o chute recolhe o joelho,
+// o soco dobra o cotovelo) antes de voltar à guarda (FLUI-7)
+const recoil=(S,lim)=>{if(!S)return null;const R=S.slice(),i={fh:2,bh:4,ft:6,bt:8}[lim];if(i===undefined)return null;
+  if(i>=6){R[i]*=.75;R[i+1]=-1.9;}else{R[i]*=.9;R[i+1]=Math.max(R[i+1],1.6);}return R;};
 function mk(n,o){
   const m=Object.assign({n,kb:40,jump:0,spin:0,sa:1,lunge:0,r:24,react:'hit',lv:'head',tw:0,lim:'fh'},o);
-  if(!m.keys)m.keys=[[0,m.A,o.ka||520,.75],[m.a,m.S,o.ks||1700,.55],[m.h+(m.d-m.h)*.5,null,280,.7]];
+  m.twS=m.lim==='bh'||m.lim==='bt'?1:-1;
+  if(!m.keys){const R=recoil(m.S,m.lim);m.keys=[[0,m.A,o.ka||(m.a<=.07?900:520),.75],[m.a,m.S,o.ks||1700,.55]];
+    if(R)m.keys.push([m.h+Math.max(.03,(m.d-m.h)*.18),R,1000,.65]);m.keys.push([m.h+(m.d-m.h)*.5,null,280,.7]);}
   if(!m.hits)m.hits=[{t:m.h,dmg:m.dmg,react:m.react,lim:m.lim,lv:m.lv,kb:m.kb}];
   m.h0=m.hits.length?m.hits[0].t:m.d;m.hl=m.hits.length?m.hits[m.hits.length-1].t:m.d;if(m.a===undefined)m.a=m.keys[1]?m.keys[1][0]:0;
   return m;
@@ -195,7 +204,7 @@ const BX={
  jab:mk('Jab',{lim:'fh',d:.24,a:.04,h:.085,A:[.15,-.15,.8,2.25,.55,2.4,.3,-.4,-.35,-.3],S:[.3,-.12,1.6,.05,.6,2.35,.38,-.35,-.42,-.25],dmg:5,r:22,kb:25,tw:.25,lunge:5}),
  dir:mk('Direto',{lim:'bh',d:.3,a:.06,h:.12,A:[.12,-.15,1.0,2.05,.4,2.45,.3,-.4,-.35,-.3],S:[.45,-.15,.85,2.15,1.58,.05,.5,-.55,-.6,-.05],dmg:8,r:24,tw:.9,lunge:8}),
  gan:mk('Gancho',{lim:'fh',d:.3,a:.07,h:.13,A:[.15,-.1,.7,1.7,.55,2.4,.35,-.5,-.35,-.3],S:[.38,-.1,1.45,1.05,.55,2.4,.42,-.5,-.4,-.3],dmg:9,r:20,tw:1.15,kb:35}),
- upp:mk('Uppercut',{lim:'bh',d:.36,a:.1,h:.16,A:[.55,.05,.95,2.05,.5,2.55,.62,-1.05,-.45,-.75],S:[-.1,-.3,.95,2.05,2.5,-.35,.3,-.25,-.35,-.1],dmg:10,r:20,tw:.6,react:'stagger'}),
+ upp:mk('Uppercut',{lim:'bh',d:.36,a:.1,h:.16,A:[.55,.05,.95,2.05,.5,2.55,.62,-1.05,-.45,-.75],S:[.1,-.3,.95,2.05,1.6,1.42,.3,-.25,-.35,-.1],dmg:10,r:20,tw:.6,react:'stagger'}),
  cor:mk('Gancho no corpo',{lim:'fh',d:.32,a:.08,h:.14,A:[.5,0,.7,1.8,.5,2.45,.65,-1.1,-.4,-.7],S:[.6,-.05,1.25,.9,.55,2.4,.65,-1.0,-.45,-.6],dmg:9,r:20,tw:1.1,lv:'body'}),
  ovr:mk('Overhand',{lim:'bh',d:.4,a:.1,h:.18,A:[.0,-.1,1.0,2.05,.9,2.6,.3,-.4,-.35,-.3],S:[.7,-.2,.8,2.15,1.85,.25,.58,-.75,-.6,-.05],dmg:12,r:24,tw:1.0,lunge:12,react:'knock',kb:70}),
  ent:mk('Jab de entrada',{lim:'fh',d:.3,a:.05,h:.1,A:[.55,-.2,.9,2.2,.5,2.4,.8,-1.3,-.7,-.55],S:[.4,-.15,1.62,.05,.6,2.35,.55,-.6,-.6,-.2],dmg:6,r:22,tw:.3,lunge:16}),
@@ -203,13 +212,13 @@ const BX={
  chk:mk('Check hook',{lim:'fh',d:.46,a:.1,h:.18,A:PULL,S:[.35,-.1,1.5,1.0,.55,2.4,.3,-.4,-.6,-.3],dmg:15,r:22,tw:1.2,spin:PI*.3,sa:1,ret:1,react:'knock',kb:90}),
  fly:mk('Rajada',{lim:'bh',d:.24,a:.04,h:.08,A:[.3,-.1,.9,2.1,.5,2.5,.4,-.5,-.45,-.25],S:[.42,-.12,1.0,2.0,1.6,.05,.45,-.5,-.5,-.15],dmg:4,r:22,tw:.7,kb:12}),
 };
-BX.finUpp=mk('Uppercut do Martelo',Object.assign({},{lim:'bh',d:.42,a:.12,h:.19,A:DUCK,S:[-.15,-.35,.95,2.05,2.6,-.4,.3,-.2,-.35,-.05],dmg:12,r:20,tw:.7,react:'stagger'}));
+BX.finUpp=mk('Uppercut do Martelo',Object.assign({},{lim:'bh',d:.42,a:.12,h:.19,A:DUCK,S:[.05,-.35,.95,2.05,1.65,1.38,.3,-.2,-.35,-.05],dmg:12,r:20,tw:.7,react:'stagger'}));
 BX.finOvr=mk('MARTELO',{lim:'bh',d:.7,a:.26,h:.36,A:[-.15,-.1,1.1,2.1,1.6,2.9,.4,-.7,-.4,-.4],S:[.85,-.3,.8,2.2,1.9,.3,.65,-.9,-.65,-.05],dmg:22,r:24,tw:1.1,lunge:14,react:'knock',kb:150,jump:8});
 const TK={
  ban:mk('Bandal Chagi',{lim:'ft',d:.26,a:.06,h:.11,A:[-.1,.05,.5,1.4,.25,1.6,1.25,-2.0,-.5,-.1],S:[-.5,.1,.35,1.5,-.1,1.3,1.62,-.1,-.45,-.05],dmg:6,r:28,tw:.6,lv:'body',kb:30}),
  dol:mk('Dollyo Chagi',{lim:'bt',d:.34,a:.1,h:.16,A:[-.15,.05,.5,1.4,.1,1.5,-.15,-.2,1.05,-2.2],S:[-.6,.1,.3,1.6,-.3,1.2,-.1,-.15,1.68,-.08],dmg:9,r:28,tw:1.0,kb:45}),
  mir:mk('Mireo Chagi',{lim:'ft',d:.34,a:.1,h:.15,A:[-.15,.05,.6,1.3,.3,1.6,1.5,-2.4,-.45,-.1],S:[-.55,.1,.6,1.2,.2,1.5,1.55,-.05,-.5,-.1],dmg:7,r:28,lunge:14,kb:95,lv:'body'}),
- nae:mk('Naeryo Chagi',{lim:'ft',d:.42,a:.17,h:.24,A:[-.45,.1,.4,1.5,.2,1.6,2.95,-.1,-.45,-.05],S:[.2,-.1,.6,1.4,.3,1.6,1.15,-.25,-.5,-.1],dmg:11,r:26,react:'knock',kb:40}),
+ nae:mk('Naeryo Chagi',{lim:'ft',d:.42,a:.17,h:.24,A:[-.45,.1,.4,1.5,.2,1.6,2.95,-.1,-.45,-.05],S:[.15,-.1,.6,1.4,.3,1.6,2.3,-.1,-.5,-.1],dmg:11,r:26,react:'knock',kb:40}),
  dwi:mk('Dwi Chagi',{lim:'bt',d:.46,a:.12,h:.2,A:[.35,0,.6,1.3,.3,1.6,.3,-.35,1.1,-2.3],S:[.9,-.2,.5,1.6,.2,1.6,.35,-.3,-1.75,0],dmg:12,r:30,spin:TAU,sa:.5,react:'launch',kb:60,lunge:6}),
  hur:mk('Dwi Huryeo Chagi',{lim:'bt',d:.5,a:.14,h:.23,A:[.35,0,.6,1.3,.3,1.6,.3,-.35,-.9,-.3],S:[.75,-.2,.5,1.6,.2,1.6,.35,-.3,-2.2,-.75],dmg:12,r:30,spin:TAU,sa:.55,react:'knock',kb:80}),
  dub:mk('Dubal Dangsung',{d:.5,jump:14,keys:[[0,[-.1,.05,.5,1.4,.25,1.6,1.25,-2.0,-.5,-.1],700,.7],[.05,[-.45,.1,.4,1.5,-.1,1.3,1.6,-.1,-.6,-.9],1800,.55],[.17,[-.5,.1,.3,1.6,-.3,1.2,-.3,-.8,1.68,-.08],1800,.55],[.35,null,280,.7]],
@@ -221,7 +230,7 @@ const TK={
  cct:mk('Contra Bandal',{lim:'ft',d:.38,a:.08,h:.13,A:HOP,S:[-.6,.1,.3,1.5,-.2,1.3,1.75,-.05,-.45,-.05],dmg:14,r:28,tw:.7,react:'knock',kb:90}),
  air:mk('Twio Ap Chagi',{lim:'ft',d:.36,a:.08,h:.15,A:TUCK,S:[-.5,.1,.5,1.4,.2,1.5,1.9,-.05,.4,-1.6],dmg:7,r:28,jump:0,react:'launch',kb:20,lv:'head'}),
 };
-TK.f540=mk('VENDAVAL 540',{lim:'ft',d:.8,a:.36,h:.48,A:TUCK,S:[.25,-.1,.7,1.5,.35,1.9,1.05,-.2,-.6,-.3],dmg:22,r:26,spin:TAU*1.5,sa:1,jump:34,react:'knock',kb:150,ka:900});
+TK.f540=mk('VENDAVAL 540',{lim:'ft',d:.8,a:.36,h:.48,A:TUCK,S:[.25,-.1,.7,1.5,.35,1.9,1.05,-.2,-.6,-.3],dmg:22,r:26,spin:TAU*1.5,sa:2/3,jump:34,react:'knock',kb:150,ka:900});
 const MOV={box:BX,tkd:TK};
 const SEQ={
   box:[['jab','dir'],['jab','dir','gan'],['jab','jab','dir'],['jab','dir','gan','dir'],['cor','gan','dir'],['jab','dir','cor','gan'],['jab','dir','upp','gan'],['dir','gan','dir','ovr']],
@@ -322,7 +331,8 @@ function mkF(style,isP,pal,x,z){return {style,isP,pal,x,z,y:0,vx:0,vz:0,vy:0,fac
   pose:G[style].slice(),pt:G[style].slice(),pv:new Array(10).fill(0),k:160,zt:.8,ki:-1,hi:0,rot:0,rotT:0,spin:0,turn:0,tw:0,walk:0,flash:0,cd:1.4,bob:Math.random()*6,
   chain:[],trailT:0,fc:0,kind:'norm',smear:[],seq:null,si:0,imp:0,impT:0,mash:0,flow:0,queued:null,early:false,cedo:false,preK:null,impMv:null,lastImpact:-9,airHits:0,gh:0,lt:0,
   rotR:0,rotDir:0,y0:0,spinT:0,buf:null,hold:null,finBuf:null,punish:false,tgtOk:true,dash:null,dg:null,inScene:false,stum:false,hurtD:.38,
-  stun:0,stunT:0,armor:false,jg:0,landV:0,bounced:false,spk:false};}
+  stun:0,stunT:0,armor:false,jg:0,landV:0,bounced:false,spk:false,
+  tv:0,rv:0,fb:0,lk:0,gw:0,gx:1,str:0,ro:0,ank:null,yb:0,lvx:0,lvz:0,wx:null,wz:0,twS:-1,yl:0};}
 
 function newMatch(style){
   const es=style==='box'?'tkd':'box';
@@ -335,7 +345,8 @@ function startRound(){
   // zera todo estado transitório: nada da luta anterior (toque guardado, giro, juggle, câmera lenta) vaza para o round novo
   for(const [f,x] of [[player,-70],[enemy,70]]){Object.assign(f,{x,z:225,y:0,vx:0,vz:0,vy:0,rot:0,rotT:0,rotR:0,rotDir:0,y0:0,spin:0,spinT:0,turn:0,tw:0,st:'idle',t:0,flash:0,face:f.isP?1:-1,fc:0,imp:0,impT:0,mash:0,flow:0,queued:null,smear:[],seq:null,inScene:false,cseq:null,ccam:null,cStreak:0,fseq:null,
     kind:'norm',airHits:0,early:false,cedo:false,preK:null,impMv:null,lastImpact:-9,chain:[],dash:null,dg:null,buf:null,hold:null,finBuf:null,punish:false,feint:false,gh:0,inv:false,tgtOk:true,airLift:0,
-    stum:false,hurtD:.38,stun:0,stunT:0,armor:false,jg:0,landV:0,bounced:false,spk:false});f.max=f.isP?100:110+round*20;f.hp=f.max;}
+    stum:false,hurtD:.38,stun:0,stunT:0,armor:false,jg:0,landV:0,bounced:false,spk:false,
+    tv:0,rv:0,fb:0,lk:0,gw:0,gx:1,str:0,ro:0,ank:null,yb:0,lvx:0,lvz:0,wx:null,wz:0,twS:-1,yl:0,pose:G[f.style].slice(),pt:G[f.style].slice(),pv:new Array(10).fill(0)});f.max=f.isP?100:110+round*20;f.hp=f.max;}
   enemy.st='stalk';enemy.cd=1.6;combo=0;comboT=0;parts=[];trails=[];pops=[];roundOver=0;speedL=0;impactF=0;
   inp.act=null;hitstop=0;timeScale=1;slowT=0;cine=0;tiltT=0;sceneName='';sceneRed=false;
   // câmera do round novo: nada do KO (plano, zoom, inclinação, tarjas, tremor) vaza; corte com fade a partir do preto (CAME-8)
@@ -361,21 +372,76 @@ function pop(txt,f,c){let n=0;for(const q of pops)if(q.o===f&&q.l>.72)n++;pops.p
 function setPose(f,p,k,zt){const s=p||G[f.style];for(let i=0;i<10;i++)f.pt[i]=s[i];f.k=k||160;f.zt=zt||.75;}
 function kick(f,i,v){f.pv[i]+=v;}
 // virada contínua: o lado visível (cos(spin+turn)·face) não salta, mesmo no meio de outra virada ou de um giro
-function setFace(f,nf){if(nf&&nf!==f.face){unspin(f);f.face=nf;f.turn=PI-f.turn;}}
+function setFace(f,nf){if(nf&&nf!==f.face){unspin(f);f.face=nf;f.turn=PI-f.turn;f.tv=-f.tv;}}
 // passa o resíduo do giro (spin) para turn, que o phys desfaz suavemente; o desenho continua idêntico no quadro da troca
-function unspin(f){if(f.spin){const r=((f.spin+f.turn)%TAU+TAU)%TAU;f.turn=r>PI?TAU-r:r;f.spin=0;}}
+function unspin(f){if(f.spin){const r=((f.spin+f.turn)%TAU+TAU)%TAU;f.turn=r>PI?TAU-r:r;f.spin=0;f.tv=0;}}
 // passa o resíduo do mortal (rot) para rotR, que termina a volta no mesmo sentido (rotDir) em vez de estalar para 0
 function unrot(f){
   if(!f.rot)return;const v=f.rot+f.rotR,d=f.rotDir||0;let r=((v%TAU)+TAU)%TAU;
   if(d<0){if(r>TAU-.6)r-=TAU;}else if(d>0){r-=TAU;if(r<.6-TAU)r+=TAU;}else if(r>PI)r-=TAU;
   f.rotR=r;f.rot=0;f.rotDir=0;
 }
+// depois do impacto o giro termina na volta inteira seguinte (de frente), nunca numa volta extra nem de costas (FLUI-3)
 function spinAt(mv,t){
-  if(!mv.spin)return 0;if(t<mv.h0)return mv.spin*mv.sa*ease(Math.min(1,t/mv.h0));
-  const u=ease(clamp((t-mv.h0)/Math.max(.01,mv.d-mv.h0),0,1));return mv.ret?mv.spin*mv.sa*(1-u):mv.spin*(mv.sa+(1-mv.sa)*u);
+  if(!mv.spin)return 0;const s0=mv.spin*mv.sa;if(t<mv.h0)return s0*ease(Math.min(1,t/mv.h0));
+  const u=ease(clamp((t-mv.h0)/Math.max(.01,mv.d-mv.h0),0,1));return lerp(s0,mv.ret?0:Math.ceil(s0/TAU-1e-6)*TAU,u);
 }
 const lerpPose=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
-function walkPose(f,base,m,box){const s=Math.sin(f.walk),c=Math.cos(f.walk),a=box?.28:.42;const o=base.slice();o[6]+=s*a*m;o[8]-=s*a*m;o[7]-=Math.max(0,c)*.55*m;o[9]-=Math.max(0,-c)*.55*m;o[0]+=Math.abs(c)*.04*m;return o;}
+// IK de 2 ossos da perna (coxa e canela de 13): ângulos de quadril e joelho que põem o tornozelo em (fx,fy) a partir do quadril
+function ik2(fx,fy){const d=Math.min(25.9,Math.hypot(fx,fy)),a=Math.atan2(fx,-fy);return [a+Math.acos(clamp(d/26,-1,1)),-(PI-Math.acos(clamp(1-d*d/338,-1,1)))];}
+// tornozelos na guarda (descanso de cada pé) e passada de cada estilo: o boxeador arrasta sem cruzar os pés (FLUI-6)
+const FK=(o,i)=>{const a=o[6+2*i],b=a+o[7+2*i];return [13*Math.sin(a)+13*Math.sin(b),-13*Math.cos(a)-13*Math.cos(b)];};
+// passo de luta (step-drag): o pé da frente sai, o de trás vem logo atrás e os dois ficam plantados o resto do ciclo, sem
+// cruzar; para trás a ordem inverte sozinha (o pé de trás sai primeiro). f/b = tornozelo base de cada pé (um pouco mais baixo
+// que a guarda, para todo passo caber na perna), c = ciclo em unidades andadas, a = fração do ciclo em balanço, L = altura
+const WK={box:{f:3,b:-9.75,y:-23.5,c:14,a:.25,L:3},tkd:{f:4.5,b:-10.5,y:-22.5,c:16,a:.3,L:4.5}},STR={box:14,tkd:16};
+// caminhada por IK: o pé de apoio recua exatamente o que o corpo avança (a fase vem da distância percorrida), o outro passa
+// por cima em arco; f.gx = fração do movimento no eixo x (andando em profundidade o passo é no lugar, sem deslizar);
+// o ponto mais baixo do pé (calcanhar ou ponta) fica no chão: o pé que fica atrás apoia na ponta
+function walkPose(f,base,m){const o=base.slice(),K=WK[f.style],T=(f.str||K.c)*(1-K.a)*f.gx,A=K.a*TAU,L=K.L*Math.min(1,.4+m);
+  for(let i=0;i<2;i++){const ps=((f.walk-(i?A:0))%TAU+TAU)%TAU,x0=i?K.b:K.f;let x,y=K.y;
+    if(ps<A){const v=ps/A;x=x0-T/2+T*ease(v);y+=L*Math.sin(PI*v);}else x=x0+T/2-T*(ps-A)/(TAU-A);
+    let r=ik2(x,y);for(let k=0;k<2;k++){const dp=-4.5*Math.sin(r[0]+r[1]);if(dp<=.05)break;r=ik2(x,y+dp);}o[6+2*i]=r[0];o[7+2*i]=r[1];}
+  const s=Math.sin(f.walk);o[2]-=s*.07;o[4]+=s*.07;o[0]+=Math.abs(Math.cos(f.walk))*.035;return o;}
+// avança a fase da passada pelo deslocamento real (para trás a fase recua: nada de moonwalk)
+function stepWalk(f,dx,dz,dt){const d=Math.hypot(dx,dz);if(d<1e-5)return;const dl=dx*f.face;
+  f.gx=lerp(f.gx,Math.abs(dl)/d,1-Math.exp(-dt*12));f.walk+=(dl<-.2*d?-d:d)*TAU/(f.str||STR[f.style]);}
+// locomoção por velocidade com aceleração; o peso da passada (gw) segue a velocidade real (FLUI-10)
+function loco(f,vx,vz,sp,acc,dt){const a=1-Math.exp(-dt*acc);f.lvx=lerp(f.lvx,vx,a);f.lvz=lerp(f.lvz,vz,a);
+  const nx=clamp(f.x+f.lvx*dt,-AX,AX),nz=clamp(f.z+f.lvz*dt,Z0,Z1);stepWalk(f,nx-f.x,nz-f.z,dt);f.x=nx;f.z=nz;
+  f.gw=lerp(f.gw,clamp(Math.hypot(f.lvx,f.lvz)/(sp*.35),0,1),1-Math.exp(-dt*10));}
+// pouso amortecido: joelhos cedem e o tronco inclina na mola, proporcional à velocidade de queda (FLUI-2/FLUI-11)
+function land(f,v){const s=clamp(-v/320,.35,1);kick(f,7,-8*s);kick(f,9,-7*s);kick(f,0,3.5*s);dust(f.x,f.z,Math.round(3+4*s),40+40*s);}
+// alcance real do golpe no quadro do impacto (membro, giro, torção, pé de apoio) → espaçamento do dash e do magnetismo:
+// a luva/o pé encosta na superfície do rival em vez de parar no ar ou atravessar o corpo (FLUI-1)
+// spOf(mv,st,ro): ro = deslocamento do pé plantado previsto no impacto (padrão: partindo da guarda)
+function impF(mv,st){const h=mv.hits[0];let ki=0;for(let i=0;i<mv.keys.length;i++)if(h.t>=mv.keys[i][0])ki=i;
+  return {style:st,pose:(mv.keys[ki][1]||G[st]).slice(),tw:mv.tw,twS:mv.twS,spin:spinAt(mv,h.t),turn:0,rot:0,rotR:0,y:0,ro:0,gw:0,st:'atk',mv,face:1};}
+function spOf(mv,st,ro){
+  const h=mv.hits&&mv.hits[0];if(!h)return mv.r-2;const c='rb'+st;
+  if(mv[c]===undefined){const f=impF(mv,st),S=skel(f),k=ankK(mv);mv[c]=(S[h.lim]||S.fh)[0];
+    mv['ro'+st]=clamp(FK(G[st],k==='ff'?0:1)[0]-S[k][0],-14,14);}
+  return clamp(mv[c]+6+(ro===undefined?mv['ro'+st]:ro),15,mv.r+10);
+}
+// pé de apoio do golpe: no chute, a perna que não chuta; no soco, o pé da frente (o pivô do check hook) (FLUI-9)
+const ankK=mv=>{const l=mv.hits&&mv.hits[0]?mv.hits[0].lim:mv.lim;return l==='ft'?'bf':'ff';};
+// planta o pé e prevê o deslocamento dele no impacto (o magnetismo do golpe já conta com isso)
+function setAnk(f,k,tag){const S=skel(f);f.ank={k,x:S[k][0],tag};f.roI=0;
+  if(tag&&tag.hits&&tag.hits[0])f.roI=clamp(f.ank.x-(skel(impF(tag,f.style))[k][0]),-14,14);}
+// pé plantado: desloca o desenho (f.ro, x local) para o pé de apoio ficar parado enquanto o corpo gira ou muda de base;
+// fora disso o deslocamento volta a 0 suavemente; no fim da levantada vira posição real (root motion)
+// levantada em 3 tempos (FLUI-12): senta com um joelho no chão, agacha apoiado no pé da frente (plantado) e sobe para a guarda
+function getupPose(f){const t=f.t;
+  if(t<.16){f.rotT=-.55;setPose(f,KNEEL,600,.7);}
+  else if(t<.3){if(!f.ank)setAnk(f,'ff','getup');f.rotT=0;setPose(f,DUCK,520,.7);}
+  else{f.rotT=0;setPose(f,G[f.style],300,.72);}
+  return t>.45;}
+function footLock(f,dt){
+  const a=f.ank,on=a&&f.y<1&&(a.tag==='getup'?f.st==='getup':(f.st==='atk'||f.st==='strike')&&f.mv===a.tag&&!f.mv.jump);
+  if(on){const S=skel(f);f.ro=clamp(a.x-(S[a.k][0]-f.ro),-14,14);return;}
+  if(a&&a.tag==='getup'){f.x=clamp(f.x+f.ro*f.face,-AX,AX);f.ro=0;}
+  f.ank=null;if(f.ro){f.ro*=Math.exp(-dt*10);if(Math.abs(f.ro)<.05)f.ro=0;}
+}
 function idlePose(f){
   const o=G[f.style].slice();
   if(f.style==='box'){const b=Math.sin(time*5.2+f.bob),w=Math.sin(time*1.7+f.bob);o[0]+=w*.08+b*.02;o[1]-=w*.08;o[7]-=.1+b*.12;o[9]-=.08+b*.1;o[6]+=.04+b*.05;o[2]+=Math.sin(time*3.1+f.bob)*.08;o[4]+=Math.cos(time*2.7+f.bob)*.08;}
@@ -462,24 +528,26 @@ function dashTo(p,kind,o){
     else mv=nextSeqMove(p);
   }
   // flanco sem espaço (rival encostado na grade): vira entrada frontal em vez de atravessar o rival (INTE-7)
-  if(flank&&Math.abs(e.x+side*(mv.r-2))>AX-6){side=-side;flank=false;kind='norm';}
-  const tx=e.x+side*(mv.r-2),tz=e.z,d=Math.hypot(tx-p.x,tz-p.z);
+  if(flank&&Math.abs(e.x+side*spOf(mv,p.style))>AX-6){side=-side;flank=false;kind='norm';}
+  const tx=e.x+side*spOf(mv,p.style),tz=e.z,d=Math.hypot(tx-p.x,tz-p.z);
   unrot(p);
   if(d<10&&!flank&&kind!=='cnt'){setFace(p,-side);startMove(p,mv,kind);return;}
   p.st='dash';p.t=0;
-  p.dash={sx:p.x,sz:p.z,sy:p.y,side,mv,kind,dur:kind==='cnt'?.08:clamp(d/(560*(1+p.flow*.15)),.07,flank?.34:.3),flank,zs:Math.random()<.5?-1:1,far:d>80,s0:0};
+  p.dash={sx:p.x,sz:p.z,sy:p.y,side,mv,kind,dur:kind==='cnt'?.08:clamp(d/(560*(1+p.flow*.15)),flank?(p.style==='tkd'?.2:.16):.07,flank?.34:.3),flank,zs:Math.random()<.5?-1:1,far:d>80,s0:0};
   if(flank){
     // flanco: já vira para o lado final, mas o giro (spin, que o phys não decai) mantém o rosto no rival,
     // fica de perfil exatamente no cruzamento (kc) e termina de frente do outro lado (INTE-6/FLUI-8)
     const f0=p.face;let s=p.spin+p.turn+(f0!==-side?PI:0);s=((s%TAU)+TAU)%TAU;if(s>PI)s-=TAU;
     const qc=clamp(Math.abs(e.x-p.x)/Math.max(1,Math.abs(tx-p.x)),.3,.7);
-    p.face=-side;p.spin=s;p.turn=0;p.dash.s0=s;p.dash.kc=qc<.5?Math.sqrt(qc/2):1-Math.sqrt((1-qc)/2);p.rotDir=1;
+    p.face=-side;p.spin=s;p.turn=0;p.tv=0;p.dash.s0=s;p.dash.kc=qc<.5?Math.sqrt(qc/2):1-Math.sqrt((1-qc)/2);p.rotDir=1;
   }else{unspin(p);setFace(p,-side);}
   sfx.swoosh();
 }
 function startMove(f,mv,kind){
   unspin(f);unrot(f);
-  f.st='atk';f.mv=mv;f.t=0;f.hi=0;f.ki=-1;f.kind=kind||'norm';f.y0=f.y;f.smear=[];f.cedo=false;f.preK=null;
+  f.st='atk';f.mv=mv;f.t=0;f.hi=0;f.ki=-1;f.kind=kind||'norm';f.y0=f.y;f.yb=f.y;f.vy=0;f.twS=mv.twS;f.smear=[];f.cedo=false;f.preK=null;
+  // pé de apoio plantado durante o golpe no chão (o giro pivota sobre ele) (FLUI-9)
+  f.ank=null;if(!mv.jump&&f.y<1)setAnk(f,ankK(mv),mv);
   // o jogador acompanha o rival no ar, com teto (o ápice do juggle já é limitado em applyHit) (INTE-5)
   f.airLift=f.isP&&enemy.st==='air'?Math.min(70,enemy.y):0;
   // toque feito durante o dash vira a fila do golpe (neutro: sem CEDO e sem crédito) (FREE-3)
@@ -501,14 +569,14 @@ function doCounter(p){
   // mordeu a finta: tropeço sem guarda (CONTRA de novo é engolido) e o golpe real vem logo atrás; só a ESQUIVA salva (INTE-14)
   if(e.feint){e.feint=false;unspin(p);unrot(p);p.st='hurt';p.t=0;p.stum=true;p.hurtD=.3;p.queued=null;p.preK=null;p.buf=null;setPose(p,PULL,700,.5);kick(p,0,-5);
     pop('FINTA!',p,'#ffffff');loseImp(p,25);sfx.block();
-    e.st='wind';e.t=0;e.wd=.3;e.mv=MOV[e.style][pick(['jab','dir','ban','dol'].filter(k=>MOV[e.style][k]))];setPose(e,e.mv.A,700,.7);return;}
+    e.st='wind';e.t=0;e.wd=.3;e.wx=null;e.mv=MOV[e.style][pick(['jab','dir','ban','dol'].filter(k=>MOV[e.style][k]))];setPose(e,e.mv.A,700,.7);return;}
   const perfect=e.st==='strike'||e.st==='wind'&&e.t>e.wd*.55;
   p.cStreak=(p.cStreak||0)+1;e.armor=false;e.stun=0;
   const sc=pickScene(p,e,perfect);
   // o rival termina o golpe no vazio e fica congelado a 80% do caminho, com o giro do golpe (o chute giratório
   // continua apontando para o jogador) e caindo pela gravidade se estava no ar (FLUI-5)
   const m=e.mv||{};
-  e.st='countered';e.t=0;e.spinT=m.spin?m.spin*m.sa:0;e.tw=m.tw||0;e.vy=0;e.chain=[];setPose(e,m.S?lerpPose(m.A||G[e.style],m.S,.8):HURT_BODY,1100,.6);
+  e.st='countered';e.t=0;e.spinT=m.spin?m.spin*m.sa:0;e.tw=m.tw||0;e.twS=m.twS||-1;e.vy=0;e.chain=[];setPose(e,m.S?lerpPose(m.A||G[e.style],m.S,.8):HURT_BODY,1100,.6);
   flashA=perfect?.45:.3;sfx.counter();buzz(30);
   pop(p.cStreak>1?'CONTRA x'+p.cStreak:perfect?'CONTRA PERFEITO':'CONTRA!',p,'#f2a93b');
   gainImp(p,perfect?20:15);
@@ -585,6 +653,9 @@ function tryAct(p,k){
 // ---------- impacto ----------
 const AIRMAX=4; // acertos no ar antes do spike que encerra o juggle
 function applyHit(a,d,hit,mv){
+  // quadro de impacto controlado: o membro que bateu fica na extensão do golpe (sem cotovelo dobrado nem excesso da mola)
+  // durante o hitstop; faíscas e rastro já saem dele (FLUI-7)
+  const J={fh:2,bh:4,ft:6,bt:8}[hit.lim];if(J!==undefined)for(const j of [J,J+1]){a.pose[j]=a.pt[j];a.pv[j]=0;}
   const fromBehind=Math.sign(a.x-d.x)!==d.face;
   if(!a.isP&&d.isP&&d.st==='block'){sfx.block();sparks(d.x+a.face*-4,36,d.z-1,5,false,'#cfe3ff');d.vx=a.face*80;return;}
   // ARMADURA da ruptura: o golpe livre só raspa e não interrompe o golpe blindado; o que nocautearia atravessa (INTE-1/FREE-1)
@@ -625,7 +696,7 @@ function applyHit(a,d,hit,mv){
   if(hit.lv==='body'){kick(d,0,9);kick(d,1,-6);}else{kick(d,0,-10);kick(d,1,16);}
   unspin(d);d.spinT=0;
   if(d.isP){d.hold=null;d.buf=null;d.finBuf=null;d.queued=null;d.preK=null;d.fseq=null;d.cseq=null;d.inScene=false;d.ccam=null;d.stum=false;d.hurtD=.38;}
-  if(d.hp<=0){d.armor=false;if(a.isP&&a.kind==='cnt'){impactF=.12;impactRed=true;}d.st='ko';d.t=0;d.vx=a.face*130;d.vy=180;d.jg=0;setPose(d,AIRP,300,.5);slow(.15,1.2);cine=Math.max(cine,1.8);flashA=.5;tiltT=.07;koCam={t:0,who:d,win:a,ph:0};camCut=true;sfx.heavy();ring(d.x,d.z,40,'#ffffff');updHud();return;}
+  if(d.hp<=0){d.armor=false;if(a.isP&&a.kind==='cnt'){impactF=.12;impactRed=true;}d.st='ko';d.t=0;d.vx=a.face*130;d.vy=180;d.jg=0;setPose(d,AIRP,300,.5);d.rv-=4;kick(d,2,-8);kick(d,4,7);slow(.15,1.2);cine=Math.max(cine,1.8);flashA=.5;tiltT=.07;koCam={t:0,who:d,win:a,ph:0};camCut=true;sfx.heavy();ring(d.x,d.z,40,'#ffffff');updHud();return;}
   setFace(d,-a.face);
   if(d.st==='air'||(!d.isP&&react==='launch')){
     // lançamento novo (do chão ou de uma cena): o juggle anterior não conta
@@ -635,8 +706,9 @@ function applyHit(a,d,hit,mv){
     // spike, que bate no chão e quica uma vez (FREE-6/INTE-5)
     if(d.airHits>AIRMAX||react==='knock'){d.vy=-160;d.spk=true;d.jg=d.jg||330;}
     else{const top=react==='launch'?64:Math.min(72,Math.max(d.y+12,38));d.jg=330*(1+.15*(d.airHits-1));d.vy=Math.sqrt(2*d.jg*Math.max(6,top-d.y));}
-    d.vx=a.face*(hit.kb*.4);setPose(d,AIRP,400,.5);
-  }else if(react==='knock'||(d.isP&&react==='launch')){d.st='down';d.t=0;d.vx=a.face*(hit.kb+40);d.vy=90;setPose(d,AIRP,500,.5);}
+    // juggle orgânico (FLUI-12): poses alternadas (dobrado/aberto), o corpo roda para trás no sentido do golpe e os braços soltam
+    d.vx=a.face*(hit.kb*.4);setPose(d,d.airHits%2?AIRP2:AIRP,500,.5);d.rotT=d.spk?-1.25:-.8-.14*Math.min(2,d.airHits-1);d.rv-=d.spk?1.5:2.6;kick(d,2,-9);kick(d,4,8);
+  }else if(react==='knock'||(d.isP&&react==='launch')){d.st='down';d.t=0;d.vx=a.face*(hit.kb+40);d.vy=90;setPose(d,AIRP,500,.5);d.rv-=3;kick(d,2,-7);kick(d,4,6);}
   else if(react==='stagger'&&!d.isP){eStart(d,'stagger');d.vx=a.face*30;}
   else{d.st=d.isP?'hurt':'hit';d.t=0;d.vx=a.face*hit.kb;setPose(d,hit.lv==='body'?HURT_BODY:HURT_HEAD,700,.45);}
   if(d.isP){sfx.hurt();flashA=.15;loseImp(d,60);d.cStreak=0;}
@@ -670,33 +742,41 @@ function updPlayer(p,rdt){
   // fora do golpe (e do flanco, que gira por k) o giro não fica congelado: o resíduo vira turn e se desfaz (INTE-10)
   if(p.spin&&p.st!=='atk'&&!(p.st==='dash'&&p.dash.flank))unspin(p);
   const jm=Math.hypot(inp.x,inp.z);
-  p.tw=lerp(p.tw,0,1-Math.exp(-dt*10));
+  p.tw=lerp(p.tw,0,1-Math.exp(-dt*10));if(p.st!=='idle')p.gw=0;
   switch(p.st){
    case 'idle':case 'block':{
     if(p.st==='block'&&p.t>.35)p.st='idle';
-    let moving=false;
-    if(p.st==='idle'&&jm>.15&&live){const sp=p.style==='tkd'?100:88;p.x+=inp.x*sp*dt;p.z+=inp.z*72*dt;p.walk+=dt*(p.style==='tkd'?12:10)*Math.min(1,jm);moving=true;}
+    let moving=false,mdx=0,mdz=0;
+    if(p.st==='idle'&&jm>.15&&live){const sp=p.style==='tkd'?100:88;mdx=inp.x*sp*dt;mdz=inp.z*72*dt;}
     else if(p.st==='idle'&&p.hold&&live){
       // PRESSÃO: aproxima em guarda até perto do rival caído, sem pisar nele
       const dx=e.x-Math.sign(e.x-p.x||p.face)*42-p.x,dz=e.z-p.z,sp=p.style==='tkd'?80:70;
-      if(Math.abs(dx)>3||Math.abs(dz)>4){p.x+=clamp(dx,-sp*dt,sp*dt);p.z+=clamp(dz,-sp*.8*dt,sp*.8*dt);p.walk+=dt*9;moving=true;}
+      if(Math.abs(dx)>3||Math.abs(dz)>4){mdx=clamp(dx,-sp*dt,sp*dt);mdz=clamp(dz,-sp*.8*dt,sp*.8*dt);}
     }
+    // a passada anda o que o corpo anda de fato (contra a grade o pé não desliza)
+    if(mdx||mdz){const nx=clamp(p.x+mdx,-AX,AX),nz=clamp(p.z+mdz,Z0,Z1);if(Math.abs(nx-p.x)+Math.abs(nz-p.z)>1e-4){stepWalk(p,nx-p.x,nz-p.z,dt);moving=true;}p.x=nx;p.z=nz;}
     // histerese: só vira quando o rival passa 6 un. para trás (evita viradas em sequência)
     if(canAct(e)&&Math.abs(e.x-p.x)>4){if((e.x-p.x)*p.face<-6)setFace(p,-p.face);}else if(Math.abs(inp.x)>.2)setFace(p,Math.sign(inp.x));
-    if(p.st==='idle')setPose(p,moving?walkPose(p,G[p.style],p.hold&&jm<=.15?.7:Math.min(1,jm),p.style==='box'):idlePose(p),moving?260:170,.75);
-    p.rot=lerp(p.rot,0,1-Math.exp(-dt*20));p.y=Math.max(0,p.y-dt*200);break;}
+    // guarda parada e passada misturadas por peso (sem troca brusca ao começar/parar de andar)
+    p.gw=lerp(p.gw,moving&&p.st==='idle'?1:0,1-Math.exp(-dt*(moving?12:8)));
+    if(p.st==='idle'){const ip=idlePose(p);setPose(p,p.gw>.01?lerpPose(ip,walkPose(p,G[p.style],p.hold&&jm<=.15?.7:Math.min(1,jm)),p.gw):ip,moving?260:170,.75);p.lk=.85*p.gw;}
+    p.rot=lerp(p.rot,0,1-Math.exp(-dt*20));break;}
    case 'dash':{
     const D=p.dash,k=Math.min(1,p.t/D.dur),q=ease(k);
-    const tx=e.x+D.side*(D.mv.r-2),tz=e.z;
+    const tx=e.x+D.side*spOf(D.mv,p.style),tz=e.z;
     p.x=lerp(D.sx,tx,q);p.z=lerp(D.sz,tz,q);
-    // altura contínua: parte de onde estava (y0) em vez de cair para 0 num quadro
-    const tk=p.style==='tkd',y0=(D.sy||0)*(1-q);
+    // altura contínua (FLUI-2): parte de onde estava (sy) e, com o rival no ar, já sobe ao encontro dele (o juggle não desce e sobe)
+    const tk=p.style==='tkd',yb=lerp(D.sy||0,D.kind!=='cnt'&&e.st==='air'?clamp(e.y-8,0,70):0,q),fl=tk&&(D.flank||D.far);
     if(D.flank){p.spin=D.s0*(1-ease(clamp((k-D.kc)/.56+.5,0,1)));
-      if(tk){p.y=Math.sin(k*PI)*36+y0;p.rot=q*TAU;setPose(p,TUCK,900,.6);}
-      else{p.z+=Math.sin(k*PI)*26*D.zs;p.y=y0;setPose(p,DUCK,900,.6);}}
-    else if(D.far&&tk){p.y=Math.sin(k*PI)*10+y0;setPose(p,HOP,700,.6);}
-    else{p.y=y0;setPose(p,DASHP[p.style],700,.65);}
-    if(k>=1){p.rot=0;p.spin=0;p.y=0;p.rotDir=0;startMove(p,D.mv,D.kind==='flank'?'norm':D.kind);}
+      // mortal do flanco abre a pose antes de pousar (FLUI-11)
+      if(tk){p.y=Math.sin(k*PI)*36+yb;p.rot=q*TAU;setPose(p,k>.72?HOP:TUCK,k>.72?700:900,.6);}
+      else{p.z+=Math.sin(k*PI)*26*D.zs;p.y=yb;setPose(p,DUCK,900,.6);}}
+    else if(D.far&&tk){p.y=Math.sin(k*PI)*10+yb;setPose(p,HOP,700,.6);}
+    else{p.y=yb;
+      // passo arrastado (FLUI-11): a perna da frente alcança, depois o pé de trás arrasta para dentro; o boxeador inclina no meio
+      const o=DASHP[p.style].slice();if(k<.45){o[6]=.95;o[7]=-.35;o[8]=-.75;o[9]=-.45;}else{o[6]=.55;o[7]=-.75;o[8]=-.25;o[9]=-.95;}
+      if(!tk)o[0]+=Math.sin(k*PI)*.15;setPose(p,o,900,.62);}
+    if(k>=1){p.rot=0;p.spin=0;p.rotDir=0;if(fl&&p.y<1)land(p,-240);startMove(p,D.mv,D.kind==='flank'?'norm':D.kind);}
     break;}
    case 'atk':{
     const mv=p.mv,t=p.t;
@@ -705,11 +785,16 @@ function updPlayer(p,rdt){
     // giro completo e torção do tronco
     p.spin=spinAt(mv,t);
     if(mv.tw){const b=t<mv.h0?eout(clamp((t-mv.a*.5)/(mv.h0-mv.a*.5),0,1)):1-ease(clamp((t-mv.h0)/(mv.d-mv.h0),0,1));p.tw=mv.tw*b;}
-    const jl=p.airLift||0;p.y=(mv.jump?Math.sin(Math.min(1,t/(mv.d*.85))*PI)*mv.jump:0)+(jl?Math.sin(Math.min(1,t/mv.d)*PI)*jl:0)+(p.y0?p.y0*(1-ease(Math.min(1,t/.12))):0);
+    // altura (FLUI-2): arco do salto do golpe sobre uma base contínua (yb) que, no juggle, persegue o rival até o impacto e
+    // depois cai pela gravidade (sem descer a 0 e subir de novo a cada golpe do combo aéreo)
+    const arc=mv.jump?Math.sin(Math.min(1,t/(mv.d*.85))*PI)*mv.jump:0;
+    if(p.airLift&&t<mv.hl&&e.st==='air'){p.yb=lerp(p.yb,clamp(e.y-8,0,70),1-Math.exp(-dt*10));p.vy=0;}
+    else if(p.yb>0){p.vy-=440*dt;p.yb=Math.max(0,p.yb+p.vy*dt);if(!p.yb)p.vy=0;}
+    p.y=p.yb+arc;
     if(mv.lunge&&t>=mv.a*.5&&t<mv.h0)p.x+=p.face*mv.lunge*dt/(mv.h0-mv.a*.5);
     // magnetismo de free flow: cola no rival durante a preparação
     if(mv.zs)p.z+=mv.zs*(p.zsd||1)*dt/mv.d;
-    if(t<mv.h0&&mv.hits.length&&canAct(e)&&e.st!=='evade'){const tx=e.x-p.face*(mv.r-2);p.x=lerp(p.x,tx,1-Math.exp(-dt*9));p.z=lerp(p.z,e.z,1-Math.exp(-dt*12));}
+    if(t<mv.h0&&mv.hits.length&&canAct(e)&&e.st!=='evade'){const tx=e.x-p.face*spOf(mv,p.style,p.ank?p.roI:0);p.x=lerp(p.x,tx,1-Math.exp(-dt*9));p.z=lerp(p.z,e.z,1-Math.exp(-dt*12));}
     if(mv.hits.length&&t>=mv.a&&t<mv.hl+.07){const S=skel(p),h=mv.hits[Math.min(p.hi,mv.hits.length-1)],L=S[h.lim]||S.fh;p.smear.push([p.x+L[0]*p.face,L[1],p.z,time]);}
     while(p.hi<mv.hits.length&&t>=mv.hits[p.hi].t){const h=mv.hits[p.hi++];
       const dx=(e.x-p.x)*p.face,ok=hittable(e)&&dx>-10&&dx<mv.r+18&&Math.abs(e.z-p.z)<24&&(e.st!=='air'||Math.abs(e.y-p.y)<40||p.kind!=='norm');
@@ -734,23 +819,26 @@ function updPlayer(p,rdt){
    case 'dodge':{
     const D=p.dg,k=Math.min(1,p.t/D.dur),box=p.style==='box',y0=(D.sy||0)*(1-ease(k));
     if(D.kind==='over'){const q=ease(k);p.x=lerp(D.sx,D.tx,q);p.z=lerp(D.sz,D.tz,q)+(box?Math.sin(k*PI)*28*D.zs:0);
-      if(box){p.y=y0;setPose(p,DUCK,900,.55);}else{p.y=Math.sin(k*PI)*40+y0;p.rot=q*TAU;setPose(p,TUCK,900,.6);}
+      if(box){p.y=y0;setPose(p,k>.7?G.box:DUCK,k>.7?520:900,.55);}else{p.y=Math.sin(k*PI)*40+y0;p.rot=q*TAU;setPose(p,k>.72?HOP:TUCK,k>.72?700:900,.6);}
       if(k>.55&&canAct(e))setFace(p,Math.sign(e.x-p.x));}
-    else{p.x+=D.vx*dt*(1-k*.6);p.z+=D.vz*dt*(1-k*.6);
-      if(box){p.y=y0;setPose(p,D.kind==='back'?PULL:DUCK,900,.55);}
-      else if(D.kind==='back'){p.y=Math.sin(k*PI)*18+y0;p.rot=-ease(k)*TAU;setPose(p,TUCK,900,.6);}
-      else{p.y=Math.sin(k*PI)*10+y0;setPose(p,HOP,700,.6);}}
+    // arranque explosivo e freada até parar (mesma distância), a pose volta à guarda no último terço (FLUI-11)
+    else{const v=1.75*Math.pow(1-k,1.5);p.x+=D.vx*dt*v;p.z+=D.vz*dt*v;
+      if(box){p.y=y0;setPose(p,k>.66?G.box:D.kind==='back'?PULL:DUCK,k>.66?520:900,.55);}
+      else if(D.kind==='back'){p.y=Math.sin(k*PI)*18+y0;p.rot=-ease(k)*TAU;setPose(p,k>.72?HOP:TUCK,k>.72?700:900,.6);}
+      else{p.y=Math.sin(k*PI)*10+y0;setPose(p,k>.66?G.tkd:HOP,700,.6);}}
     // ESQUIVA PERFEITA com toque guardado: cancela a esquiva e pune na hora
     if(p.buf&&e.punish&&hittable(e)){const q=p.buf.k;p.buf=null;dashTo(p,'norm',optK(p,q));break;}
-    if(k>=1){p.st='idle';p.t=0;p.rot=0;p.y=0;p.rotDir=0;dust(p.x,p.z,4);if(canAct(e))setFace(p,Math.sign(e.x-p.x));
+    if(k>=1){p.st='idle';p.t=0;p.rot=0;p.y=0;p.rotDir=0;if(!box&&D.kind!=='side')land(p,-260);else{kick(p,0,-3);dust(p.x,p.z,4);}if(canAct(e))setFace(p,Math.sign(e.x-p.x));
       if(p.buf){const q=p.buf.k;p.buf=null;fireKey(p,q);}}
     break;}
    case 'hurt':if(p.t>(p.hurtD||.38)){p.st='idle';p.stum=false;p.hurtD=.38;}break;
    case 'down':p.rotT=-1.45;if(p.t>.25)setPose(p,DOWN,200,.8);if(p.t>1&&p.y<=0){p.st='getup';p.t=0;}break;
-   case 'getup':p.rotT=0;setPose(p,G[p.style],260,.7);if(p.t>.4){p.st='idle';p.rot=0;}break;
+   case 'getup':if(getupPose(p))p.st='idle';break;
    case 'ko':p.rotT=-1.5;if(p.t>.3)setPose(p,DOWN,150,.8);break;
    case 'win':setPose(p,WIN[p.style],120,.6);p.rot=0;p.spin=0;break;
   }
+  // pouso do golpe com salto ou da queda do juggle dentro do golpe: amortece nos joelhos (FLUI-2)
+  if(dt>0){if(p.st==='atk'&&p.yl>2&&p.y<=.5)land(p,-(p.yl-p.y)/dt);p.yl=p.y;}
   // o dash comum não é invulnerável: avançar amassando o botão contra o golpe blindado leva o golpe (FREE-1)
   p.inv=p.st==='dash'&&p.dash.kind!=='norm'||p.st==='dodge'||(p.st==='atk'&&p.kind!=='norm')||p.st==='down'||p.st==='getup';
   if(p.st==='dash'||p.st==='dodge'||(p.st==='atk'&&(p.t<p.mv.hl+.05||p.kind!=='norm'))){p.trailT-=rdt;if(p.trailT<=0){p.trailT=.022;trails.push({f:snap(p),l:.18,c:p.flow>=3?'#f2a93b':p.pal.trail});}}
@@ -776,6 +864,7 @@ function updEnemy(e,dt){
   const aggr=.75+round*.15;
   e.tw=lerp(e.tw,0,1-Math.exp(-dt*10));
   if(e.st!=='rec')e.punish=false;
+  if(e.st!=='wind')e.wx=null;if(e.st!=='stalk'&&e.st!=='appr'){e.lvx=0;e.lvz=0;if(e.st!=='wind')e.gw=0;}
   // a armadura só vale da ruptura até o fim do golpe blindado; o atordoamento some depois de 1,2 s sem apanhar, contando
   // só o tempo em pé (como o combo, ele atravessa o knockdown e o juggle)
   if(e.armor&&e.st!=='brk'&&e.st!=='wind'&&e.st!=='strike')e.armor=false;
@@ -789,9 +878,10 @@ function updEnemy(e,dt){
     const box=e.style==='box';
     const R=(box?48:74)+(box?Math.sin(time*1.3)*6:Math.sin(time*2.2)*16);
     const tx=p.x-e.face*R,tz=p.z+Math.sin(time*.6+1)*22;
-    const ddx=tx-e.x,ddz=tz-e.z,d=Math.hypot(ddx,ddz);let moving=false;
-    if(d>4){const sp=(box?50:58)*aggr;e.x+=ddx/d*Math.min(sp*dt,d);e.z+=ddz/d*Math.min(sp*.8*dt,d);e.walk+=dt*(box?9:11);moving=true;}
-    setPose(e,moving&&d>10?walkPose(e,G[e.style],.8,box):idlePose(e),moving?240:170,.75);
+    const ddx=tx-e.x,ddz=tz-e.z,d=Math.hypot(ddx,ddz),sp=(box?50:58)*aggr,vs=d>2?Math.min(sp,d*5):0;
+    // locomoção por velocidade (FLUI-10): acelera, chega freando ao alvo e a passada segue o deslocamento real
+    e.str=lerp(e.str||STR[e.style],STR[e.style],1-Math.exp(-dt*6));loco(e,d>2?ddx/d*vs:0,d>2?ddz/d*vs*.8:0,sp,6,dt);
+    setPose(e,e.gw>.01?lerpPose(idlePose(e),walkPose(e,G[e.style],1),e.gw):idlePose(e),e.gw>.3?240:170,.75);e.lk=.85*e.gw;
     e.rot=lerp(e.rot,0,1-Math.exp(-dt*12));
     if(running&&!roundOver&&p.st!=='ko'){e.cd-=dt;
       // taekwondista pune quem entra correndo
@@ -801,18 +891,27 @@ function updEnemy(e,dt){
    case 'appr':{
     if(!e.chain||!e.chain.length)e.chain=pick(ESEQ[e.style]).slice();
     const mv=MOV[e.style][e.chain[0]];
-    const tx=p.x-e.face*(mv.r-3),tz=p.z,ddx=tx-e.x,ddz=tz-e.z,d=Math.hypot(ddx,ddz);
-    if(d>3){const sp=110*aggr;e.x+=ddx/d*Math.min(sp*dt,d);e.z+=ddz/d*Math.min(sp*dt,d);e.walk+=dt*14;}
-    setPose(e,e.style==='tkd'?HOP:walkPose(e,DASHP.box,.8,true),600,.7);
+    const tx=p.x-e.face*spOf(mv,e.style),tz=p.z,ddx=tx-e.x,ddz=tz-e.z,d=Math.hypot(ddx,ddz),sp=110*aggr,vs=d>3?Math.min(sp,d*7):0;
+    // investida (FLUI-10): o taekwondista vem em saltitos (fase pela distância, um a cada 28 un.); o boxeador em passos
+    // largos, inclinado; os dois aceleram e freiam
+    e.str=lerp(e.str||STR[e.style],e.style==='tkd'?56:20,1-Math.exp(-dt*8));loco(e,d>3?ddx/d*vs:0,d>3?ddz/d*vs:0,sp,8,dt);
+    if(e.style==='tkd'){const hp=Math.abs(Math.sin(e.walk));e.y=hp*6*e.gw;setPose(e,lerpPose(G.tkd,HOP,hp*e.gw),600,.7);e.lk=.6*e.gw;}
+    else{setPose(e,lerpPose(DASHP.box,walkPose(e,DASHP.box,1),e.gw),600,.7);e.lk=.85*e.gw;}
     if(d<8||e.t>1.2){const c=e.chain;e.chain=[];eAttack(e,true);e.chain=c.slice(1);e.mv=MOV[e.style][c[0]];setPose(e,e.mv.A,420,.7);}
     break;}
    case 'brk':{
     // RUPTURA: sacode o golpe (guarda) e já parte blindado para o ataque
-    const tx=p.x-e.face*(e.mv.r-3);e.x=lerp(e.x,tx,1-Math.exp(-dt*3));
+    const tx=p.x-e.face*spOf(e.mv,e.style);e.x=lerp(e.x,tx,1-Math.exp(-dt*3));
     if(e.t>=.14){e.st='wind';e.t=0;setPose(e,e.mv.A,800,.6);}
     break;}
    case 'wind':{
-    const tx=p.x-e.face*(e.mv.r-3);e.x=lerp(e.x,tx,1-Math.exp(-dt*3));e.z=lerp(e.z,p.z,1-Math.exp(-dt*3));
+    // um passo de ajuste (acelera e freia) no começo da preparação, com a passada; depois acompanha o jogador (FLUI-10)
+    const tx=p.x-e.face*spOf(e.mv,e.style);if(e.wx===null){e.wx=e.x;e.wz=e.z;}
+    {const k=ease(Math.min(1,e.t/(e.wd*.45))),mx=clamp(lerp(e.wx,tx,k)-e.x,-160*dt,160*dt),mz=clamp(lerp(e.wz,p.z,k)-e.z,-120*dt,120*dt);
+     stepWalk(e,mx,mz,dt);e.x+=mx;e.z+=mz;e.gw=lerp(e.gw,clamp(Math.hypot(mx,mz)/Math.max(dt,1e-4)/40,0,1),1-Math.exp(-dt*14));
+     // preparação progressiva e legível: enrola da guarda até A, passa um pouco no fim e treme antes de soltar
+     const w=clamp(e.t/e.wd,0,1),o=lerpPose(G[e.style],e.mv.A,eout(Math.min(1,w/.7))*(1+.12*clamp((w-.7)/.3,0,1)));if(w>.6)o[0]+=Math.sin(e.t*70)*.025;
+     setPose(e,e.gw>.02?lerpPose(o,walkPose(e,o,1),e.gw):o,650,.7);e.lk=.85*e.gw;}
     // chute giratório: o giro começa na preparação e chega ao valor do início do strike (t=mv.a) sem estalo
     e.spin=spinAt(e.mv,e.mv.a)*ease(clamp(e.t/e.wd,0,1));
     if(e.t>=e.wd){
@@ -820,7 +919,7 @@ function updEnemy(e,dt){
         // não mordeu a isca: leitura recompensada (INTE-14)
         if(canAct(p)&&p.st!=='hurt'&&p.st!=='dodge'&&ad<110&&running&&!roundOver){pop('LEU A FINTA',p,'#7fd6ff');gainImp(p,8);}
         break;}
-      e.st='strike';e.t=e.mv.a;e.hi=0;e.ki=-1;e.smear=[];sfx.swoosh();}
+      e.st='strike';e.t=e.mv.a;e.hi=0;e.ki=-1;e.smear=[];e.twS=e.mv.twS;e.gw=0;e.ank=null;if(!e.mv.jump&&e.y<1)setAnk(e,ankK(e.mv),e.mv);sfx.swoosh();}
     break;}
    case 'strike':{
     const mv=e.mv,t=e.t;
@@ -828,10 +927,11 @@ function updEnemy(e,dt){
     if(ki!==e.ki){e.ki=ki;const K=mv.keys[ki];setPose(e,K[1],K[2],K[3]);}
     e.spin=spinAt(mv,t);
     if(mv.tw){e.tw=mv.tw*(t<mv.h0?eout(clamp(t/mv.h0,0,1)):1-ease(clamp((t-mv.h0)/(mv.d-mv.h0),0,1)));}
-    e.y=mv.jump?Math.sin(Math.min(1,t/(mv.d*.85))*PI)*mv.jump*.5:0;
-    if(t<mv.h0)e.x+=e.face*(40+mv.lunge*2)*dt;
+    e.y=mv.jump?Math.sin(Math.min(1,t/(mv.d*.85))*PI)*mv.jump*.5:Math.max(0,e.y-dt*120);
+    // avanço até o impacto com freada (mesma distância), não velocidade constante
+    if(t<mv.h0){const u=clamp((t-mv.a)/Math.max(.01,mv.h0-mv.a),0,1);e.x+=e.face*(40+mv.lunge*2)*2*(1-u)*dt;}
     if(t<mv.hl+.07){const S=skel(e),h=mv.hits[0],L=S[h.lim]||S.fh;e.smear.push([e.x+L[0]*e.face,L[1],e.z,time]);}
-    if(e.hi===0&&t>=mv.h0){e.hi=1;const fx=(p.x-e.x)*e.face,inR=fx>-6&&fx<mv.r+10&&Math.abs(p.z-e.z)<18&&p.y<30;
+    if(e.hi===0&&t>=mv.h0){e.hi=1;const fx=(p.x-e.x)*e.face,dg=p.st==='dodge',inR=fx>-6&&fx<mv.r+(dg?34:10)&&Math.abs(p.z-e.z)<(dg?30:18)&&(p.y<30||dg);
       if(inR&&p.st!=='ko'){
         if(p.st==='dodge'){pop('ESQUIVA PERFEITA',p,'#7fd6ff');slow(.2,.6);gainImp(p,20);e.st='rec';e.t=-.6;e.punish=true;e.armor=false;e.stun=0;e.chain=[];setPose(e,STAG,300,.5);sfx.perfect();}
         else if(!p.inv){const h=Object.assign({},mv.hits[0],{dmg:5+round*2+(mv.hits[0].react!=='hit'?3:0)});applyHit(e,p,h,mv);if(p.hp<=0){p.st='ko';p.t=0;p.vx=e.face*130;p.vy=160;}}
@@ -847,7 +947,7 @@ function updEnemy(e,dt){
    case 'guard':setPose(e,BLOCK[e.style],600,.7);if(e.t>e.gd){e.st='stalk';e.cd=.4;}break;
    case 'stagger':{const w=Math.sin(e.t*9);const o=STAG.slice();o[0]+=w*.2;o[1]-=w*.3;setPose(e,o,200,.4);e.spin=0;e.x+=Math.sin(e.t*5)*10*dt;if(e.t>e.sd){e.st='stalk';e.cd=.5;}break;}
    case 'countered':e.spin=lerp(e.spin,e.spinT||0,1-Math.exp(-dt*12));if(e.t>.9&&!p.inScene){e.st='stalk';e.spinT=0;}break;
-   case 'air':e.spin=0;e.rotT=-.9;
+   case 'air':e.spin=0;if(e.t>.16&&e.vy<0&&!e.spk)setPose(e,AIRP,260,.6);
     if(e.y<=0&&e.t>.1){
       // queda forte (spike ou juggle longo) quica uma vez, ainda acertável; depois cai de vez (FREE-6)
       if(!e.bounced&&(e.spk||e.landV<-230)){e.bounced=true;e.jg=330;e.vy=Math.min(120,-e.landV*.42);
@@ -855,8 +955,8 @@ function updEnemy(e,dt){
       else{e.st='down';e.t=0;e.airHits=0;e.jg=0;e.spk=false;e.bounced=false;e.landV=0;dust(e.x,e.z,10,80);quake(.3,0,1);}}
     break;
    case 'down':e.rotT=-1.45;if(e.t>.2)setPose(e,DOWN,200,.8);e.spin=0;if(e.t>1.1&&e.y<=0){e.st='getup';e.t=0;}break;
-   case 'getup':e.rotT=0;setPose(e,G[e.style],240,.7);
-    if(e.t>.45){e.rot=0;
+   case 'getup':
+    if(getupPose(e)){e.rot=0;
       // levantada com ruptura: depois de um combo longo (ou de botão amassado no chão) ele levanta já atacando blindado
       if(running&&!roundOver&&p.st!=='ko'&&(e.stun>=5-round||p.mash>3.2)&&Math.random()<.7)eBreak(e,p);
       else{e.st='stalk';e.cd=rnd(.5,1.2);}}
@@ -869,17 +969,29 @@ function updEnemy(e,dt){
 // ---------- física e animação por molas ----------
 const KJ=[1,.6,.9,.9,.9,.9,1,1,1,1],ZJ=[1,.65,.9,.9,.9,.9,1,1,1,1];
 function phys(f,dt){
-  const ctl=f.st==='atk'||f.st==='dash'||f.st==='dodge'||(f.st==='strike');
+  const ctl=f.st==='atk'||f.st==='dash'||f.st==='dodge'||f.st==='strike'||f.st==='appr',dn=f.st==='down'||f.st==='ko';
+  if(!dn)f.fb=0;
   // no ar a gravidade cresce com os acertos do juggle (jg); a velocidade de pouso fica guardada para o quique (landV)
   // (com dt=0 — hitstop — não integra: um lançamento a partir do chão não pode ser lido como pouso e perder o vy)
-  if(!ctl&&dt>0){if(f.y>0||f.vy>0){f.vy-=(f.st==='air'?(f.jg||330):440)*dt;f.y+=f.vy*dt;if(f.y<=0){f.y=0;f.landV=f.vy;if(f.vy<-130){dust(f.x,f.z,8,70);quake(.2,0,1);}f.vy=0;}}}
+  if(!ctl&&dt>0){if(f.y>0||f.vy>0){f.vy-=(f.st==='air'?(f.jg||330):440)*dt;f.y+=f.vy*dt;if(f.y<=0){f.y=0;f.landV=f.vy;
+    // corpo que cai bate e quica uma vez (FLUI-12); quem cai em pé amortece nos joelhos (FLUI-2)
+    if(dn&&!f.fb&&f.vy<-60){f.fb=1;f.vy=-f.vy*.25;kick(f,0,6);kick(f,1,-8);kick(f,2,6);kick(f,4,-6);dust(f.x,f.z,8,70);}
+    else{if(f.vy<-130){dust(f.x,f.z,8,70);quake(.2,0,1);}if(f.vy<-100&&canAct(f)&&f.st!=='air')land(f,f.vy);f.vy=0;}}}}
   f.x+=f.vx*dt;f.z+=f.vz*dt;const fr=Math.exp(-dt*(f.y>0?1.5:7));f.vx*=fr;f.vz*=fr;
-  if(f.st==='down'||f.st==='ko'||f.st==='getup'||f.st==='air')f.rot=lerp(f.rot,f.rotT,1-Math.exp(-dt*(f.st==='getup'?12:6)));
   f.x=clamp(f.x,-AX,AX);f.z=clamp(f.z,Z0,Z1);
-  f.turn*=Math.exp(-dt*16);if(f.turn<.02)f.turn=0;
+  // virada por mola criticamente amortecida: começa e termina suave em vez de concentrar o giro nos primeiros quadros
+  if(f.turn||f.tv){const x=22*dt,e=1/(1+x+.48*x*x+.235*x*x*x),tmp=(f.tv+22*f.turn)*dt;f.tv=(f.tv-22*tmp)*e;f.turn=(f.turn+tmp)*e;if(Math.abs(f.turn)<.01&&Math.abs(f.tv)<.3){f.turn=0;f.tv=0;}}
   if(f.rotR){f.rotR*=Math.exp(-dt*20);if(Math.abs(f.rotR)<.01)f.rotR=0;}
-  if(dt>0){const n=Math.ceil(dt/.008),h=dt/n;
-    for(let s=0;s<n;s++)for(let i=0;i<10;i++){const k=f.k*KJ[i],c=2*Math.sqrt(k)*f.zt*ZJ[i];f.pv[i]+=((f.pt[i]-f.pose[i])*k-f.pv[i]*c)*h;f.pose[i]+=f.pv[i]*h;}}
+  const rs=dn||f.st==='getup'||f.st==='air';if(!rs)f.rv=0;
+  if(dt>0){const n=Math.ceil(dt/.008),h=dt/n,rk=f.st==='getup'?200:60,rc=2*Math.sqrt(rk)*(f.st==='getup'?.85:f.st==='air'?.72:.55);
+    for(let s=0;s<n;s++){for(let i=0;i<10;i++){const k=f.k*KJ[i],c=2*Math.sqrt(k)*f.zt*ZJ[i];f.pv[i]+=((f.pt[i]-f.pose[i])*k-f.pv[i]*c)*h;f.pose[i]+=f.pv[i]*h;}
+      // limites articulares: cotovelo e joelho não dobram ao contrário no excesso da mola (FLUI-7)
+      for(let j=3;j<10;j+=2){const sg=j<6?1:-1,lm=.02*sg;if((f.pose[j]-lm)*sg<0){f.pose[j]=lm;if(f.pv[j]*sg<0)f.pv[j]=0;}}
+      // queda, quique e levantada: rotação do corpo por mola (leve sobrepasso) em vez de prancha rígida (FLUI-12)
+      if(rs){f.rv+=((f.rotT-f.rot)*rk-f.rv*rc)*h;f.rot+=f.rv*h;}}
+    // locomoção: as pernas seguem a passada sem atraso de mola (o pé de apoio não escorrega) (FLUI-6)
+    if(f.lk>0)for(let i=6;i<10;i++){f.pose[i]=lerp(f.pose[i],f.pt[i],f.lk);f.pv[i]*=1-f.lk;}}
+  f.lk=0;
   if(f.flash>0)f.flash-=dt;
 }
 
@@ -891,7 +1003,7 @@ function update(dt,rdt){
   const pl=player;pl.mash*=Math.exp(-rdt*2.3);
   if(pl.imp>0&&time-pl.impT>.8&&!isDown(enemy)&&!pl.inScene&&!(pl.st==='atk'&&pl.kind==='fin')){pl.imp=Math.max(0,pl.imp-6*dt);setFlowLv(pl);}
   const pdt=updPlayer(player,dt);updEnemy(enemy,dt);
-  phys(player,pdt);phys(enemy,dt);
+  phys(player,pdt);phys(enemy,dt);footLock(player,pdt);footLock(enemy,dt);
   if(player.y<8&&enemy.y<8&&canAct(enemy)&&player.st!=='dodge'&&player.st!=='dash'){
     const dx=enemy.x-player.x,dz=(enemy.z-player.z)*1.4,d=Math.hypot(dx,dz);
     if(d<15&&d>.01){const push=(15-d)/2,nx=dx/d,nz=dz/d;player.x-=nx*push;enemy.x+=nx*push;player.z-=nz*push/1.4;enemy.z+=nz*push/1.4;
@@ -938,7 +1050,8 @@ function updHud(force){
 }
 
 // ---------- esqueleto ----------
-const UPPER=['nk','sh','hd','sF','sB','fe','fh','be','bh'];
+// pernas que golpeiam no golpe atual (não são puxadas para o chão pelo IK)
+const kickLegs=mv=>mv.kl||(mv.kl=[mv.hits.some(h=>h.lim==='ft'),mv.hits.some(h=>h.lim==='bt')]);
 function skel(f){
   const p=f.pose,ln=p[0],sn=Math.sin,co=Math.cos;
   const td=[sn(ln),co(ln)],n=[co(ln),-sn(ln)];
@@ -946,22 +1059,33 @@ function skel(f){
   P.hip=[0,0];P.nk=[td[0]*18,td[1]*18];P.sh=[td[0]*16,td[1]*16];
   const ha=ln+p[1];P.hd=[P.nk[0]+sn(ha)*6,P.nk[1]+co(ha)*6];
   P.hF=[n[0]*3.6,n[1]*3.6];P.hB=[-n[0]*3.4,-n[1]*3.4];
-  P.sF=[P.sh[0]+n[0]*4.4,P.sh[1]+n[1]*4.4+.5];P.sB=[P.sh[0]-n[0]*4.2,P.sh[1]-n[1]*4.2+.5];
+  // torção do tronco (FLUI-1): a linha dos ombros gira em profundidade. O lado que golpeia (twS) vem à frente e o outro
+  // recua; a silhueta do peito alarga (aparece a largura dos ombros); braços nunca encolhem
+  const tw=f.tw||0,tc=co(tw),sw=5*sn(tw),g=f.twS||-1,wF=4.4*tc+sw,wB=4.2*tc+sw;
+  P.sF=[P.sh[0]+n[0]*wF,P.sh[1]+n[1]*wF+.5];P.sB=[P.sh[0]-n[0]*wB,P.sh[1]-n[1]*wB+.5];
+  const rF=[P.sh[0]-n[0]*sw*g,P.sh[1]-n[1]*sw*g],rB=[P.sh[0]+n[0]*sw*g,P.sh[1]+n[1]*sw*g];
   const sd=a=>[sn(a),-co(a)];
   const limb=(o,a1,a2,l1,l2,k1,k2)=>{const d1=sd(a1);P[k1]=[o[0]+d1[0]*l1,o[1]+d1[1]*l1];const d2=sd(a1+a2);P[k2]=[P[k1][0]+d2[0]*l2,P[k1][1]+d2[1]*l2];return a1+a2;};
-  limb(P.sh,ln+p[2],p[3],10.5,10,'fe','fh');
-  limb(P.sh,ln+p[4],p[5],10.5,10,'be','bh');
-  const fa=limb(P.hip,p[6],p[7],13,13,'fk','ff');
-  const ba=limb(P.hip,p[8],p[9],13,13,'bk','bf');
+  limb(rF,ln+p[2],p[3],10.5,10,'fe','fh');
+  limb(rB,ln+p[4],p[5],10.5,10,'be','bh');
+  const ra=f.rot+(f.rotR||0);
+  let la=[p[6],p[7],p[8],p[9]];
+  // pé de base no chão (FLUI-9): em pé, o pé que paira até 10 un. acima do outro desce por IK (o chute e a passada não)
+  const gw=(1-(f.gw||0))*(f.y<6&&Math.abs(ra)<.2&&canAct(f)&&f.st!=='air'?1:0);
+  if(gw>0){const kl=f.mv&&(f.st==='atk'||f.st==='strike'||f.st==='wind'||f.st==='countered')?kickLegs(f.mv):null;
+    const low=(a,b)=>{const t=a+b,ax=13*sn(a)+13*sn(t),ay=-13*co(a)-13*co(t);return [ax,ay,Math.min(ay,ay+4.5*sn(t))-.6];};
+    const L0=low(la[0],la[1]),L1=low(la[2],la[3]),gy=Math.min(L0[2],L1[2]);
+    [L0,L1].forEach((L,i)=>{if(kl&&kl[i])return;let h=L[2]-gy;if(h<.25||h>10)return;const w=gw*(h<5?1:1-(h-5)/5);
+      let ty=L[1]-h*w;for(let it=0;it<2;it++){const r=ik2(L[0],ty),q=low(r[0],r[1]),e=(q[2]-gy)-(1-w)*h;la[2*i]=r[0];la[2*i+1]=r[1];if(Math.abs(e)<.3)break;ty-=e;}});}
+  const fa=limb(P.hip,la[0],la[1],13,13,'fk','ff');
+  const ba=limb(P.hip,la[2],la[3],13,13,'bk','bf');
   P.ft=[P.ff[0]+co(fa)*4.5,P.ff[1]+sn(fa)*4.5];P.bt=[P.bf[0]+co(ba)*4.5,P.bf[1]+sn(ba)*4.5];
-  // torção do tronco (o quadril fica, o tronco gira em profundidade)
-  const ct=Math.cos(f.tw||0);for(const k of UPPER){P[k][0]*=ct;}
-  const ra=f.rot+(f.rotR||0),cs=Math.cos(f.spin+f.turn),cr=Math.cos(ra),sr=Math.sin(ra);
+  const cs=Math.cos(f.spin+f.turn),cr=Math.cos(ra),sr=Math.sin(ra),ro=f.ro||0;
   let mn=1e9;
-  for(const k in P){let [x,y]=P[k];x*=cs;const X=x*cr+y*sr,Y=-x*sr+y*cr;P[k]=[X,Y];
+  for(const k in P){let [x,y]=P[k];x*=cs;const X=x*cr+y*sr+ro,Y=-x*sr+y*cr;P[k]=[X,Y];
     const rr=k==='hd'?5.5:(k==='fh'||k==='bh')?3:(k==='ff'||k==='bf'||k==='ft'||k==='bt')?.6:2;if(Y-rr<mn)mn=Y-rr;}
   const off=-mn+f.y;for(const k in P)P[k][1]+=off;
-  P.swap=cs<0;P.ha=ha+ra;P.dirS=cs<0?-1:1;P.armSwap=ct<.35;
+  P.swap=cs<0;P.ha=ha+ra;P.dirS=cs<0?-1:1;P.armSwap=g>0&&sw>4.3;
   return P;
 }
 function snap(f){return {S:skel(f),x:f.x,z:f.z,face:f.face};}
@@ -1228,7 +1352,7 @@ function camUpdate(rdt,SK){
     cy+=Math.min(26,air*.3);fy=32+air*.3;tl=tiltT*face;
     // antecipação: a velocidade suavizada e, no dash, já o sentido do alvo desde o primeiro quadro; o flanco adianta mais e inclina
     let lead=CAM.pvx*.08;
-    if(p.st==='dash'){const D=p.dash,d=Math.sign(e.x+D.side*(D.mv.r-2)-D.sx)||face;lead+=10*d;if(D.flank){lead+=14*Math.sign(e.x-D.sx||face);tl+=.04*d;}}
+    if(p.st==='dash'){const D=p.dash,d=Math.sign(e.x+D.side*spOf(D.mv,p.style)-D.sx)||face;lead+=10*d;if(D.flank){lead+=14*Math.sign(e.x-D.sx||face);tl+=.04*d;}}
     fx+=clamp(lead,-30,30);}
   go(CAM.fx,fx,wF,rdt,cut);go(CAM.fy,fy,wF,rdt,cut);go(CAM.fz,fz,wF,rdt,cut);
   go(CAM.cx,clamp(fx,-170,170),shot?6:4,rdt,cut);go(CAM.cy,cy,5,rdt,cut);go(CAM.cz,cz,5,rdt,cut);go(CAM.yaw,yaw,5,rdt,cut);
@@ -1293,10 +1417,10 @@ function render(rdt){
   ctx.setTransform(...CAM.m);
   ctx.imageSmoothingEnabled=false;
   drawBG();
-  for(const f of fs){const q=P(f.x,0,f.z);ctx.fillStyle=`rgba(0,0,0,${.5*(1-Math.min(f.y/80,.7))})`;ctx.beginPath();ctx.ellipse(q[0],q[1],(f.st==='ko'||f.st==='down'?22:13)*q[2],3.4*q[2]*Math.min(1.6,camY/80),0,0,TAU);ctx.fill();}
+  for(const f of fs){const q=P(f.x+(f.ro||0)*f.face,0,f.z);ctx.fillStyle=`rgba(0,0,0,${.5*(1-Math.min(f.y/80,.7))})`;ctx.beginPath();ctx.ellipse(q[0],q[1],(f.st==='ko'||f.st==='down'?22:13)*q[2],3.4*q[2]*Math.min(1.6,camY/80),0,0,TAU);ctx.fill();}
   const threat=isThreat(enemy);
-  if(threat){const q=P(enemy.x,0,enemy.z),k=.5+.5*Math.sin(time*40);ctx.strokeStyle=enemy.feint?`rgba(255,255,255,${.4+.4*k})`:`rgba(255,93,58,${.5+.5*k})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(q[0],q[1],(16+k*4)*q[2],(4+k)*q[2],0,0,TAU);ctx.stroke();}
-  {const q=P(player.x,0,player.z);ctx.strokeStyle=player.flow>=3?'rgba(242,169,59,.6)':'rgba(127,214,255,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(q[0],q[1],12*q[2],3*q[2],0,0,TAU);ctx.stroke();}
+  if(threat){const q=P(enemy.x+enemy.ro*enemy.face,0,enemy.z),k=.5+.5*Math.sin(time*40);ctx.strokeStyle=enemy.feint?`rgba(255,255,255,${.4+.4*k})`:`rgba(255,93,58,${.5+.5*k})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(q[0],q[1],(16+k*4)*q[2],(4+k)*q[2],0,0,TAU);ctx.stroke();}
+  {const q=P(player.x+player.ro*player.face,0,player.z);ctx.strokeStyle=player.flow>=3?'rgba(242,169,59,.6)':'rgba(127,214,255,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(q[0],q[1],12*q[2],3*q[2],0,0,TAU);ctx.stroke();}
   for(const r of parts)if(r.t==='r'){const q=P(r.x,0,r.z),k=1-r.l/r.ml;ctx.strokeStyle=r.c;ctx.globalAlpha=1-k;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(q[0],q[1],r.r*k*q[2],r.r*k*.3*q[2],0,0,TAU);ctx.stroke();ctx.globalAlpha=1;}
   for(const t of trails){const q=P(t.f.x,0,t.f.z);drawGhost(ctx,t.f,q[0],q[1],q[2],t.c,t.l/.18*.45);}
   const sorted=fs.slice().sort((a,b)=>b.z-a.z);
@@ -1403,12 +1527,12 @@ $('again').onclick=()=>begin(chosen);
 // prévias animadas no menu (mostram golpes do estilo)
 function preview(id,style,pal){const c=$(id).getContext('2d');const f=mkF(style,true,pal,0,0);const list=SEQ[style].flat();let li=0,mt=0,mv=null,pt=performance.now();
   (function draw(now){const dt=Math.min(.05,((now||pt)-pt)/1000);pt=now||pt;time+=0;mt+=dt;
-    if(!mv&&mt>.9){mv=MOV[style][list[li++%list.length]];mt=0;f.ki=-1;}
+    if(!mv&&mt>.9){mv=MOV[style][list[li++%list.length]];mt=0;f.ki=-1;f.st='atk';f.mv=mv;}
     if(mv){let ki=0;for(let i=0;i<mv.keys.length;i++)if(mt>=mv.keys[i][0])ki=i;if(ki!==f.ki){f.ki=ki;setPose(f,mv.keys[ki][1],mv.keys[ki][2],mv.keys[ki][3]);}
       f.spin=spinAt(mv,mt);
-      f.tw=mv.tw?mv.tw*(mt<mv.h0?eout(clamp(mt/mv.h0,0,1)):1-ease(clamp((mt-mv.h0)/(mv.d-mv.h0),0,1))):0;
+      f.tw=mv.tw?mv.tw*(mt<mv.h0?eout(clamp(mt/mv.h0,0,1)):1-ease(clamp((mt-mv.h0)/(mv.d-mv.h0),0,1))):0;f.twS=mv.twS;
       f.y=mv.jump?Math.sin(Math.min(1,mt/(mv.d*.85))*PI)*mv.jump*.6:0;
-      if(mt>=mv.d){mv=null;mt=0;f.spin=0;f.y=0;}}
+      if(mt>=mv.d){mv=null;mt=0;f.spin=0;f.y=0;f.st='idle';}}
     else setPose(f,idlePose(f),170,.75);
     phys(f,dt);f.x=0;f.z=Z0;
     c.clearRect(0,0,60,60);const g=c.createRadialGradient(30,52,2,30,52,28);g.addColorStop(0,'rgba(242,169,59,.35)');g.addColorStop(1,'rgba(242,169,59,0)');c.fillStyle=g;c.fillRect(0,0,60,60);
