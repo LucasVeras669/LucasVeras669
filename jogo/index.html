@@ -106,6 +106,8 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 
 <div id="game">
   <canvas id="cv"></canvas>
+  <!-- limiar de alfa dos sprites dos lutadores (VISU-13): borda sem meio-tom, em uma passada -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><filter id="fbHard" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncA type="discrete" tableValues="0 1"/></feComponentTransfer></filter></svg>
   <div id="hud" hidden>
     <div class="fbar"><div class="fname" id="pName">Jogador</div><div class="hp"><b id="pHpB"></b><i id="pHp"></i></div><div class="wins" id="pWins"><span></span><span></span></div></div>
     <div id="mid"><div id="rlabel">ROUND 1</div><div id="score">0</div></div>
@@ -160,10 +162,10 @@ const pj=c=>{const s=F/c[2];return [W/2+c[0]*s,HOR+(camY-c[1])*s];};
 
 // ---------- paletas ----------
 const PAL={
-  boxP:{skin:'#c98a5e',skinD:'#87522f',skinH:'#e8b183',hair:'#1b1310',sh:'#b3202a',shD:'#6e1118',trim:'#f2e6c8',gl:'#d82c2c',glD:'#7a1016',glH:'#ff8a7a',boot:'#1c1a20',bootD:'#0f0e12',trail:'#ff6a4d'},
-  boxE:{skin:'#e0b08a',skinD:'#94654a',skinH:'#f6d2b0',hair:'#6b3b1c',sh:'#1f4fa8',shD:'#112b5e',trim:'#e8e8e8',gl:'#2f6ad8',glD:'#13336e',glH:'#9cc1ff',boot:'#2a2a30',bootD:'#141418',trail:'#5c8dff'},
-  tkdP:{skin:'#e8be90',skinD:'#9b7452',skinH:'#ffe0bb',hair:'#141414',gi:'#f0efe9',giD:'#a9a8b6',giH:'#ffffff',belt:'#151515',band:'#c62828',trail:'#7fd6ff'},
-  tkdE:{skin:'#d9a477',skinD:'#8c6141',skinH:'#f3c79f',hair:'#2a1d16',gi:'#2c2c34',giD:'#141418',giH:'#4a4a58',belt:'#c62828',band:null,trail:'#c43d3d'},
+  boxP:{skin:'#c98a5e',skinD:'#87522f',skinH:'#e8b183',hair:'#1b1310',hairH:'#3d2c23',sh:'#b3202a',shD:'#6e1118',trim:'#f2e6c8',trimD:'#a3957a',gl:'#d82c2c',glD:'#7a1016',glH:'#ff8a7a',boot:'#1c1a20',bootD:'#0f0e12',bootH:'#3b3843',sole:'#d9cfbd',trail:'#ff6a4d'},
+  boxE:{skin:'#e0b08a',skinD:'#94654a',skinH:'#f6d2b0',hair:'#6b3b1c',hairH:'#9a6236',sh:'#1f4fa8',shD:'#112b5e',trim:'#e8e8e8',trimD:'#94949e',gl:'#2f6ad8',glD:'#13336e',glH:'#9cc1ff',boot:'#2a2a30',bootD:'#141418',bootH:'#484852',sole:'#cfcfd6',trail:'#5c8dff'},
+  tkdP:{skin:'#e8be90',skinD:'#9b7452',skinH:'#ffe0bb',hair:'#141414',hairH:'#3c3c40',gi:'#f0efe9',giD:'#a9a8b6',giH:'#ffffff',lap:'#6c6b78',belt:'#151515',band:'#c62828',trail:'#7fd6ff'},
+  tkdE:{skin:'#d9a477',skinD:'#8c6141',skinH:'#f3c79f',hair:'#2a1d16',hairH:'#54402f',gi:'#2c2c34',giD:'#141418',giH:'#4a4a58',lap:'#62627a',belt:'#c62828',band:null,trail:'#c43d3d'},
 };
 const NAMES={box:'Rocco "Martelo"',tkd:'Ji-ho "Vendaval"'};
 
@@ -346,7 +348,7 @@ function startRound(){
   for(const [f,x] of [[player,-70],[enemy,70]]){Object.assign(f,{x,z:225,y:0,vx:0,vz:0,vy:0,rot:0,rotT:0,rotR:0,rotDir:0,y0:0,spin:0,spinT:0,turn:0,tw:0,st:'idle',t:0,flash:0,face:f.isP?1:-1,fc:0,imp:0,impT:0,mash:0,flow:0,queued:null,smear:[],seq:null,inScene:false,cseq:null,ccam:null,cStreak:0,fseq:null,
     kind:'norm',airHits:0,early:false,cedo:false,preK:null,impMv:null,lastImpact:-9,chain:[],dash:null,dg:null,buf:null,hold:null,finBuf:null,punish:false,feint:false,gh:0,inv:false,tgtOk:true,airLift:0,
     stum:false,hurtD:.38,stun:0,stunT:0,armor:false,jg:0,landV:0,bounced:false,spk:false,
-    tv:0,rv:0,fb:0,lk:0,gw:0,gx:1,str:0,ro:0,ank:null,yb:0,lvx:0,lvz:0,wx:null,wz:0,twS:-1,yl:0,pose:G[f.style].slice(),pt:G[f.style].slice(),pv:new Array(10).fill(0)});f.max=f.isP?100:110+round*20;f.hp=f.max;}
+    tv:0,rv:0,fb:0,lk:0,gw:0,gx:1,str:0,ro:0,ank:null,yb:0,lvx:0,lvz:0,wx:null,wz:0,twS:-1,yl:0,cl:null,pose:G[f.style].slice(),pt:G[f.style].slice(),pv:new Array(10).fill(0)});f.max=f.isP?100:110+round*20;f.hp=f.max;}
   enemy.st='stalk';enemy.cd=1.6;combo=0;comboT=0;parts=[];trails=[];pops=[];roundOver=0;speedL=0;impactF=0;
   inp.act=null;hitstop=0;timeScale=1;slowT=0;cine=0;tiltT=0;sceneName='';sceneRed=false;
   // câmera do round novo: nada do KO (plano, zoom, inclinação, tarjas, tremor) vaza; corte com fade a partir do preto (CAME-8)
@@ -992,6 +994,11 @@ function phys(f,dt){
     // locomoção: as pernas seguem a passada sem atraso de mola (o pé de apoio não escorrega) (FLUI-6)
     if(f.lk>0)for(let i=6;i<10;i++){f.pose[i]=lerp(f.pose[i],f.pt[i],f.lk);f.pv[i]*=1-f.lk;}}
   f.lk=0;
+  // tecido (pontas da faixa, bandana, mecha do cabelo): vetor com mola puxado pela gravidade e contra o movimento real entre
+  // quadros, mais o giro e a rotação do corpo: atrasa e passa do ponto no dash, nos giros e nas quedas (VISU-5)
+  if(dt>0){const r=Math.cos(f.spin+f.turn)*f.face,C=f.cl||(f.cl=[-.3*f.face,-1,0,0,f.x,f.y,r]),vx=clamp((f.x-C[4])/dt,-600,600),vy=clamp((f.y-C[5])/dt,-600,600),
+    w=Math.min(40,Math.abs(r-C[6])/dt*.5+Math.abs(f.rv||0)*.4),tx=-.35*f.face-vx*.007,ty=-1-vy*.005+w*.06;
+    C[2]+=((tx-C[0])*110-C[2]*9)*dt;C[3]+=((ty-C[1])*110-C[3]*9)*dt;C[0]+=C[2]*dt;C[1]+=C[3]*dt;C[4]=f.x;C[5]=f.y;C[6]=r;}
   if(f.flash>0)f.flash-=dt;
 }
 
@@ -1064,6 +1071,11 @@ function skel(f){
   const tw=f.tw||0,tc=co(tw),sw=5*sn(tw),g=f.twS||-1,wF=4.4*tc+sw,wB=4.2*tc+sw;
   P.sF=[P.sh[0]+n[0]*wF,P.sh[1]+n[1]*wF+.5];P.sB=[P.sh[0]-n[0]*wB,P.sh[1]-n[1]*wB+.5];
   const rF=[P.sh[0]-n[0]*sw*g,P.sh[1]-n[1]*sw*g],rB=[P.sh[0]+n[0]*sw*g,P.sh[1]+n[1]*sw*g];
+  // silhueta do tronco (VISU-4): cintura, peito (o V do boxeador) e dorsal; e a raiz real de cada braço, com a torção
+  const bx=f.style==='box',tq=(a,b,t,o)=>[a[0]+(b[0]-a[0])*t+n[0]*o,a[1]+(b[1]-a[1])*t+n[1]*o];
+  P.wF=tq(P.hF,P.sF,.35,bx?.5:.3);P.cF=tq(P.hF,P.sF,.76,bx?1.5:.8);P.dB=tq(P.hB,P.sB,.66,bx?-1.2:-.7);P.aF=rF;P.aB=rB;
+  // base do pescoço (trapézio): os ombros caem até o pescoço em vez de fechar o tronco numa reta
+  P.tF=[P.sh[0]+n[0]*1.7+td[0]*1.3,P.sh[1]+n[1]*1.7+td[1]*1.3];P.tB=[P.sh[0]-n[0]*1.5+td[0]*1.3,P.sh[1]-n[1]*1.5+td[1]*1.3];
   const sd=a=>[sn(a),-co(a)];
   const limb=(o,a1,a2,l1,l2,k1,k2)=>{const d1=sd(a1);P[k1]=[o[0]+d1[0]*l1,o[1]+d1[1]*l1];const d2=sd(a1+a2);P[k2]=[P[k1][0]+d2[0]*l2,P[k1][1]+d2[1]*l2];return a1+a2;};
   limb(rF,ln+p[2],p[3],10.5,10,'fe','fh');
@@ -1091,58 +1103,189 @@ function skel(f){
 function snap(f){return {S:skel(f),x:f.x,z:f.z,face:f.face};}
 
 const OL='#0b0910';
-function drawFighter(c,f,bx,by,s,S){
-  S=S||skel(f);const fc=f.face,pal=f.pal,fl=f.flash>0;
-  const col=k=>fl?'#ffffff':pal[k];
-  const X=q=>bx+q[0]*fc*s,Y=q=>by-q[1]*s;
+// ---------- luz nos lutadores (VISU-2) ----------
+// duas luminárias (x=±110): a paleta do lutador é misturada para o quente sob a lâmpada e para o frio entre elas,
+// em 17 níveis guardados em cache (troca de paleta: custo zero por quadro). Tons médios (M) saem da mistura base/escuro
+const LAMPS=[-110,110],LPC=new WeakMap();
+const hexRGB=c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16));
+const mixHex=(c,t,a)=>{const A=hexRGB(c),B=hexRGB(t);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*a).toString(16).padStart(2,'0')).join('');};
+function lampAt(x){let k=0;const w=LAMPS.map(lx=>{const d=x-lx,v=Math.exp(-d*d/9800);k+=v;return v;});k=Math.min(1,k);return {k,w,lv:Math.round(k*16)};}
+function litPal(pal,lv){let L=LPC.get(pal);if(!L)LPC.set(pal,L=[]);if(L[lv])return L[lv];const r={},t=lv/16-.55;
+  for(const n in pal){const c=pal[n];r[n]=typeof c==='string'&&c.length===7&&c[0]==='#'?(t>0?mixHex(c,'#ffd9a0',t*.3):mixHex(c,'#141826',-t*.34)):c;}
+  for(const k of ['skin','gi','sh','gl'])if(r[k]&&r[k+'D'])r[k+'M']=mixHex(r[k],r[k+'D'],.5);
+  return L[lv]=r;}
+// luz de um lutador no quadro: nível da paleta, lado da lâmpada mais forte (mundo) e, por lâmpada, a direção (8 vizinhos,
+// em pixels da tela) e a força do rim light
+function lightOf(f,q){const L=lampAt(f.x),c=toScr(q[0],q[1]-(30+f.y)*q[2]);L.d=[];L.r=[];
+  LAMPS.forEach((lx,i)=>{const p=P(lx,165,228),s=toScr(p[0],p[1]);let vx=s[0]-c[0],vy=s[1]-c[1];const l=Math.hypot(vx,vy)||1;vx/=l;vy/=l;
+    L.d.push([Math.abs(vx)>.38?Math.sign(vx):0,Math.abs(vy)>.38?Math.sign(vy):0]);L.r.push(Math.min(.62,L.w[i]*.75));});
+  L.side=Math.sign(LAMPS[L.w[1]>L.w[0]?1:0]-f.x)||1;return L;}
+const PAIN={hit:1,hurt:1,stagger:1,countered:1,air:1,down:1,ko:1},EFFORT={atk:1,strike:1,wind:1,brk:1,dash:1};
+
+// ---------- lutador ----------
+// T: ponto do esqueleto (unidades locais) -> pixel do canvas de destino; ps: pixels por unidade; LI: luz (lightOf).
+// Cada membro é um grupo desenhado em duas passadas (todos os contornos, depois todos os preenchimentos): sem costuras nas
+// articulações; o contorno entre grupos (perna da frente sobre a de trás, braço sobre o tronco) continua. Contorno de 1 px
+// em qualquer zoom (VISU-1). Sombreado em 3 tons por plano, voltado para a lâmpada (VISU-4); figurino detalhado (VISU-5)
+function drawFighter(c,f,S,T,ps,LI){
+  const fl=f.flash>0,box=f.style==='box',LP=litPal(f.pal,LI?LI.lv:10),col=k=>fl?'#ffffff':LP[k],ow=1/ps,fc=f.face;
   c.lineCap='round';c.lineJoin='round';
-  const seg=(a,b,w,cl)=>{c.strokeStyle=cl;c.lineWidth=Math.max(1,w*s);c.beginPath();c.moveTo(X(a),Y(a));c.lineTo(X(b),Y(b));c.stroke();};
-  const mid=(a,b,t)=>[lerp(a[0],b[0],t),lerp(a[1],b[1],t)];
-  const up=(a,o)=>[a[0],a[1]+o];
-  const bone=(a,b,w,k,kh)=>{seg(a,b,w+1.5,OL);seg(a,b,w,col(k));if(kh&&!fl)seg(up(a,w*.22),up(b,w*.22),w*.32,pal[kh]);};
-  const dot=(a,r,k,kh)=>{c.fillStyle=OL;c.beginPath();c.arc(X(a),Y(a),(r+.8)*s,0,TAU);c.fill();c.fillStyle=col(k);c.beginPath();c.arc(X(a),Y(a),r*s,0,TAU);c.fill();
-    if(kh&&!fl){c.fillStyle=pal[kh];c.beginPath();c.arc(X(a)-fc*r*.3*s,Y(a)-r*.35*s,r*.4*s,0,TAU);c.fill();}};
-  const box=f.style==='box';
-  const arm=(sh,el,ha,dark)=>{
-    if(box){bone(sh,el,4.4,dark?'skinD':'skin',dark?null:'skinH');bone(el,ha,4,dark?'skinD':'skin',dark?null:'skinH');dot(ha,3.4,dark?'glD':'gl',dark?null:'glH');}
-    else{bone(sh,el,4.4,dark?'giD':'gi',dark?null:'giH');const m=mid(el,ha,.6);bone(el,m,4,dark?'giD':'gi',dark?null:'giH');bone(m,ha,3,dark?'skinD':'skin');dot(ha,1.9,dark?'skinD':'skin');}
+  const mid=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t],off=(a,v,k)=>[a[0]+v[0]*k,a[1]+v[1]*k];
+  const nrm=(a,b,d)=>{const x=a[0]-b[0],y=a[1]-b[1],l=Math.hypot(x,y);return l>1e-3?[x/l,y/l]:d||[1,0];};
+  const path=(pts,cl)=>{c.beginPath();for(let i=0;i<pts.length;i++){const A=T(pts[i]);i?c.lineTo(A[0],A[1]):c.moveTo(A[0],A[1]);}if(cl)c.closePath();};
+  const seg=(a,b,w,cl)=>{c.strokeStyle=cl;c.lineWidth=w*ps;path([a,b]);c.stroke();};
+  const disc=(a,r,cl)=>{const A=T(a);c.fillStyle=cl;c.beginPath();c.arc(A[0],A[1],r*ps,0,TAU);c.fill();};
+  const ell=(a,rx,ry,d,cl)=>{const A=T(a),B=T(off(a,d,1));c.fillStyle=cl;c.beginPath();c.ellipse(A[0],A[1],rx*ps,ry*ps,Math.atan2(B[1]-A[1],B[0]-A[0]),0,TAU);c.fill();};
+  const poly=(pts,cl)=>{c.fillStyle=cl;path(pts,1);c.fill();};
+  // luz vinda de cima e do lado da lâmpada mais forte, no espaço local
+  const Ld=[(LI?LI.side:1)*fc*.6,1];
+  // formas de um grupo acrescentadas ao caminho atual, todas no mesmo sentido (horário na tela): um fill só pinta a união
+  const capP=(a,b,r)=>{const A=T(a),B=T(b),R=r*ps,t=Math.atan2(B[1]-A[1],B[0]-A[0]);c.moveTo(B[0]+Math.sin(t)*R,B[1]-Math.cos(t)*R);c.arc(B[0],B[1],R,t-PI/2,t+PI/2);c.arc(A[0],A[1],R,t+PI/2,t+PI*1.5);c.closePath();};
+  const discP=(a,r)=>{const A=T(a),R=r*ps;c.moveTo(A[0]+R,A[1]);c.arc(A[0],A[1],R,0,TAU);c.closePath();};
+  const ellP=(a,rx,ry,d)=>{const A=T(a),B=T(off(a,d,1)),t=Math.atan2(B[1]-A[1],B[0]-A[0]);c.moveTo(A[0]+Math.cos(t)*rx*ps,A[1]+Math.sin(t)*rx*ps);c.ellipse(A[0],A[1],rx*ps,ry*ps,t,0,TAU);c.closePath();};
+  const polyP=pts=>{const V=pts.map(T);let ar=0;for(let i=0;i<V.length;i++){const p=V[i],q=V[(i+1)%V.length];ar+=p[0]*q[1]-q[0]*p[1];}if(ar<0)V.reverse();
+    c.moveTo(V[0][0],V[0][1]);for(let i=1;i<V.length;i++)c.lineTo(V[i][0],V[i][1]);c.closePath();};
+  // grupo: b=osso [a,b,largura,cor,sombreado], d=disco [centro,raio,cor], e=elipse [centro,rx,ry,direção,cor], p=polígono [pontos,cor]
+  const Q=[],keyOf=q=>q[0]==='b'?q[4]:q[0]==='d'?q[3]:q[0]==='e'?q[5]:q[2];
+  const addQ=(q,e)=>{const t=q[0];if(t==='b')capP(q[1],q[2],q[3]/2+e);else if(t==='d')discP(q[1],q[2]+e);else if(t==='e')ellP(q[1],q[2]+e,q[3]+e,q[4]);else if(!e)polyP(q[1]);};
+  // sombra (embaixo, tom médio) e realce (em cima) de um osso, voltados para a luz
+  const shadeP=(q,dk)=>{const a=q[1],b=q[2],w=q[3];let nx=a[1]-b[1],ny=b[0]-a[0];const l=Math.hypot(nx,ny);if(l<1e-3)return;nx/=l;ny/=l;if(nx*Ld[0]+ny*Ld[1]<0){nx=-nx;ny=-ny;}
+    const o=dk?-.3*w:.27*w;capP([a[0]+nx*o,a[1]+ny*o],[b[0]+nx*o,b[1]+ny*o],dk?.17*w:.12*w);};
+  // contorno do grupo inteiro num fill (polígonos: traço), depois cada sequência de mesma cor num fill, com sombra e realce
+  const flush=()=>{
+    c.fillStyle=OL;c.beginPath();let hp=0;for(const q of Q){if(q[0]==='p')hp=1;addQ(q,ow);}c.fill();
+    if(hp){c.strokeStyle=OL;c.lineWidth=2*ow*ps;c.beginPath();for(const q of Q)if(q[0]==='p')polyP(q[1]);c.stroke();}
+    for(let i=0,j;i<Q.length;i=j){const k=keyOf(Q[i]);c.beginPath();for(j=i;j<Q.length&&keyOf(Q[j])===k;j++)addQ(Q[j],0);c.fillStyle=col(k);c.fill();
+      if(!fl)for(const dk of [1,0]){const C=dk?LP[k+'M']||LP[k+'D']:LP[k+'H'];if(!C)continue;let n=0;c.beginPath();for(let x=i;x<j;x++)if(Q[x][0]==='b'&&Q[x][5]){shadeP(Q[x],dk);n++;}if(n){c.fillStyle=C;c.fill();}}}
+    Q.length=0;};
+  // tecido: vetor da mola (mundo) no espaço local, normalizado
+  const C=f.cl,cl0=C?Math.hypot(C[0],C[1]):0,cv=cl0>.15?[C[0]/cl0*fc,C[1]/cl0]:[-.3,-.95],cp=[-cv[1],cv[0]];
+  const arm=(r0,el,ha,dk)=>{
+    const sk=dk?'skinD':'skin',dir=nrm(ha,el);
+    if(box){const g0=off(ha,dir,.5),pn=[-dir[1],dir[0]],up=pn[0]*Ld[0]+pn[1]*Ld[1]>0?pn:[dir[1],-dir[0]];
+      Q.push(['d',r0,2.7,sk],['b',r0,el,4.4,sk,!dk],['b',el,ha,4,sk,!dk],['b',mid(el,ha,.58),mid(el,ha,.84),4.8,dk?'trimD':'trim',0],['e',g0,4.1,3.4,dir,dk?'glD':'gl']);flush();
+      // luva: sombra embaixo, brilho em cima e a costura do polegar; cadarço no punho de perto
+      if(!fl&&!dk){ell(off(g0,up,-1.2),3,1.6,dir,col('glD'));ell(off(off(g0,up,.4),dir,-.2),3.2,2.2,dir,col('gl'));
+        disc(off(off(g0,up,1.5),dir,.9),1,col('glH'));seg(off(off(g0,up,-.6),dir,-1.6),off(off(g0,up,-1.1),dir,1.6),.7,col('glD'));
+        if(ps>1.6){const a=mid(el,ha,.66),b=mid(el,ha,.78);seg(off(a,up,1.6),off(b,up,-1.6),.45,OL);seg(off(a,up,-1.6),off(b,up,1.6),.45,OL);}}}
+    else{const m=mid(el,ha,.6),g=dk?'giD':'gi';
+      // a mão e o antebraço saem de dentro da manga (desenhados antes dela); manga mais larga no fim, com barra
+      Q.push(['d',r0,2.8,g],['b',r0,el,4.6,g,!dk],['b',m,ha,3,sk,!dk],['d',ha,2,sk],['b',el,m,4.4,g,!dk],['b',mid(el,m,.45),m,5.3,g,0]);
+      if(!dk)Q.push(['b',mid(el,m,.9),m,5.3,'giM',0]);flush();}
   };
-  const leg=(kn,ft,toe,dark)=>{
-    const h=S.hip,m1=mid(h,kn,.55),m2=mid(kn,ft,.55);
-    if(box){bone(h,m1,6.4,dark?'shD':'sh');bone(m1,kn,5.2,dark?'skinD':'skin',dark?null:'skinH');bone(kn,m2,4.6,dark?'skinD':'skin',dark?null:'skinH');bone(m2,ft,5,dark?'bootD':'boot');bone(ft,toe,3.2,dark?'bootD':'boot');}
-    else{bone(h,kn,6,dark?'giD':'gi',dark?null:'giH');bone(kn,ft,5.2,dark?'giD':'gi',dark?null:'giH');bone(ft,toe,2.6,dark?'skinD':'skin');}
+  const leg=(kn,an,toe,dk)=>{const h=S.hip,sk=dk?'skinD':'skin',sd=nrm(an,kn,[0,-1]);
+    if(box){const m1=mid(h,kn,.55),m2=mid(kn,an,.56),bt=dk?'bootD':'boot';
+      Q.push(['b',h,m1,7,dk?'shD':'sh',!dk],['b',m1,kn,5.3,sk,!dk],['b',kn,m2,4.6,sk,!dk],['b',mid(kn,m2,.78),m2,4.7,dk?'trimD':'trim',0],['b',m2,an,5.1,bt,0],['b',an,toe,3.5,bt,0]);flush();
+      if(!fl){// faixa lateral do calção, brilho do cano da bota e sola clara
+        seg(mid(h,m1,.3),mid(h,m1,.97),1.1,col(dk?'trimD':'trim'));
+        if(!dk)seg(off(mid(m2,an,.15),Ld,.9),off(mid(m2,an,.8),Ld,.9),1,col('bootH'));
+        const fd=nrm(toe,an);let s2=[fd[1],-fd[0]];if(s2[0]*sd[0]+s2[1]*sd[1]<0)s2=[-s2[0],-s2[1]];
+        seg(off(off(an,s2,1.2),fd,-.6),off(toe,s2,1.2),1.1,col(dk?'trimD':'sole'));}}
+    else{const g=dk?'giD':'gi',e=mid(kn,an,.86);
+      // pé descalço por baixo da barra; calça mais larga no último terço, com a barra mais escura
+      Q.push(['b',an,toe,2.8,sk,0],['b',h,kn,6.2,g,!dk],['b',kn,e,5.4,g,!dk],['b',mid(kn,an,.55),e,6.4,g,0]);if(!dk)Q.push(['b',mid(kn,an,.8),e,6.4,'giM',0]);flush();}
   };
+  // tronco com 9 pontos (cintura, peito, ombros caindo até o pescoço, dorsal), pescoço por baixo e sombreado por plano
+  const tp=[S.hF,S.wF,S.cF,S.sF,S.tF,S.tB,S.sB,S.dB,S.hB],sp=nrm(S.sh,S.hip,[0,1]),hw=[S.hF[0]-S.hB[0],S.hF[1]-S.hB[1]];
+  // ponto do tronco pela altura h (0 quadril, 1 ombro) e profundidade u (0 frente, 1 costas): o sombreado fica sempre dentro
+  // do polígono, mesmo com o tronco estreitado pelo giro (sem recorte)
+  const tf=h=>h<.35?mid(S.hF,S.wF,h/.35):h<.76?mid(S.wF,S.cF,(h-.35)/.41):mid(S.cF,S.sF,(h-.76)/.24),tb=h=>h<.66?mid(S.hB,S.dB,h/.66):mid(S.dB,S.sB,(h-.66)/.34);
+  const tpt=(h,u)=>mid(tf(h),tb(h),u);
+  const trunks=()=>{poly([tpt(0,1),tpt(.3,1),tpt(.3,0),tpt(0,0)],col('sh'));if(!fl)poly([tpt(0,1),tpt(.3,1),tpt(.3,.72),tpt(0,.7)],col('shD'));
+    poly([tpt(.2,1),tpt(.32,1),tpt(.32,0),tpt(.2,0)],col('trim'));};
   const torso=()=>{
-    const q=[S.hB,S.hF,S.sF,S.sB];
-    c.beginPath();q.forEach((v,i)=>i?c.lineTo(X(v),Y(v)):c.moveTo(X(v),Y(v)));c.closePath();
-    c.lineWidth=1.6*s;c.strokeStyle=OL;c.stroke();c.fillStyle=col(box?'skin':'gi');c.fill();
-    if(!fl){
-      if(box){const a=mid(S.hF,S.sF,.35),b=mid(S.hF,S.sF,.7);seg(mid(S.hip,a,.6),a,.7,pal.skinD);seg(mid(S.hip,b,.6),b,.7,pal.skinD);seg(mid(S.sB,S.sF,.15),mid(S.hB,S.hF,.2),1.4,pal.skinH);}
-      else{seg(S.sF,mid(S.hip,S.hF,.6),1,pal.giD);seg(mid(S.sB,S.sF,.2),mid(S.hB,S.hF,.25),1.6,pal.giH);}
-    }
-    if(box){seg(S.hB,S.hF,2.6,col('trim'));}
-    else{seg(S.hB,S.hF,2.6,col('belt'));const sw=Math.sin(time*9+f.x*.1)*1.5;const b0=mid(S.hB,S.hF,.5),bt=[b0[0]-3*S.dirS,b0[1]-6+sw*.3];seg(b0,bt,1.4,col('belt'));seg(b0,[bt[0]-1.5,bt[1]+.5],1.2,col('belt'));}
+    Q.push(['b',S.sh,S.nk,3.8,'skin',0]);flush();
+    c.lineWidth=2*ow*ps;c.strokeStyle=OL;path(tp);c.stroke();poly(tp,col(box?'skin':'gi'));
+    if(!fl){poly([tpt(1,1),tpt(.66,1),tpt(0,1),tpt(0,.68),tpt(.66,.7),tpt(1,.74)],col(box?'skinM':'giM'));
+      if(box){seg(tpt(.69,.08),tpt(.72,.42),.8,col('skinD'));seg(tpt(.8,.14),tpt(.88,.42),1.2,col('skinH'));
+        for(const h of [.4,.5,.6])seg(tpt(h,.12),tpt(h,.24),.7,col('skinD'));
+        seg(tpt(.93,.1),tpt(.42,.1),.8,col('skinH'));}
+      else{const A=tpt(.96,.62),B=tpt(.3,.12);seg(mid(A,B,.02),B,1.4,col('giH'));seg(off(A,hw,-.08),off(B,hw,-.08),.8,col('lap'));seg(tpt(.93,.12),tpt(.45,.12),.9,col('giH'));}}
+    if(box)trunks();
+  };
+  // depois da perna da frente: o calção (boxe) ou a saia do dobok com a faixa (tkd) cobrem a raiz da coxa sem costura
+  const hipOver=()=>{
+    if(box){trunks();return;}
+    const a=tpt(.22,1),e=tpt(.22,0),b=off(off(S.hB,sp,-4.8),hw,-.12),d=off(off(S.hF,sp,-4.8),hw,.1),sk=[a,S.hB,b,d,S.hF,e];
+    c.lineWidth=2*ow*ps;c.strokeStyle=OL;path(sk);c.stroke();poly(sk,col('gi'));
+    if(!fl){poly([b,d,mid(d,S.hF,.24),mid(b,S.hB,.24)],col('giM'));poly([a,S.hB,b,mid(b,d,.3),mid(S.hB,S.hF,.3),mid(a,e,.3)],col('giM'));}
+    const k0=mid(off(S.hF,sp,.9),off(S.hB,sp,.9),.06),t1=off(off(k0,cv,5),cp,.5),t2=off(off(k0,cv,4),cp,-.6);
+    Q.push(['b',off(S.hB,sp,.9),off(S.hF,sp,.9),2.2,'belt',0],['b',k0,t1,1.3,'belt',0],['b',k0,t2,1.1,'belt',0],['d',k0,1.3,'belt']);flush();
   };
   const head=()=>{
     const ha=S.ha,u=[Math.sin(ha),Math.cos(ha)],fw=[Math.cos(ha)*S.dirS,-Math.sin(ha)*S.dirS],h=S.hd;
     const at=(a,b)=>[h[0]+fw[0]*a+u[0]*b,h[1]+fw[1]*a+u[1]*b];
-    dot(h,5,'skin');
-    if(!fl){c.fillStyle=pal.hair;c.beginPath();c.arc(X(at(-1.3,1.4)),Y(at(-1.3,1.4)),4.3*s,0,TAU);c.fill();
-      c.fillStyle=pal.skin;c.beginPath();c.arc(X(at(1.2,-.6)),Y(at(1.2,-.6)),3.6*s,0,TAU);c.fill();
-      c.fillStyle=pal.skinD;c.fillRect(X(at(-.6,-.2))-s*.7,Y(at(-.6,-.2))-s*.8,s*1.4,s*1.8);
-      c.fillStyle=OL;const e=at(3,.7);c.fillRect(X(e)-s*.55,Y(e)-s*.6,s*1.1,s*1.2);
-      c.fillStyle=pal.skinH;const nz=at(4.6,-.6);c.fillRect(X(nz)-s*.5,Y(nz)-s*.5,s*1,s*1);
-      if(pal.band){seg(at(-4.6,2),at(4.4,2.3),1.6,pal.band);const t0=at(-4.5,2),sw=Math.sin(time*11)*1.2;seg(t0,[t0[0]-4*S.dirS,t0[1]-2+sw],1.2,pal.band);seg(t0,[t0[0]-3.5*S.dirS,t0[1]-4+sw*.6],1,pal.band);}
-    }
+    const arc=(r,t0,t1,n)=>{const o=[];for(let i=0;i<=n;i++){const t=t0+(t1-t0)*i/n;o.push(at(Math.cos(t)*r,Math.sin(t)*r));}return o;};
+    // cabelo por estilo: boxeador curto e rente; taekwondista com franja e uma mecha atrás presa à mola do tecido
+    const hair=box?[...arc(5.35,.95,3.75,9),at(-2.9,-1.7),at(-1.3,1),at(1.9,2.8)]
+      :[at(-2.6,-1.6),...arc(5.75,3.85,.5,11),at(5.5,1.9),at(4,2.5),at(3.1,1.7),at(1.4,2.7),at(-1.3,1)];
+    if(!box){const r0=at(-4.6,1.3),r1=at(-4,-1.8),tip=off(at(-4.7,-.4),cv,5);Q.push(['p',[r0,tip,r1],'hair']);}
+    Q.push(['d',h,5,'skin'],['d',at(2.5,-3.1),1.7,'skin'],['d',at(4.6,-.5),1.05,'skin'],['p',hair,'hair']);flush();
+    if(!fl){
+      seg(at(-1.4,-3.5),at(1.5,-3.9),1,col('skinM'));
+      disc(at(-.9,-.5),.95,col('skinM'));if(ps>1.6)disc(at(-.8,-.5),.4,col('skinD'));
+      if(ps>1.4){c.strokeStyle=col('hairH');c.lineWidth=Math.max(1,.8*ps);path(arc(box?4.5:4.8,1.3,2.3,4));c.stroke();}
+      const pain=PAIN[f.st],eff=EFFORT[f.st],px=(q,w,hh,cl)=>{const A=T(q),pw=Math.max(1,Math.round(w*ps)),ph=Math.max(1,Math.round(hh*ps));c.fillStyle=cl;c.fillRect(Math.round(A[0]-pw/2),Math.round(A[1]-ph/2),pw,ph);};
+      px(at(3.15,.5),1,pain?.6:1.2,OL);
+      const bw=Math.max(.7,1/ps);
+      if(eff)seg(at(2.3,2.6),at(4.1,1.8),bw,OL);else if(pain)seg(at(2.3,1.9),at(4.1,2.5),bw,OL);else seg(at(2.3,2.3),at(4.1,2.1),bw,OL);
+      if(pain){seg(at(3.8,-1.8),at(3.9,-2.9),1.2,OL);if(box)seg(at(3.75,-1.85),at(3.85,-2.25),.8,'#f4f1e8');}
+      else seg(at(3.3,-2.4),at(4.3,-2.2),.7,col('skinD'));
+      px(at(4.9,-.2),.9,.9,col('skinH'));
+      if(LP.band){const k0=at(-4.7,2.9),t1=off(off(k0,cv,5),cp,.5),t2=off(off(k0,cv,4),cp,-.8);
+        Q.push(['b',k0,at(3.7,3.3),1.8,'band',0],['b',k0,t1,1.4,'band',0],['b',k0,t2,1.1,'band',0],['d',k0,1.3,'band']);flush();}}
   };
   const swap=S.swap;
   const legB=()=>swap?leg(S.fk,S.ff,S.ft,true):leg(S.bk,S.bf,S.bt,true);
   const legF=()=>swap?leg(S.bk,S.bf,S.bt,false):leg(S.fk,S.ff,S.ft,false);
-  const armB=()=>swap?arm(S.sh,S.fe,S.fh,true):arm(S.sh,S.be,S.bh,true);
-  const armF=()=>swap?arm(S.sh,S.be,S.bh,false):arm(S.sh,S.fe,S.fh,false);
-  if(S.armSwap&&!swap){legB();torso();armB();legF();head();armF();}
-  else{armB();legB();torso();legF();head();armF();}
+  const armB=()=>swap?arm(S.aF,S.fe,S.fh,true):arm(S.aB,S.be,S.bh,true);
+  const armF=()=>swap?arm(S.aB,S.be,S.bh,false):arm(S.aF,S.fe,S.fh,false);
+  if(S.armSwap&&!swap){legB();torso();armB();legF();hipOver();head();armF();}
+  else{armB();legB();torso();legF();hipOver();head();armF();}
 }
+// ---------- sprite do lutador (VISU-13) ----------
+// Cada lutador é desenhado num canvas próprio já na grade de pixels da tela (mesma rotação e escala da câmera, origem
+// inteira) e tem o alfa das bordas endurecido por composição (sem meio-tom: pixel art nítido, contorno de 1 px). Acima de
+// ~2.5 px por unidade o sprite sai numa resolução inteira menor (m=2,3) e é ampliado sem suavização: pixels grossos e
+// estáveis no close, em vez de um boneco liso. O rim light das lâmpadas e o gradiente vertical entram por cima (VISU-2)
+// Endurecer o alfa: filtro SVG de limiar (uma passada, testado uma vez no início); sem suporte a filtro no canvas, 8
+// composições do sprite sobre ele mesmo (a²: destination-in; 2a-a²: source-over) aproximam o mesmo degrau
+const HARD='SHHSHSHS',RIMC='#ffe0ad',TMP=[document.createElement('canvas'),document.createElement('canvas'),document.createElement('canvas')];
+const HARDF=(()=>{try{const c=document.createElement('canvas'),s=document.createElement('canvas');c.width=c.height=s.width=s.height=2;const g=c.getContext('2d'),q=s.getContext('2d');
+  if(!('filter' in g))return false;q.fillStyle='rgba(255,0,0,.6)';q.fillRect(0,0,1,2);q.fillStyle='rgba(255,0,0,.3)';q.fillRect(1,0,1,2);
+  g.filter='url(#fbHard)';g.drawImage(s,0,0);g.filter='none';const d=g.getImageData(0,0,2,1).data;return d[3]===255&&d[7]===0;}catch(e){return false;}})();
+function fitC(c,w,h){if(c.width<w||c.height<h){c.width=Math.max(c.width,w+24);c.height=Math.max(c.height,h+24);}return c.getContext('2d');}
+function fighterSprite(f,S,M,bx,by,s,LI){
+  const sp=f._sp||(f._sp={c:document.createElement('canvas'),m:1}),k=s*Math.hypot(M[0],M[1]);
+  // a resolução do sprite troca de preferência no corte de câmera; no meio de um movimento só fora de uma faixa larga
+  let m=sp.m;if(CAM.cut||sp.n!==1){m=Math.max(1,Math.ceil(k/2.55));sp.n=1;}else{while(k/m>3.1)m++;while(m>1&&k/(m-1)<1.9)m--;}sp.m=m;const ps=k/m,fc=f.face;
+  const a=M[0]*fc*s,b=-M[2]*s,e0=M[0]*bx+M[2]*by+M[4],d=M[1]*fc*s,e=-M[3]*s,g0=M[1]*bx+M[3]*by+M[5];
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,yt=-1e9,yl=1e9;
+  for(const key in S){const v=S[key];if(!Array.isArray(v))continue;const X=a*v[0]+b*v[1]+e0,Y=d*v[0]+e*v[1]+g0;
+    if(X<x0)x0=X;if(X>x1)x1=X;if(Y<y0)y0=Y;if(Y>y1)y1=Y;if(v[1]>yt)yt=v[1];if(v[1]<yl)yl=v[1];}
+  const mg=12*k+3,ox=Math.floor(x0-mg),oy=Math.floor(y0-mg),w=Math.ceil((x1+mg-ox)/m)+1,h=Math.ceil((y1+mg-oy)/m)+1;
+  const g=fitC(sp.c,w,h);g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;g.clearRect(0,0,w+1,h+1);
+  const T=q=>[(a*q[0]+b*q[1]+e0-ox)/m,(d*q[0]+e*q[1]+g0-oy)/m];
+  if(HARDF){const t=fitC(TMP[2],w,h);t.clearRect(0,0,w+1,h+1);drawFighter(t,f,S,T,ps,LI);g.filter='url(#fbHard)';g.drawImage(TMP[2],0,0,w,h,0,0,w,h);g.filter='none';}
+  else{drawFighter(g,f,S,T,ps,LI);for(const o of HARD){g.globalCompositeOperation=o==='S'?'destination-in':'source-over';g.drawImage(sp.c,0,0,w,h,0,0,w,h);}}
+  if(LI&&!(f.flash>0)){
+    const t1=fitC(TMP[1],w,h);
+    for(let i=0;i<2;i++){const al=LI.r[i],D=LI.d[i];if(al<.1||!(D[0]||D[1]))continue;
+      // rim: o primeiro pixel por dentro do contorno no lado voltado para a lâmpada (silhueta deslocada menos a deslocada 2x)
+      t1.globalCompositeOperation='source-over';t1.clearRect(0,0,w,h);t1.drawImage(sp.c,0,0,w,h,-D[0],-D[1],w,h);
+      t1.globalCompositeOperation='destination-out';t1.drawImage(sp.c,0,0,w,h,-2*D[0],-2*D[1],w,h);
+      t1.globalCompositeOperation='source-in';t1.fillStyle=RIMC;t1.fillRect(0,0,w,h);
+      g.globalCompositeOperation='source-atop';g.globalAlpha=al;g.drawImage(TMP[1],0,0,w,h,0,0,w,h);g.globalAlpha=1;}
+    // gradiente vertical do mundo: topo do corpo mais quente, pés no escuro
+    const A=T([0,yt+5]),B=T([0,yl-1]),gr=g.createLinearGradient(A[0],A[1],B[0],B[1]);
+    gr.addColorStop(0,`rgba(255,222,170,${(.05+.12*LI.k).toFixed(3)})`);gr.addColorStop(.45,'rgba(255,222,170,0)');gr.addColorStop(1,'rgba(8,10,26,.32)');
+    g.globalCompositeOperation='source-atop';g.fillStyle=gr;g.fillRect(0,0,w,h);}
+  g.globalCompositeOperation='source-over';
+  return {c:sp.c,ox,oy,w,h,m};
+}
+// desenha o sprite na tela (fora da transformação da câmera: origem inteira, sem suavização)
+function drawFighterW(f,S){const q=P(f.x,0,f.z),M=CAM.m,r=fighterSprite(f,S,M,q[0],q[1],q[2],lightOf(f,q));
+  ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;ctx.drawImage(r.c,0,0,r.w,r.h,r.ox,r.oy,r.w*r.m,r.h*r.m);ctx.setTransform(...M);}
 function drawGhost(c,g,bx,by,s,col,al,wa){
   const S=g.S,fc=g.face,X=q=>bx+q[0]*fc*s,Y=q=>by-q[1]*s;wa=wa||0;
   c.globalAlpha=al;c.strokeStyle=col;c.lineCap='round';
@@ -1245,17 +1388,41 @@ function drawBG(){
     if(c.ph2>.93&&Math.sin(time*2+c.ph)>.6){ctx.fillStyle='#dfefff';ctx.fillRect(Math.round(q[0]+3*q[2]),Math.round(q[1]-2*q[2]),1,1);}}
   ctx.strokeStyle='#47423f';ctx.lineWidth=1.4;ctx.beginPath();for(let x=-900;x<=900;x+=60){const q=P(x,0,305);if(q[0]>vb[0]-4&&q[0]<vb[2]+4)seg3([x,0,305],[x,22,305]);}ctx.stroke();
   line3([-900,22,305],[900,22,305],'#5a5450',1.6);line3([-900,12,305],[900,12,305],'#3a3533',1);
+  beams(.15);
   for(const lx of [-110,110]){
-    const L=P(lx,165,228),f0=P(lx-70,0,228),f1=P(lx+70,0,228);
+    const L=P(lx,165,228);
     line3([lx,165,228],[lx,1600,228],'#111',1);
     ctx.globalCompositeOperation='lighter';
-    const cg=ctx.createLinearGradient(0,L[1],0,f0[1]);cg.addColorStop(0,'rgba(255,200,120,.22)');cg.addColorStop(1,'rgba(255,200,120,0)');
-    poly([[L[0]-3*L[2],L[1]],[L[0]+3*L[2],L[1]],f1,f0],cg);
     for(const m of motes)if((m.lamp?110:-110)===lx){const q=P(lx+m.x*(1-m.y/170),m.y+Math.sin(time*.8+m.ph)*4,m.z);ctx.fillStyle=`rgba(255,220,170,${.25+.2*Math.sin(time*2+m.ph)})`;ctx.fillRect(q[0],q[1],1,1);}
     ctx.globalCompositeOperation='source-over';
     poly([[L[0]-6*L[2],L[1]],[L[0]+6*L[2],L[1]],[L[0]+2.5*L[2],L[1]-5*L[2]],[L[0]-2.5*L[2],L[1]-5*L[2]]],'#2e3b3a');
     ctx.fillStyle='#fff1c9';ctx.fillRect(L[0]-3*L[2],L[1],6*L[2],1.2*L[2]);
   }
+}
+// cone de luz das luminárias: uma parte atrás dos lutadores (cenário) e outra por cima deles, para quem está dentro do
+// feixe parecer iluminado por ele (VISU-2)
+function beams(a){ctx.globalCompositeOperation='lighter';
+  for(const lx of LAMPS){const L=P(lx,165,228),f0=P(lx-70,0,228),f1=P(lx+70,0,228),cg=ctx.createLinearGradient(0,L[1],0,f0[1]);
+    cg.addColorStop(0,`rgba(255,200,120,${a})`);cg.addColorStop(1,'rgba(255,200,120,0)');poly([[L[0]-3*L[2],L[1]],[L[0]+3*L[2],L[1]],f1,f0],cg);}
+  ctx.globalCompositeOperation='source-over';}
+// sombras (VISU-3): a projetada por cada luminária (um traço só por lâmpada: a união não escurece onde os membros se cruzam;
+// a lâmpada virtual fica um pouco atrás, em z=255, para a sombra cair na diagonal; juntas acima de y=90 contam como 90, o
+// que mantém a sombra à frente da lente), a elipse do corpo, que encolhe com a altura, e o contato de cada pé no chão
+const SHB=[['hip','sh',1],['sh','hd',1],['aF','fe'],['fe','fh'],['aB','be'],['be','bh'],['hip','fk'],['fk','ff'],['hip','bk'],['bk','bf'],['ff','ft'],['bf','bt']];
+function drawShadows(fs,SK){
+  const fy=Math.min(1.6,camY/80);ctx.lineCap='round';
+  for(let i=0;i<2;i++){const f=fs[i],S=SK[i],q0=P(f.x,0,f.z);
+    for(const lx of LAMPS){const dx=f.x-lx,al=.3*Math.exp(-dx*dx/28800)*(1-Math.min(.5,f.y/150));if(al<.02)continue;
+      const pr=k=>{const v=S[k],y=Math.min(v[1],90),x=f.x+v[0]*f.face,t=165/(165-y);return P(lx+(x-lx)*t,0,255+(f.z-255)*t);};
+      ctx.beginPath();
+      for(const [a,b,th] of SHB){const A=pr(a),B=pr(b);ctx.moveTo(A[0],A[1]);ctx.lineTo(B[0],B[1]);
+        if(th){let nx=A[1]-B[1],ny=B[0]-A[0];const l=Math.hypot(nx,ny)||1,o=1.5*q0[2];nx*=o/l;ny*=o/l;
+          ctx.moveTo(A[0]+nx,A[1]+ny);ctx.lineTo(B[0]+nx,B[1]+ny);ctx.moveTo(A[0]-nx,A[1]-ny);ctx.lineTo(B[0]-nx,B[1]-ny);}}
+      ctx.lineWidth=4.4*q0[2];ctx.strokeStyle=`rgba(0,0,0,${al.toFixed(3)})`;ctx.stroke();}
+    const q=P(f.x+(f.ro||0)*f.face,0,f.z),sh=1-Math.min(f.y/120,.6);
+    ctx.fillStyle=`rgba(0,0,0,${.45*(1-Math.min(f.y/80,.7))})`;ctx.beginPath();ctx.ellipse(q[0],q[1],(isDown(f)||f.st==='ko'?22:12)*sh*q[2],3.2*sh*q[2]*fy,0,0,TAU);ctx.fill();
+    for(const [a,b] of [['ff','ft'],['bf','bt']]){const A=S[a],B=S[b],lo=Math.min(A[1],B[1]);if(lo>4)continue;
+      const p=P(f.x+(A[0]+B[0])/2*f.face,0,f.z);ctx.fillStyle=`rgba(0,0,0,${(.42*(1-lo/4)).toFixed(3)})`;ctx.beginPath();ctx.ellipse(p[0],p[1],(3+Math.abs(B[0]-A[0])*.5)*p[2],1.3*p[2]*fy,0,0,TAU);ctx.fill();}}
 }
 // primeiro plano: pilares, corrente e a primeira fila (grade + silhuetas). O que cruza a caixa real dos lutadores fica
 // translúcido, e tudo some quando o dolly chega perto demais da lente (CAME-12)
@@ -1327,7 +1494,7 @@ function camUpdate(rdt,SK){
   lbox+=((cine>0?1:0)-lbox)*Math.min(1,rdt*10);tiltT*=Math.exp(-rdt*1.5);
   // KO: plano no corpo que voa (em câmera lenta); quando ele toca o chão, ou quando o vencedor comemora, corte para o vencedor (CAME-8)
   if(koCam){koCam.t+=rdt;if(!koCam.ph&&(koCam.t>.6&&koCam.who.y<=0||koCam.t>1.25)){koCam.ph=1;camCut=true;}}
-  const cut=camCut||camReset;camCut=false;camReset=false;
+  const cut=camCut||camReset;camCut=false;camReset=false;CAM.cut=cut;
   const shot=!koCam&&p.inScene&&p.ccam?SHOTS[p.ccam.cam]:null;
   // altura no ar suavizada: os quiques do juggle não sacodem a câmera
   const air=go(CAM.air,Math.max(p.y,e.y),3,rdt,cut);
@@ -1417,7 +1584,7 @@ function render(rdt){
   ctx.setTransform(...CAM.m);
   ctx.imageSmoothingEnabled=false;
   drawBG();
-  for(const f of fs){const q=P(f.x+(f.ro||0)*f.face,0,f.z);ctx.fillStyle=`rgba(0,0,0,${.5*(1-Math.min(f.y/80,.7))})`;ctx.beginPath();ctx.ellipse(q[0],q[1],(f.st==='ko'||f.st==='down'?22:13)*q[2],3.4*q[2]*Math.min(1.6,camY/80),0,0,TAU);ctx.fill();}
+  drawShadows(fs,SK);
   const threat=isThreat(enemy);
   if(threat){const q=P(enemy.x+enemy.ro*enemy.face,0,enemy.z),k=.5+.5*Math.sin(time*40);ctx.strokeStyle=enemy.feint?`rgba(255,255,255,${.4+.4*k})`:`rgba(255,93,58,${.5+.5*k})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(q[0],q[1],(16+k*4)*q[2],(4+k)*q[2],0,0,TAU);ctx.stroke();}
   {const q=P(player.x+player.ro*player.face,0,player.z);ctx.strokeStyle=player.flow>=3?'rgba(242,169,59,.6)':'rgba(127,214,255,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(q[0],q[1],12*q[2],3*q[2],0,0,TAU);ctx.stroke();}
@@ -1427,7 +1594,8 @@ function render(rdt){
   for(const f of sorted){const q=P(f.x,0,f.z);
     // armadura da ruptura: contorno laranja pulsando atrás do corpo (o golpe livre não interrompe)
     if(f.armor){const k=.5+.5*Math.sin(time*26);drawGhost(ctx,snap(f),q[0],q[1],q[2],k>.5?'#ff5d3a':'#ffb347',.45+.3*k,4+k*1.5);}
-    drawFighter(ctx,f,q[0],q[1],q[2],SK[f===player?0:1]);drawSmear(f);}
+    drawFighterW(f,SK[f===player?0:1]);drawSmear(f);}
+  beams(.07);
   // escudo da guarda
   if(enemy.st==='guard'){const S=SK[1],q=P(enemy.x,0,enemy.z),hx=q[0]+(S.hd[0]+6)*enemy.face*q[2],hy=q[1]-S.hd[1]*q[2];ctx.strokeStyle='rgba(160,200,255,.7)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(hx,hy,9*q[2],-1.2,1.2);if(enemy.face<0){ctx.beginPath();ctx.arc(hx,hy,9*q[2],PI-1.2,PI+1.2);}ctx.stroke();}
   // indicador ⚡ (amarelo = real, branco = finta)
@@ -1536,7 +1704,10 @@ function preview(id,style,pal){const c=$(id).getContext('2d');const f=mkF(style,
     else setPose(f,idlePose(f),170,.75);
     phys(f,dt);f.x=0;f.z=Z0;
     c.clearRect(0,0,60,60);const g=c.createRadialGradient(30,52,2,30,52,28);g.addColorStop(0,'rgba(242,169,59,.35)');g.addColorStop(1,'rgba(242,169,59,0)');c.fillStyle=g;c.fillRect(0,0,60,60);
-    c.fillStyle='rgba(0,0,0,.5)';c.beginPath();c.ellipse(26,55,14,3,0,0,TAU);c.fill();drawFighter(c,f,24,55,.8);if(!$('menu').hidden)requestAnimationFrame(draw);})();}
+    c.fillStyle='rgba(0,0,0,.5)';c.beginPath();c.ellipse(26,55,14,3,0,0,TAU);c.fill();
+    const r=fighterSprite(f,skel(f),[1,0,0,1,0,0],24,55,.8,PVL);c.imageSmoothingEnabled=false;c.drawImage(r.c,0,0,r.w,r.h,r.ox,r.oy,r.w,r.h);if(!$('menu').hidden)requestAnimationFrame(draw);})();}
+// luz fixa das prévias: quente, de cima e da direita (o brilho âmbar atrás do lutador)
+const PVL={k:.8,lv:12,w:[0,.8],r:[0,.6],d:[[0,0],[1,-1]],side:1};
 
 addEventListener('resize',resize);resize();
 player=mkF('box',true,PAL.boxP,-60,230);enemy=mkF('tkd',false,PAL.tkdE,60,230);enemy.st='idle';
