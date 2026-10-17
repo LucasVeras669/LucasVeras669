@@ -72,7 +72,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 #knob{position:absolute;left:50%;top:50%;width:calc(46px*var(--u));height:calc(46px*var(--u));margin:calc(-23px*var(--u)) 0 0 calc(-23px*var(--u));border-radius:50%;background:rgba(239,230,210,.35);border:2px solid var(--paper)}
 #stickHint{position:absolute;left:max(24px,env(safe-area-inset-left,0px));bottom:calc(26px + env(safe-area-inset-bottom,0px));width:96px;height:96px;transform:scale(var(--u));transform-origin:0 100%;border-radius:50%;
   border:2px dashed rgba(239,230,210,.22);pointer-events:none;display:grid;place-items:center;font-family:var(--display);font-size:9px;opacity:.6;text-align:center}
-#pad{position:absolute;right:max(8px,env(safe-area-inset-right,0px));bottom:calc(8px + env(safe-area-inset-bottom,0px));width:244px;height:240px;transform:scale(var(--u));transform-origin:100% 100%}
+#pad{position:absolute;right:max(8px,env(safe-area-inset-right,0px));bottom:calc(8px + env(safe-area-inset-bottom,0px));width:244px;height:256px;transform:scale(var(--u));transform-origin:100% 100%}
 #pad button{position:absolute;border-radius:50%;border:3px solid var(--paper);color:var(--paper);font-family:var(--display);font-size:8px;line-height:1.05;letter-spacing:.03em;
   background:rgba(13,11,18,.5);touch-action:none;padding:0 4px;box-shadow:0 4px 0 var(--ink);display:grid;place-items:center;text-align:center}
 #pad button:active,#pad button.dn{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
@@ -80,8 +80,8 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 #b1,#b2,#b3{width:60px;height:60px;background:rgba(127,214,255,.18)!important;border-color:rgba(239,230,210,.85)!important}
 #b1{right:104px;bottom:4px}#b2{right:110px;bottom:70px}#b3{right:56px;bottom:104px}
 #bCnt{width:56px;height:56px;right:0;bottom:110px;background:rgba(255,255,255,.82)!important;color:#15121c!important;border-color:#fff}
-#bDef{width:56px;height:56px;right:0;bottom:176px;background:rgba(60,110,86,.78)!important;color:#fff;border-color:#bfe8cf}
-#defHint{position:absolute;right:62px;bottom:192px;width:104px;text-align:right;font-family:var(--display);font-size:7px;line-height:1.2;letter-spacing:.04em;color:#bfe8cf;text-shadow:1px 1px 0 var(--ink);pointer-events:none}
+#bDef small{display:block;font-size:5.8px;line-height:1.15;letter-spacing:0;margin-top:2px;opacity:.9}
+#bDef{width:76px;height:76px;right:0;bottom:176px;background:rgba(60,110,86,.78)!important;color:#fff;border-color:#bfe8cf}
 #bDef.dn,#bDef.on{background:rgba(90,170,126,.95)!important}
 #bDod{width:56px;height:56px;right:176px;bottom:6px;background:rgba(220,40,40,.78)!important;color:#fff;border-color:#ffd0d0}
 #bTh{width:60px;height:60px;right:122px;bottom:134px;font-size:6.5px!important;background:rgba(242,169,59,.28)!important;border-color:#f2a93b!important}
@@ -152,8 +152,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
   <div id="pad" hidden>
     <button id="bFin" aria-label="Especial">ESPECIAL</button>
     <button id="bTh" aria-label="Arremessar">ARREMESSAR</button>
-    <button id="bDef" aria-label="Defesa (segure)">DEFESA</button>
-    <span id="defHint">MANTENHA<br>PRESSIONADO</span>
+    <button id="bDef" aria-label="Defesa (mantenha pressionado)">DEFESA<small>(mantenha<br>pressionado)</small></button>
     <button id="bDod" aria-label="Esquiva">ESQUIVA</button>
     <button id="b2">DIRETO</button>
     <button id="b1">JAB</button>
