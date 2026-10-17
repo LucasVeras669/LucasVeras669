@@ -398,10 +398,10 @@ function newMatch(style){
 function startRound(){
   // zera todo estado transitório: nada da luta anterior (toque guardado, giro, juggle, câmera lenta) vaza para o round novo
   for(const [f,x] of [[player,-70],[enemy,70]]){Object.assign(f,{x,z:225,y:0,vx:0,vz:0,vy:0,rot:0,rotT:0,rotR:0,rotDir:0,y0:0,spin:0,spinT:0,turn:0,tw:0,st:'idle',t:0,flash:0,face:f.isP?1:-1,fc:0,imp:0,impT:0,mash:0,flow:0,queued:null,smear:[],seq:null,inScene:false,cseq:null,ccam:null,cStreak:0,fseq:null,
-    kind:'norm',airHits:0,early:false,cedo:false,preK:null,impMv:null,lastImpact:-9,chain:[],dash:null,dg:null,buf:null,hold:null,finBuf:null,punish:false,feint:false,sp:0,red:false,seqHit:false,fl:0,gh:0,inv:false,tgtOk:true,airLift:0,
+    kind:'norm',airHits:0,early:false,cedo:false,preK:null,impMv:null,lastImpact:-9,chain:[],dash:null,dg:null,buf:null,hold:null,finBuf:null,punish:false,feint:false,sp:0,red:false,seqHit:false,fl:0,cen:false,gh:0,inv:false,tgtOk:true,airLift:0,
     stum:false,hurtD:.38,stun:0,stunT:0,armor:false,jg:0,landV:0,bounced:false,spk:false,
     tv:0,rv:0,fb:0,lk:0,gw:0,gx:1,str:0,ro:0,ank:null,yb:0,lvx:0,lvz:0,wx:null,wz:0,twS:-1,yl:0,cl:null,_px:x,_pz:225,_py:0,_sc:0,pose:G[f.style].slice(),pt:G[f.style].slice(),pv:new Array(10).fill(0)});f.max=(f.isP?100:(110+round*20)*DP.hpM)*HPX;f.hp=f.max;}
-  enemy.sp=DIFF==='facil'?35:65;enemy.red=false;enemy.seqHit=false;eFin=false;
+  enemy.sp=DIFF==='facil'?35:65;enemy.red=false;enemy.cen=false;enemy.seqHit=false;eFin=false;
   enemy.st='stalk';enemy.cd=1.6;combo=0;comboT=0;parts=[];trails=[];pops=[];roundOver=0;speedL=0;impactF=0;
   inp.act=null;hitstop=0;timeScale=1;slowT=0;cine=0;tiltT=0;sceneName='';sceneRed=false;
   // câmera do round novo: nada do KO (plano, zoom, inclinação, tarjas, tremor) vaza; corte com fade a partir do preto (CAME-8)
@@ -570,38 +570,65 @@ function fireKey(p,k){
 function holdKey(p,k){if(!p.hold)pop('PRESSÃO',p,'#cfe3ff');p.hold={k,g:time};}
 
 // ---------- ARREMESSAR: agarra o rival, levanta e joga em direção à câmera (como nos beat 'em ups de fliperama) ----------
-const GRAB=[.35,-.1,1.6,.15,1.55,.2,.5,-.6,-.5,-.2],LIFT=[-.05,-.25,2.85,.2,2.75,.3,.3,-.4,-.3,-.2],TOSS=[.6,-.2,1.35,.1,1.2,.15,.6,-.7,-.4,-.1];
-const GRABBED=[.3,.4,-.3,.8,-.5,.6,.45,-.5,-.3,-.2],OVERH=[.1,.2,2.5,-.4,2.4,-.3,-.5,-.1,.4,-.1];
+// Linha do tempo (s): agarra .00-.20 · agacha e puxa .20-.40 · explode e levanta .40-.68 · solta .74. O rival vira um boneco
+// solto: dobrado na cintura quando pego, sobe girando de cabeça para baixo, voa em arco com braços e pernas balançando
+// (molas macias, fases diferentes) e pousa de costas. Enquanto está no ar a âncora é o QUADRIL (cen), não o ponto mais baixo,
+// para o corpo girar em torno do centro sem pular para cima e para baixo.
+const GRAB=[.4,-.1,1.55,.2,1.5,.25,.5,-.7,-.5,-.25],CRCH=[.62,-.15,1.3,.5,1.2,.55,1.05,-1.55,-.5,-1.3],LIFT=[-.1,-.25,2.8,.15,2.75,.2,.3,-.35,-.3,-.25],TOSS=[.55,-.15,1.4,.1,1.3,.15,.7,-.9,-.4,-.1];
+const BENT=[.9,.6,.9,.5,.7,.55,.25,-.2,-.2,-.1];
 const THRMV=pm('Arremesso',{d:.9,r:22,keys:[[0,GRAB,500,.7]],hits:[]}),WHIFF=pm('Agarrão perdido',{d:.55,keys:[[0,GRAB,600,.6],[.3,null,300,.7]],hits:[]});
 const GRABOK=['stalk','idle','rec','guard','stagger','hit','appr','wind'];
+const TH={g:.2,c:.4,l:.68,r:.74,T:.72,hip:26};
+const sm=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
+// pose de boneco solto (membros em fases diferentes); k de 0 (pego, dobrado) a 1 (solto)
+function limpPose(t,k,w){
+  const a=Math.sin(t*10),b=Math.sin(t*10+1.7),c=Math.sin(t*7+.6);
+  const L=[-.1+.15*c,-.3+.2*a,2.3+.5*a*w,.35+.2*b,2.1+.5*b*w,.4+.2*a,.7+.5*b*w,-1+.4*a,.5+.5*a*w,-.8+.4*b];
+  return lerpPose(BENT,L,k);
+}
 function beginThrow(p){
   const e=enemy;p.thrT=time;
   const near=Math.abs(e.x-p.x)<42&&Math.abs(e.z-p.z)<26;
   if(!(GRABOK.includes(e.st)&&!e.red&&!e.armor&&near)){
     pop(e.red||e.armor?'NÃO DÁ PARA AGARRAR':'ERROU O AGARRÃO',p,'#cfc6b6');startMove(p,WHIFF,'norm');return;}
   p.st='throw';p.t=0;p.kind='thr';p.mv=THRMV;p.thrDone=false;p.inScene=false;p.ank=null;unspin(p);unrot(p);
-  e.st='held';e.t=0;e.chain=[];e.feint=false;e.stun=0;e.punish=false;e.red=false;unspin(e);unrot(e);e.rot=0;setFace(e,-p.face);
-  setPose(p,GRAB,520,.65);setPose(e,GRABBED,300,.6);pop('AGARROU!',p,'#f2a93b');sfx.block();hype(.15,p.x);
+  e.st='held';e.t=0;e.chain=[];e.feint=false;e.stun=0;e.punish=false;e.red=false;unspin(e);unrot(e);e.rot=0;e.cen=true;e.y=TH.hip;setFace(e,-p.face);
+  setPose(p,GRAB,520,.65);setPose(e,BENT,260,.6);pop('AGARROU!',p,'#f2a93b');sfx.block();hype(.15,p.x);
 }
 function throwStep(p,dt){
   const e=enemy,t=p.t,f=p.face;
-  if(t<.2){setPose(p,GRAB,520,.65);e.x=lerp(e.x,p.x+f*15,1-Math.exp(-dt*25));e.z=lerp(e.z,p.z,1-Math.exp(-dt*25));e.y=0;}
-  else if(t<.58){const u=ease((t-.2)/.38);setPose(p,LIFT,420,.6);setPose(e,OVERH,300,.6);e.x=p.x+f*(15-9*u);e.z=p.z;e.y=40*u;e.rot=-PI*u;}
-  else if(!p.thrDone){
-    p.thrDone=true;setPose(p,TOSS,700,.55);
-    e.st='thrown';e.t=0;e.th={x0:e.x,z0:e.z,y0:e.y,rot0:e.rot,xT:clamp(e.x+f*40,-AX+10,AX-10),zT:114,H:52,rotT:-TAU-1.45};
-    slow(.3,.35);camPunch(.9);quake(.3,f,0);sfx.swoosh();pop('ARREMESSO!',p,'#f2a93b');buzz([10,30]);hype(.2,e.x);
+  if(t<TH.c){
+    // agarra e puxa: o rival é trazido para o peito do lutador, dobrado na cintura e já erguido nas pontas dos pés
+    const u=t<TH.g?0:sm((t-TH.g)/(TH.c-TH.g));
+    setPose(p,t<TH.g?GRAB:CRCH,t<TH.g?520:700,.62);
+    const q=1-Math.exp(-dt*22);e.x=lerp(e.x,p.x+f*(16-3*u),q);e.z=lerp(e.z,p.z-1,q);e.y=TH.hip+8*u;e.rot=-1.0*u;
+    setPose(e,limpPose(t,.1+.3*u,.4),240,.6);
+  }else if(t<TH.r){
+    // explode das pernas e levanta: o rival sobe girando para a posição invertida sobre a cabeça; o corpo vai ficando solto
+    const u=t<TH.l?sm((t-TH.c)/(TH.l-TH.c)):1;
+    setPose(p,LIFT,520,.58);
+    e.x=p.x+f*(13-10*u);e.z=p.z-1;e.y=lerp(TH.hip+8,80,u);e.rot=lerp(-1.0,-PI,u);
+    setPose(e,limpPose(t,.4+.5*u,.6),200,.55);
+  }else if(!p.thrDone){
+    p.thrDone=true;setPose(p,TOSS,760,.5);kick(p,0,6);
+    e.st='thrown';e.t=0;e.th={x0:e.x,z0:e.z,y0:e.y,rot0:e.rot,xT:clamp(e.x+f*42,-AX+10,AX-10),zT:150,rotT:-TAU-1.45,tr:0};
+    slow(.55,.16);camPunch(.9);quake(.3,f,0);sfx.swoosh();pop('ARREMESSO!',p,'#f2a93b');buzz([10,30]);hype(.2,e.x);
   }
-  if(t>=.95)endChain(p);
+  if(t>=1)endChain(p);
 }
 function thrownStep(e,dt){
-  const T=e.th,TT=.62,u=clamp(e.t/TT,0,1);
-  e.x=lerp(T.x0,T.xT,u);e.z=lerp(T.z0,T.zT,ease(u)*.6+u*.4);e.y=T.y0*(1-u)+4*T.H*u*(1-u);e.rot=lerp(T.rot0,T.rotT,ease(u));e.vx=e.vz=e.vy=0;
-  setPose(e,e.t*8%2<1?AIRP:AIRP2,300,.5);
+  const T=e.th,u=clamp(e.t/TH.T,0,1),t=e.t,g=520,vy=(6-T.y0+.5*g*TH.T*TH.T)/TH.T;
+  // posição por balística: x e z em velocidade constante (o rival vem na direção da câmera), y numa parábola que sai da mão
+  // com impulso para cima e termina no chão em TH.T; o giro é contínuo e só desacelera perto do pouso
+  e.x=lerp(T.x0,T.xT,u);e.z=lerp(T.z0,T.zT,u);e.y=Math.max(6,T.y0+vy*t-.5*g*t*t);e.rot=lerp(T.rot0,T.rotT,1-Math.pow(1-u,1.35));
+  e.vx=e.vz=e.vy=0;
+  // braços e pernas balançam durante o voo e abrem para o pouso; rastro de movimento
+  setPose(e,lerpPose(limpPose(e.t+.3,1,1.3),AIRP,sm((u-.78)/.22)),170,.45);
+  if((T.tr-=dt)<=0){T.tr=.04;trails.push({f:snap(e),l:.16,c:'#d8dde6'});}
   if(u>=1){
-    const r=((e.rot%TAU)+TAU)%TAU;e.rot=r>PI?r-TAU:r;e.y=0;
+    const r=((e.rot%TAU)+TAU)%TAU;e.rot=r>PI?r-TAU:r;e.y=0;e.cen=false;
     const p=player;ring(e.x,e.z,60);dust(e.x,e.z,22,140);splat(e,p.face,3,true);hitstop=Math.max(hitstop,.14);camPunch(2);quake(1,0,1);
-    applyHit(p,e,{dmg:20,react:'knock',kb:40,lv:'body',lim:'bh',ar:'back',px:e.x,py:e.y+22,unb:true},THRMV);
+    applyHit(p,e,{dmg:20,react:'knock',kb:40,lv:'body',lim:'bh',ar:'back',px:e.x,py:e.y+22,unb:true},THRMV);e.flash=0;
   }
 }
 function dashTo(p,kind,o){
@@ -983,7 +1010,7 @@ const DNAMES={facil:'FÁCIL',medio:'MÉDIO',mestre:'MESTRE'};
 const D_NEUTRO={agg:1,cdM:1,wdM:1,evM:1,grdM:1,rupM:1,dmgM:1,react:0,chainX:0,recM:1,close:1,hpM:1,getM:1,spR:2.6,spH:26};
 // MÉDIO: ataca sem parar (pausa entre ataques 3x menor), preparação curta, combos longos, esquiva e defende bem, causa mais dano
 const D_MEDIO={agg:1.65,cdM:.2,wdM:.6,evM:2.2,grdM:1.8,rupM:1.8,dmgM:1.4,react:.9,chainX:.8,recM:.45,close:.75,hpM:1.4,getM:.55,spR:5,spH:36};
-const STAT={atk:0,hits:0};window.__stat=STAT;window.__st=()=>[enemy.st,player.st,enemy.cd,enemy.sp];window.__spec=()=>{enemy.sp=100;};window.__red=()=>enemy.red;window.__pm=()=>player.mv&&player.mv.n;window.__mvn=()=>[enemy.mv&&enemy.mv.n,enemy.red,enemy.st,enemy.armor,enemy.feint];window.__php=()=>player.hp;window.__ez=()=>[enemy.st,enemy.x,enemy.z,enemy.y,enemy.hp,0,0,eFin];window.__thr=()=>({t:(enemy.st==="wind"||enemy.st==="brk"||enemy.st==="strike"&&enemy.hi===0),red:enemy.red,feint:enemy.feint,armor:enemy.armor,st:enemy.st,wd:enemy.wd,et:enemy.t});
+const STAT={atk:0,hits:0};window.__stat=STAT;window.__st=()=>[enemy.st,player.st,enemy.cd,enemy.sp];window.__spec=()=>{enemy.sp=100;};window.__red=()=>enemy.red;window.__fix=()=>{enemy.x=player.x+30;enemy.z=player.z;enemy.st="idle";enemy.cd=9;};window.__pm=()=>player.mv&&player.mv.n;window.__mvn=()=>[enemy.mv&&enemy.mv.n,enemy.red,enemy.st,enemy.armor,enemy.feint];window.__php=()=>player.hp;window.__ez=()=>[enemy.st,enemy.x,enemy.z,enemy.y,enemy.hp,0,0,eFin];window.__thr=()=>({t:(enemy.st==="wind"||enemy.st==="brk"||enemy.st==="strike"&&enemy.hi===0),red:enemy.red,feint:enemy.feint,armor:enemy.armor,st:enemy.st,wd:enemy.wd,et:enemy.t});
 let DP=D_NEUTRO;
 const AI0=.6;
 const AI={skill:AI0,t:0,dash:0,flank:0,dod:0,cnt:0,atk:0,mv:{},last:[],ps:'',pm:null,ins:false,idle:0,lvl:0,pt:-9};
@@ -1320,7 +1347,7 @@ function skel(f){
   let mn=1e9;
   for(const k in P){let [x,y]=P[k];x*=cs;const X=x*cr+y*sr+ro,Y=-x*sr+y*cr;P[k]=[X,Y];
     const rr=k==='hd'?5.5:(k==='fh'||k==='bh')?3:(k==='ff'||k==='bf'||k==='ft'||k==='bt')?.6:2;if(Y-rr<mn)mn=Y-rr;}
-  const off=-mn+f.y;for(const k in P)P[k][1]+=off;
+  const off=f.cen?f.y:-mn+f.y;for(const k in P)P[k][1]+=off;
   P.swap=cs<0;P.ha=ha+ra;P.dirS=cs<0?-1:1;P.armSwap=g>0&&sw>4.3;
   return P;
 }
@@ -2121,6 +2148,9 @@ function camUpdate(rdt,SK){
     // quem está no ar leva o foco junto (INTE-5)
     if(sub){fx=sub.x;fz=sub.z;fy=shot.fy+sub.y*.6;ax=.5+shot.ao*side(sub,sub===p?e:p);}
     else{fx=(p.x+e.x)/2;fz=(p.z+e.z)/2;fy=shot.fy+Math.max(p.y,e.y)*.4;}}
+  else if(e.st==='held'||e.st==='thrown'){wF=5;const T=e.th,th=e.st==='thrown'&&T;
+    m=zB*(th?1:1.2);cy=cyB-4;cz=14;yaw=.03*face;tl=0;
+    fx=(p.x+(th?T.xT:e.x))/2;fz=(p.z+(th?lerp(e.z,T.zT,.6):e.z))/2;fy=34+Math.min(40,e.y*.3);}
   else{
     if(finOn){m=zB*1.3;cy=cyB-20;cz=30;yaw=.05*Math.sin(rclock*1.1)*face;fx=(p.x*2+e.x)/3;fz=(p.z*2+e.z)/3;}
     // combo livre: aproxima com o FLUXO e o combo; no FLUXO 3 a câmera desce (heroica) e avança; deriva leve na câmera lenta (FREE-12)
@@ -2276,9 +2306,7 @@ let last=performance.now();
 // qualidade adaptativa: se o aparelho não sustenta ~50 FPS por 2 s, os extras do cenário (grão, fumaça, reflexos, halos grandes,
 // rim da plateia, feixes do exaustor) saem; nunca volta no meio da partida (evita alternar)
 let LQ=false,lqA=1/60,lqT=0;
-function loop(now){
-  const rdt=Math.min(.05,(now-last)/1000);last=now;
-  if(paused){requestAnimationFrame(loop);return;}
+function frame(rdt){
   if(!LQ&&running&&rdt>0){lqA+=(rdt-lqA)*.05;lqT=lqA>1/48?lqT+rdt:0;if(lqT>2)LQ=true;}
   if(slowT>0){slowT-=rdt;}else timeScale+=(1-timeScale)*Math.min(1,rdt*6);
   let gdt=rdt*timeScale;if(hitstop>0){hitstop-=rdt;gdt=0;}
@@ -2289,6 +2317,12 @@ function loop(now){
   {const c=!!player&&(player.inScene||player.st==='atk'&&player.kind==='fin'||player.st==='dash'&&!!player.dash&&player.dash.kind==='fin');
    if(c!==cineOn){cineOn=c;$('game').classList.toggle('cine',c);}}
   render(rdt);
+}
+let HOLD=false;window.__tick=dt=>{HOLD=true;frame(dt);};window.__free=()=>{HOLD=false;};
+function loop(now){
+  const rdt=Math.min(.05,(now-last)/1000);last=now;
+  if(paused||HOLD){requestAnimationFrame(loop);return;}
+  frame(rdt);
   requestAnimationFrame(loop);
 }
 
