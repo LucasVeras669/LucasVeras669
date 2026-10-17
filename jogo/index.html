@@ -2210,7 +2210,7 @@ function begin(style){
   ['b1','b2','b3'].forEach((id,i)=>{$(id).textContent=BLABEL[style][i];$(id).setAttribute('aria-label',BLABEL[style][i]);});
   setTimeout(()=>{if(running)$('stickHint').hidden=true;},9000);
 }
-const DDESC={facil:'O rival de sempre: bom para aprender os golpes.',medio:'Mais agressivo e reativo: ataca mais rápido, esquiva e defende mais.',mestre:'O rival aprende com você durante a luta, explora seus hábitos e fica mais forte aos poucos.'};
+const DDESC={facil:'Bom para aprender os golpes.',medio:'Mais agressivo e reativo: ataca mais rápido, esquiva e defende mais.',mestre:'O rival aprende com você durante a luta, explora seus hábitos e fica mais forte aos poucos.'};
 function setDiff(d,save){DIFF=DDESC[d]?d:'facil';DP=aiParams();$('difd').textContent=DDESC[DIFF];
   document.querySelectorAll('.dif').forEach(b=>{const on=b.dataset.d===DIFF;b.classList.toggle('on',on);b.setAttribute('aria-checked',on);});
   if(save){try{localStorage.setItem('fb_dif',DIFF);}catch(e){}}}
