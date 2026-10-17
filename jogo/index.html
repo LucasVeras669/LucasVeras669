@@ -107,6 +107,11 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 @media (prefers-reduced-motion:reduce){#bFin.ready,#bCnt.alert,#bDod.alert,#combo.pop b{animation:none}}
 @media (max-height:420px){.card canvas{width:90px;height:90px}.screen h1{font-size:34px}}
 
+.exit{position:absolute;left:50%;transform:translateX(-50%);top:calc(46px*var(--t) + env(safe-area-inset-top,0px));z-index:5;font-family:var(--display);font-size:calc(9px*var(--t));letter-spacing:.1em;padding:calc(5px*var(--t)) calc(12px*var(--t));min-height:44px;min-width:44px;background:rgba(13,11,18,.55);color:var(--paper);border:2px solid rgba(239,230,210,.7);cursor:pointer;opacity:.85}
+.exit:active{transform:translateX(-50%) translateY(2px)}
+.exit:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.screen.pz{background:rgba(13,11,18,.78)}
+.cine .exit{opacity:.25}
 .kbd{display:none;font-size:calc(12px*var(--m));opacity:.7;margin:0;max-width:60ch;line-height:1.5}
 @media (hover:hover) and (pointer:fine){.kbd{display:block}}
 
@@ -124,6 +129,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
   </div>
   <div id="combo"><div id="cWrap"><b id="cNum">0</b><span>HITS</span><em id="cMove"></em></div><div id="flow">FLUXO <i></i><i></i><i></i><div id="imp"><div id="impF"></div></div></div></div>
   <div id="banner"><h2 id="bTitle"></h2><p id="bSub"></p></div>
+  <button class="exit" id="bExit" aria-label="Pausar ou sair" hidden>SAIR</button>
   <div id="stickHint" hidden>MOVER</div>
   <div id="stick"><div id="knob"></div></div>
   <div id="pad" hidden>
@@ -145,10 +151,15 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
     <p class="how">Três botões com o nome dos <b>golpes básicos</b> do seu estilo. <b>FLUXO</b> luta sozinho de forma livre: salta até o rival, encadeia golpes e troca de lado pelo flanco (toque logo depois de cada impacto para o PERFEITO e encha o <b>ÍMPETO</b>; quem amassa o botão provoca a <b>RUPTURA</b>: o rival escapa blindado). <b>CONTRA</b> no raio ⚡ amarelo (o branco é finta) dispara uma cena de contra-ataque. <b>ESQUIVA</b> na hora do golpe vira esquiva perfeita. <b>ESPECIAL</b> libera com 5 acertos; com 12 vira SUPER.</p>
   <p class="kbd"><b>Teclado:</b> setas ou WASD movem · 1, 2, 3 golpes básicos · J fluxo · K contra · L esquiva · I especial</p>
   </div>
+  <div class="screen pz" id="pause" hidden>
+    <h1>PAUSADO</h1>
+    <p class="sub">A luta está parada.</p>
+    <div class="ctas"><button class="cta" id="resume">CONTINUAR</button><button class="cta alt" id="quit">SAIR PARA O MENU</button></div>
+  </div>
   <div class="screen" id="over" hidden>
     <h1 id="oTitle">NOCAUTE</h1>
     <p class="sub" id="oSub"></p>
-    <div class="ctas"><button class="cta" id="again">LUTAR DE NOVO</button><button class="cta alt" id="swap">TROCAR DE PERSONAGEM</button></div>
+    <div class="ctas"><button class="cta" id="again">LUTAR DE NOVO</button><button class="cta alt" id="quit2">SAIR PARA O MENU</button><button class="cta alt" id="swap">TROCAR DE PERSONAGEM</button></div>
   </div>
 </div>
 
@@ -163,7 +174,7 @@ const $=id=>document.getElementById(id);
 const cv=$('cv'),ctx=cv.getContext('2d');
 let W=320,H=200,HOR=65,PORT=false;
 const F=230,AX=230,Z0=170,Z1=285,PIV=228,NEAR=10;
-let UI_U=1;
+let paused=false,UI_U=1;
 // escala da interface: --t (texto, HUD, menus) cresce com a tela; --u (botões de toque e direcional) cresce menos e encolhe em telas pequenas
 function setScale(){const m=Math.min(innerWidth,innerHeight),coarse=matchMedia('(pointer:coarse)').matches;
   UI_U=coarse?clamp(m/390,.8,1.5):clamp(m/520,.85,1.25);const t=clamp(m/390,.85,2.2),r=document.documentElement.style;r.setProperty('--u',UI_U.toFixed(3));r.setProperty('--t',t.toFixed(3));r.setProperty('--m',clamp(Math.min(innerHeight/560,innerWidth/420),.8,2).toFixed(3));}
@@ -1062,7 +1073,7 @@ function endMatch(won){
   $('oTitle').textContent=won?'VITÓRIA':'DERROTA';
   $('oSub').textContent=`${won?'Você venceu':'O rival venceu'} por ${Math.max(...wins)} a ${Math.min(...wins)}. Maior combo: ${best} hits. Pontos: ${score}.`;
   const other=chosen==='box'?'tkd':'box';$('swap').textContent='JOGAR DE '+(other==='box'?'BOXEADOR':'TAEKWONDO');
-  $('over').hidden=false;$('pad').hidden=true;$('stickHint').hidden=true;
+  $('over').hidden=false;$('pad').hidden=true;$('stickHint').hidden=true;$('bExit').hidden=true;
 }
 
 // ---------- HUD ----------
@@ -2077,6 +2088,7 @@ let last=performance.now();
 let LQ=false,lqA=1/60,lqT=0;
 function loop(now){
   const rdt=Math.min(.05,(now-last)/1000);last=now;
+  if(paused){requestAnimationFrame(loop);return;}
   if(!LQ&&running&&rdt>0){lqA+=(rdt-lqA)*.05;lqT=lqA>1/48?lqT+rdt:0;if(lqT>2)LQ=true;}
   if(slowT>0){slowT-=rdt;}else timeScale+=(1-timeScale)*Math.min(1,rdt*6);
   let gdt=rdt*timeScale;if(hitstop>0){hitstop-=rdt;gdt=0;}
@@ -2119,7 +2131,7 @@ document.addEventListener('contextmenu',e=>e.preventDefault());
 function begin(style){
   au();
   try{const d=document.documentElement;if(d.requestFullscreen&&!document.fullscreenElement)d.requestFullscreen().then(()=>screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})).catch(()=>{});}catch(e){}
-  $('menu').hidden=true;$('over').hidden=true;$('hud').hidden=false;$('pad').hidden=false;$('stickHint').hidden=false;
+  $('menu').hidden=true;$('over').hidden=true;$('pause').hidden=true;paused=false;$('bExit').hidden=false;$('hud').hidden=false;$('pad').hidden=false;$('stickHint').hidden=false;
   inp.act=null;newMatch(style);computeSafe();
   ['b1','b2','b3'].forEach((id,i)=>{$(id).textContent=BLABEL[style][i];$(id).setAttribute('aria-label',BLABEL[style][i]);});
   setTimeout(()=>{if(running)$('stickHint').hidden=true;},9000);
@@ -2128,6 +2140,18 @@ let chosen='box';
 $('pickBox').onclick=()=>{chosen='box';begin('box');};
 $('pickTkd').onclick=()=>{chosen='tkd';begin('tkd');};
 $('again').onclick=()=>begin(chosen);
+// pausa e saída: o botão SAIR pausa a luta e pergunta (sem diálogos do navegador); Esc faz o mesmo no PC
+function setPause(v){if(!running&&!v&&!paused)return;if(v&&!running)return;paused=v;$('pause').hidden=!v;if(v){inp.x=0;inp.z=0;inp.act=null;sid=null;stick.classList.remove('on');for(const k in keys)keys[k]=0;$('resume').focus();}}
+function showMenu(){
+  paused=false;running=false;matchOver=false;roundOver=0;inp.act=null;inp.x=0;inp.z=0;sid=null;stick.classList.remove('on');
+  for(const id of ['over','pause','hud','pad','stickHint','bExit'])$(id).hidden=true;
+  $('banner').classList.remove('on');$('game').classList.remove('cine');cineOn=false;
+  try{if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen();if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}
+  demoFighters();camReset=true;koCam=null;cine=0;lbox=0;flashA=0;trauma=0;slowT=0;timeScale=1;hitstop=0;parts.length=0;trails.length=0;pops.length=0;
+  $('menu').hidden=false;preview('pvBox','box',PAL.boxP);preview('pvTkd','tkd',PAL.tkdP);$('pickBox').focus();
+}
+$('bExit').onclick=()=>setPause(true);$('resume').onclick=()=>setPause(false);$('quit').onclick=showMenu;$('quit2').onclick=showMenu;
+addEventListener('keydown',e=>{if(e.code==='Escape'&&!e.repeat&&running)setPause(!paused);});
 $('swap').onclick=()=>{chosen=chosen==='box'?'tkd':'box';begin(chosen);};
 
 // prévias animadas no menu (mostram golpes do estilo)
@@ -2154,7 +2178,8 @@ function fontRebuild(){try{if(!wallFont&&[...document.fonts].some(f=>/Silkscreen
 try{document.fonts.load('700 12px Silkscreen').then(fontRebuild,()=>{});document.fonts.ready.then(fontRebuild);document.fonts.addEventListener('loadingdone',fontRebuild);}catch(e){}
 setTimeout(fontRebuild,3000);
 addEventListener('resize',resize);resize();
-player=mkF('box',true,PAL.boxP,-60,230);enemy=mkF('tkd',false,PAL.tkdE,60,230);enemy.st='idle';
+function demoFighters(){player=mkF('box',true,PAL.boxP,-60,230);enemy=mkF('tkd',false,PAL.tkdE,60,230);enemy.st='idle';}
+demoFighters();
 preview('pvBox','box',PAL.boxP);preview('pvTkd','tkd',PAL.tkdP);
 requestAnimationFrame(loop);
 })();
