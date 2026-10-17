@@ -472,13 +472,14 @@ function spinAt(mv,t){
 }
 const lerpPose=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
 // IK de 2 ossos da perna (coxa e canela de 13): ângulos de quadril e joelho que põem o tornozelo em (fx,fy) a partir do quadril
-function ik2(fx,fy){const d=Math.min(25.9,Math.hypot(fx,fy)),a=Math.atan2(fx,-fy);return [a+Math.acos(clamp(d/26,-1,1)),-(PI-Math.acos(clamp(1-d*d/338,-1,1)))];}
+const LEG=14.5,HS=.8;
+function ik2(fx,fy){const d=Math.min(2*LEG-.1,Math.hypot(fx,fy)),a=Math.atan2(fx,-fy);return [a+Math.acos(clamp(d/(2*LEG),-1,1)),-(PI-Math.acos(clamp(1-d*d/(2*LEG*LEG),-1,1)))];}
 // tornozelos na guarda (descanso de cada pé) e passada de cada estilo: o boxeador arrasta sem cruzar os pés (FLUI-6)
-const FK=(o,i)=>{const a=o[6+2*i],b=a+o[7+2*i];return [13*Math.sin(a)+13*Math.sin(b),-13*Math.cos(a)-13*Math.cos(b)];};
+const FK=(o,i)=>{const a=o[6+2*i],b=a+o[7+2*i];return [LEG*Math.sin(a)+LEG*Math.sin(b),-LEG*Math.cos(a)-LEG*Math.cos(b)];};
 // passo de luta (step-drag): o pé da frente sai, o de trás vem logo atrás e os dois ficam plantados o resto do ciclo, sem
 // cruzar; para trás a ordem inverte sozinha (o pé de trás sai primeiro). f/b = tornozelo base de cada pé (um pouco mais baixo
 // que a guarda, para todo passo caber na perna), c = ciclo em unidades andadas, a = fração do ciclo em balanço, L = altura
-const WK={box:{f:3,b:-9.75,y:-23.5,c:14,a:.25,L:3},tkd:{f:4.5,b:-10.5,y:-22.5,c:16,a:.3,L:4.5}},STR={box:14,tkd:16};
+const WK={box:{f:3.3,b:-10.9,y:-26.2,c:14,a:.25,L:3.3},tkd:{f:5,b:-11.7,y:-25.1,c:16,a:.3,L:5}},STR={box:14,tkd:16};
 // caminhada por IK: o pé de apoio recua exatamente o que o corpo avança (a fase vem da distância percorrida), o outro passa
 // por cima em arco; f.gx = fração do movimento no eixo x (andando em profundidade o passo é no lugar, sem deslizar);
 // o ponto mais baixo do pé (calcanhar ou ponta) fica no chão: o pé que fica atrás apoia na ponta
@@ -607,7 +608,7 @@ const GRAB=[.4,-.1,1.55,.2,1.5,.25,.5,-.7,-.5,-.25],CRCH=[.62,-.15,1.3,.5,1.2,.5
 const BENT=[.9,.6,.9,.5,.7,.55,.25,-.2,-.2,-.1];
 const THRMV=pm('Arremesso',{d:.9,r:22,keys:[[0,GRAB,500,.7]],hits:[]}),WHIFF=pm('Agarrão perdido',{d:.55,keys:[[0,GRAB,600,.6],[.3,null,300,.7]],hits:[]});
 const GRABOK=['stalk','idle','rec','guard','stagger','hit','appr','wind'];
-const TH={g:.2,c:.4,l:.68,r:.74,T:.72,hip:26};
+const TH={g:.2,c:.4,l:.68,r:.74,T:.72,hip:29};
 const sm=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
 // pose de boneco solto (membros em fases diferentes); k de 0 (pego, dobrado) a 1 (solto)
 function limpPose(t,k,w){
@@ -1348,8 +1349,8 @@ function skel(f){
   const p=f.pose,ln=p[0],sn=Math.sin,co=Math.cos;
   const td=[sn(ln),co(ln)],n=[co(ln),-sn(ln)];
   const P={};
-  P.hip=[0,0];P.nk=[td[0]*18,td[1]*18];P.sh=[td[0]*16,td[1]*16];
-  const ha=ln+p[1];P.hd=[P.nk[0]+sn(ha)*6,P.nk[1]+co(ha)*6];
+  P.hip=[0,0];P.nk=[td[0]*20,td[1]*20];P.sh=[td[0]*18,td[1]*18];
+  const ha=ln+p[1];P.hd=[P.nk[0]+sn(ha)*5.4,P.nk[1]+co(ha)*5.4];
   P.hF=[n[0]*3.6,n[1]*3.6];P.hB=[-n[0]*3.4,-n[1]*3.4];
   // torção do tronco (FLUI-1): a linha dos ombros gira em profundidade. O lado que golpeia (twS) vem à frente e o outro
   // recua; a silhueta do peito alarga (aparece a largura dos ombros); braços nunca encolhem
@@ -1363,19 +1364,19 @@ function skel(f){
   P.tF=[P.sh[0]+n[0]*1.7+td[0]*1.3,P.sh[1]+n[1]*1.7+td[1]*1.3];P.tB=[P.sh[0]-n[0]*1.5+td[0]*1.3,P.sh[1]-n[1]*1.5+td[1]*1.3];
   const sd=a=>[sn(a),-co(a)];
   const limb=(o,a1,a2,l1,l2,k1,k2)=>{const d1=sd(a1);P[k1]=[o[0]+d1[0]*l1,o[1]+d1[1]*l1];const d2=sd(a1+a2);P[k2]=[P[k1][0]+d2[0]*l2,P[k1][1]+d2[1]*l2];return a1+a2;};
-  limb(rF,ln+p[2],p[3],10.5,10,'fe','fh');
-  limb(rB,ln+p[4],p[5],10.5,10,'be','bh');
+  limb(rF,ln+p[2],p[3],12,11,'fe','fh');
+  limb(rB,ln+p[4],p[5],12,11,'be','bh');
   const ra=f.rot+(f.rotR||0);
   let la=[p[6],p[7],p[8],p[9]];
   // pé de base no chão (FLUI-9): em pé, o pé que paira até 10 un. acima do outro desce por IK (o chute e a passada não)
   const gw=(1-(f.gw||0))*(f.y<6&&Math.abs(ra)<.2&&canAct(f)&&f.st!=='air'?1:0);
   if(gw>0){const kl=f.mv&&(f.st==='atk'||f.st==='strike'||f.st==='wind'||f.st==='countered')?kickLegs(f.mv):null;
-    const low=(a,b)=>{const t=a+b,ax=13*sn(a)+13*sn(t),ay=-13*co(a)-13*co(t);return [ax,ay,Math.min(ay,ay+4.5*sn(t))-.6];};
+    const low=(a,b)=>{const t=a+b,ax=LEG*sn(a)+LEG*sn(t),ay=-LEG*co(a)-LEG*co(t);return [ax,ay,Math.min(ay,ay+4.5*sn(t))-.6];};
     const L0=low(la[0],la[1]),L1=low(la[2],la[3]),gy=Math.min(L0[2],L1[2]);
     [L0,L1].forEach((L,i)=>{if(kl&&kl[i])return;let h=L[2]-gy;if(h<.25||h>10)return;const w=gw*(h<5?1:1-(h-5)/5);
       let ty=L[1]-h*w;for(let it=0;it<2;it++){const r=ik2(L[0],ty),q=low(r[0],r[1]),e=(q[2]-gy)-(1-w)*h;la[2*i]=r[0];la[2*i+1]=r[1];if(Math.abs(e)<.3)break;ty-=e;}});}
-  const fa=limb(P.hip,la[0],la[1],13,13,'fk','ff');
-  const ba=limb(P.hip,la[2],la[3],13,13,'bk','bf');
+  const fa=limb(P.hip,la[0],la[1],LEG,LEG,'fk','ff');
+  const ba=limb(P.hip,la[2],la[3],LEG,LEG,'bk','bf');
   P.ft=[P.ff[0]+co(fa)*4.5,P.ff[1]+sn(fa)*4.5];P.bt=[P.bf[0]+co(ba)*4.5,P.bf[1]+sn(ba)*4.5];
   // giro (FLUI-13): a volta é um yaw de verdade. Cada ponto tem uma profundidade lateral l (ombros, quadril, braços e pernas de
   // cada lado) e x' = x·cos − l·sen: a silhueta não vira uma lâmina no meio da volta, mostra a largura do corpo. Os ombros vão
@@ -1387,7 +1388,7 @@ function skel(f){
   let mn=1e9;
   for(const k in P){let [x,y]=P[k];const L=LAT[k]||[0,0],w=L[1],c1=w?ycU*w+ycL*(1-w):ycL,s1=w?ysU*w+ysL*(1-w):ysL;
     x=x*c1-L[0]*s1;const X=x*cr+y*sr+ro,Y=-x*sr+y*cr;P[k]=[X,Y];
-    const rr=k==='hd'?5.5:(k==='fh'||k==='bh')?3:(k==='ff'||k==='bf'||k==='ft'||k==='bt')?.6:2;if(Y-rr<mn)mn=Y-rr;}
+    const rr=k==='hd'?4.6:(k==='fh'||k==='bh')?3:(k==='ff'||k==='bf'||k==='ft'||k==='bt')?.6:2;if(Y-rr<mn)mn=Y-rr;}
   const off=f.cen?f.y:-mn+f.y;for(const k in P)P[k][1]+=off;
   // olhar: ângulo do corpo em relação ao rival (w) e do pescoço (hg ~110°); a cabeça fica a, no máximo, hg do rival
   const w0=((th+PI)%TAU+TAU)%TAU-PI,ho=th-clamp(w0,-1.9,1.9)*(f.gz===undefined?1:f.gz),hc=Math.cos(ho);
@@ -1511,13 +1512,13 @@ function drawFighter(c,f,S,T,ps,LI){
   };
   const head=()=>{
     const ha=S.ha,u=[Math.sin(ha),Math.cos(ha)],fw=[Math.cos(ha)*S.dirS,-Math.sin(ha)*S.dirS],h=S.hd;
-    const sc=S.hsc,at0=(a,b)=>[h[0]+fw[0]*a+u[0]*b,h[1]+fw[1]*a+u[1]*b],at=(a,b)=>at0(a*sc,b);
+    const sc=S.hsc,at0=(a,b)=>[h[0]+fw[0]*a*HS+u[0]*b*HS,h[1]+fw[1]*a*HS+u[1]*b*HS],at=(a,b)=>at0(a*sc,b);
     const arc=(r,t0,t1,n)=>{const o=[];for(let i=0;i<=n;i++){const t=t0+(t1-t0)*i/n;o.push(at(Math.cos(t)*r,Math.sin(t)*r));}return o;};
     // cabelo por estilo: boxeador curto e rente; taekwondista com franja e uma mecha atrás presa à mola do tecido
     const hair=box?[...arc(5.35,.95,3.75,9),at(-2.9,-1.7),at(-1.3,1),at(1.9,2.8)]
       :[at(-2.6,-1.6),...arc(5.75,3.85,.5,11),at(5.5,1.9),at(4,2.5),at(3.1,1.7),at(1.4,2.7),at(-1.3,1)];
     if(!box){const r0=at(-4.6,1.3),r1=at(-4,-1.8),tip=off(at(-4.7,-.4),cv,5);Q.push(['p',[r0,tip,r1],'hair']);}
-    Q.push(['d',h,5,'skin'],['d',at(2.5,-3.1),1.7,'skin'],['d',at(4.6,-.5),1.05,'skin'],['p',hair,'hair']);flush();
+    Q.push(['d',h,5*HS,'skin'],['d',at(2.5,-3.1),1.7*HS,'skin'],['d',at(4.6,-.5),1.05*HS,'skin'],['p',hair,'hair']);flush();
     if(!fl){
       seg(at(-1.4,-3.5),at(1.5,-3.9),1,col('skinM'));
       disc(at(-.9,-.5),.95,col('skinM'));if(ps>1.6)disc(at(-.8,-.5),.4,col('skinD'));
