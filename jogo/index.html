@@ -1705,7 +1705,7 @@ function startTrc(a,d){
     f.armor=false;f.punish=false;f.stun=0;f.tw=0;f._si=null;f.smear=[];}
   inp.act=null;if(inp.def){inp.def=false;$('bDef').classList.remove('on');}
   const beats=trcBeats(a.isP?'atk':'def');
-  TRC={a,d,beats,i:-1,ph:'lock',pt:0,rt:0,ts:.35,cam:'close',pips:beats.map(()=>0),score:0,g:24,init:0};
+  TRC={a,d,beats,i:-1,ph:'lock',pt:0,rt:0,ts:.7,cam:'close',pips:beats.map(()=>0),score:0,g:24,init:0};
   trcUi(true,null);trcPips();
   flashA=Math.max(flashA,.55);hitstop=Math.max(hitstop,.12);camPunch(1.4);quake(.7,a.face,0);camCut=true;sfx.heavy();sfx.counter();buzz([30,40,30]);
   ring((a.x+d.x)/2,d.z,50,'#d98cff');hype(.3,d.x);banner('TROCAÇÃO!','',.7);
@@ -1719,7 +1719,7 @@ function trcGap(dt,g,k){
 }
 function trcBeat(){
   const X=TRC,b=X.beats[X.i],p=player,e=enemy;
-  X.b=b;X.ph='lead';X.pt=0;X.rt=0;X.ts=.35;X.init=0;X.hj=0;X.tt=0;X.sc='';X.did=0;X.stag=0;X.fDone=0;X.ps=null;
+  X.b=b;X.ph='lead';X.pt=0;X.rt=0;X.ts=.9;X.init=0;X.hj=0;X.tt=0;X.sc='';X.did=0;X.stag=0;X.fDone=0;X.ps=null;
   const att=b.t==='def'?e:p,df=att===p?e:p;X.att=att;X.df=df;
   let mv=b.mv;
   if(b.t==='atk'){const o=pick(['b1','b2','b3'].filter(k=>k!==b.key));X.fl=[b.mv,MOV[p.style][BASIC[p.style][o]]];}
@@ -1730,7 +1730,7 @@ function trcBeat(){
   X.cam=trcCam(b.t);camCut=true;sfx.swoosh();trcPips();
 }
 function trcPrompt(){
-  const X=TRC,b=X.b;X.ph='prompt';X.rt=0;X.ts=.07;X.win=Math.max(.6,TRW[DIFF]*Math.pow(.95,X.i));X.left=X.win;X.tk=0;
+  const X=TRC,b=X.b;X.ph='prompt';X.rt=0;X.ts=.18;X.win=Math.max(.6,TRW[DIFF]*Math.pow(.95,X.i));X.left=X.win;X.tk=0;
   trcUi(true,b);if(!X.rb)X.rb=$('trc').getBoundingClientRect().bottom*W/Math.max(1,innerWidth);tone(1040,1040,.05,.06,'square');buzz(12);
 }
 function trcPress(k){
@@ -1739,7 +1739,7 @@ function trcPress(k){
 }
 function trcResolve(ok,why,perf){
   const X=TRC,b=X.b,p=player,e=enemy;
-  trcUi(true,null);X.ph='res';X.tt=0;X.rt=0;X.hj=0;X.init=0;X.did=0;X.stag=0;X.perf=!!perf;X.ts=.6;X.pips[X.i]=ok?(perf?2:1):-1;trcPips();
+  trcUi(true,null);X.ph='res';X.tt=0;X.rt=0;X.hj=0;X.init=0;X.did=0;X.stag=0;X.perf=!!perf;X.ts=1.15;X.pips[X.i]=ok?(perf?2:1):-1;trcPips();
   if(ok){X.score++;sfx.perfect();pop(perf?'PERFEITO!':'BOM!',p,perf?'#7fd6ff':'#a9c4d6');gainImp(p,perf?8:4);
     X.sc=b.t==='atk'?'atk':b.t==='fin'?'fin':b.key==='dod'?'esq':b.key==='cnt'?'cnt':'def';return;}
   pop(why==='late'?'TARDE DEMAIS!':'BOTÃO ERRADO!',p,'#ff4a4a');sfx.rupt();
@@ -1762,16 +1762,17 @@ function trcHit(a,d,mv,h,dmg,react,fin){
   if(a.isP)dmg/=1+Math.min(combo,25)*.02+a.flow*.08;
   applyHit(a,d,Object.assign({},h,{dmg,react}),mv);
   // peso de cinema: congela o quadro no impacto, clarão, tranco de câmera e onda de choque
-  hitstop=Math.max(hitstop,fin?.2:.12);camPunch(fin?2.2:1.3);quake(fin?1:.55,a.face,.2);flashA=Math.max(flashA,fin?.4:.2);
+  hitstop=Math.max(hitstop,fin?.22:.09);camPunch(fin?2.6:1.9);quake(fin?1:.8,a.face,.3);flashA=Math.max(flashA,fin?.55:.28);impactF=Math.max(impactF,fin?.12:.06);
   ring(d.x,d.z,fin?64:38);dust(d.x,d.z,fin?14:6,fin?110:70);if(!fin){sfx.heavy();buzz(18);}
   if(!fin&&d.st!=='ko'){d.st='trc';d.t=0;d.stum=false;}
 }
 // defesa dinâmica da troca: o mesmo repertório da defesa do jogo (esquiva de tronco, rolamento, mortal...)
 function trcDmStart(f,mv,ev){
-  const c=dmCat(mv),T=STY[f.style].dm||DMV;let L=T[c].filter(v=>!v.tkd||STY[f.style].acro);
+  // na troca a esquiva é sempre de CORPO e rápida (tronco, ombros, quadril): nada de pulo, mortal nem recuo longo
+  const c=dmCat(mv),T=STY[f.style].dm||DMV;let L=T[c].filter(v=>!v.y&&!v.rot);if(!L.length)L=T[c].map(v=>Object.assign({},v,{y:0,rot:0}));
   const L2=L.filter(v=>!!v.ev===ev);if(L2.length)L=L2;
-  const v=pick(L),sg=Math.random()<.5?-1:1;f.dm={v,t:0,d:v.d,hit:false,c,sg};
-  if(v.dx)f.vx+=-f.face*v.dx*(v.y?2.4:6.5);if(v.dz)f.vz+=sg*v.dz*6.5;
+  const v=Object.assign({},pick(L),{sp:0}),sg=Math.random()<.5?-1:1;v.d*=.62;f.dm={v,t:0,d:v.d,hit:false,c,sg};
+  if(v.dx)f.vx+=-f.face*Math.min(v.dx,12)*3;if(v.dz)f.vz+=sg*Math.min(v.dz,12)*3;
   sfx.swoosh();dust(f.x,f.z,3,30);
 }
 function trcDm(f,dt){
@@ -1779,6 +1780,12 @@ function trcDm(f,dt){
   f.rot=v.rot?v.rot*ease(k)*TAU:0;f.spin=v.sp?v.sp*m.sg*Math.sin(PI*k):0;f.y=(v.y||0)*Math.sin(PI*k);
   setPose(f,k<.62?v.p:BLOCK[f.style],k<.62?820:380,k<.62?.55:.65);
   if(k>=1){f.rot=0;f.spin=0;f.y=0;f.dm=null;}
+}
+// CHAVE DE OURO: o último golpe fecha a troca com clarão dourado, faixa, chuva de faíscas douradas e a plateia explodindo
+function trcGold(d){
+  flashA=.8;impactF=.16;banner('CHAVE DE OURO!','',1.4);sfx.bell();hype(1,d.x);crowdFlash(14,1.8);lampKick(.3);ring(d.x,d.z,90,'#ffd24a');ring(d.x,d.z,55,'#ffffff');
+  sparks(d.x,40,d.z-2,26,true,'#ffd24a');dust(d.x,d.z,22,150);buzz([40,30,60]);
+  hitstop=Math.max(hitstop,.2);timeScale=.45;slowT=.35;
 }
 function trcNext(){const X=TRC;if(X.i+1<X.beats.length){X.i++;trcBeat();}else trcEnd('win');}
 function trcEnd(res){
@@ -1797,11 +1804,11 @@ function updTrc(dt,rdt){
   switch(X.ph){
    case 'lock':
     trcGap(dt,24,5);
-    if(X.rt>.6){X.i=0;trcBeat();}
+    if(X.rt>.45){X.i=0;trcBeat();}
     break;
    case 'lead':
     trcGap(dt,X.g,7);setPose(X.df,idlePose(X.df),170,.75);
-    if(X.pt>=.24)trcPrompt();
+    if(X.pt>=.14)trcPrompt();
     break;
    case 'prompt':{
     trcGap(dt,X.g,5);setPose(X.df,idlePose(X.df),170,.75);
@@ -1819,10 +1826,10 @@ function trcRes(dt){
    case 'atk':{
     if(!X.init){X.init=1;X.fi=0;X.fI=-1;X.nh=X.fl[0].hits.length+X.fl[1].hits.length;}
     const mv=X.fl[X.fi];
-    if(X.fI!==X.fi){X.fI=X.fi;X.st=0;X.hj=0;X.cam=trcCam('atk');camCut=true;X.ts=X.fi?.4:.5;att._si=null;att._pm=null;att.mv=mv;if(X.fi)setPose(att,mv.A||mv.keys[0][1],900,.7);}
+    if(X.fI!==X.fi){X.fI=X.fi;X.st=0;X.hj=0;X.cam=trcCam('atk');camCut=true;X.ts=1.25;att._si=null;att._pm=null;att.mv=mv;if(X.fi)setPose(att,mv.A||mv.keys[0][1],900,.7);}
     X.st+=dt;trcPlay(att,df,mv,X.st,dt,true);
-    while(X.hj<mv.hits.length&&X.st>=mv.hits[X.hj].t){const h=mv.hits[X.hj++];trcHit(att,df,mv,h,TR_ATK*df.max*(X.perf?1.3:1)*(X.fi?1.3:.7)/mv.hits.length,'hit');if(df.st==='ko')return;slow(.2,.22);}
-    if(X.st>=mv.d+(X.fi?.38:.12)){if(X.fi<1)X.fi++;else trcNext();}
+    while(X.hj<mv.hits.length&&X.st>=mv.hits[X.hj].t){const h=mv.hits[X.hj++];trcHit(att,df,mv,h,TR_ATK*df.max*(X.perf?1.3:1)*(X.fi?1.3:.7)/mv.hits.length,'hit');if(df.st==='ko')return;}
+    if(X.st>=mv.d+(X.fi?.12:.0)){if(X.fi<1)X.fi++;else trcNext();}
     break;}
    case 'esq':{
     const mv=b.mv;
@@ -1830,7 +1837,7 @@ function trcRes(dt){
     trcPlay(att,df,mv,tt,dt,false);trcDm(df,dt);
     if(!X.did&&tt>=mv.hits[0].t){X.did=1;pop('ESQUIVOU!',df,'#7fd6ff');sfx.swoosh();hype(.15,df.x);gainImp(p,6);}
     if(tt>=mv.d&&!X.stag){X.stag=1;setPose(att,STAG,350,.5);kick(att,0,-4);att.vx+=att.face*30;}
-    if(tt>=Math.max(mv.d,df.dm?df.dm.d:0)+.45)trcNext();
+    if(tt>=Math.max(mv.d,df.dm?df.dm.d:0)+.12)trcNext();
     break;}
    case 'def':{
     const mv=b.mv;
@@ -1839,7 +1846,7 @@ function trcRes(dt){
     if(!X.did){if(tt<mv.hits[0].t)trcDm(df,dt);
       else{X.did=1;blockHit(att,df,mv);df.dm=null;df.rot=0;df.spin=0;df.y=0;kick(att,0,-6);att.vx-=att.face*70;gainImp(p,5);}}
     if(tt>=mv.d&&!X.stag){X.stag=1;setPose(att,STAG,350,.5);}
-    if(tt>=mv.d+.5)trcNext();
+    if(tt>=mv.d+.12)trcNext();
     break;}
    case 'cnt':{
     if(!X.init){X.init=1;const m=b.mv;att.mv=m;
@@ -1848,9 +1855,9 @@ function trcRes(dt){
       pop('CONTRA!',df,'#f2a93b');sfx.counter();flashA=Math.max(flashA,.3);buzz(30);
       df.kind='cnt';df.cStreak=1;sceneName=X.scn.n;sceneRed=false;$('cMove').textContent=X.scn.n;}
     att.spin=lerp(att.spin,X.sp,1-Math.exp(-dt*12));
-    if(X.si>=X.steps.length){if(tt-X.tEnd>=.5){df.kind='norm';df.cseq=null;df.ccam=null;trcNext();}break;}
+    if(X.si>=X.steps.length){if(tt-X.tEnd>=.1){df.kind='norm';df.cseq=null;df.ccam=null;trcNext();}break;}
     const stp=X.steps[X.si],mv=stp.mv;
-    if(X.stI!==X.si){X.stI=X.si;X.st=0;X.hj=0;X.cam=stp.cam;camCut=true;X.ts=mv.hits.length?Math.max(.4,stp.slow||.5):.7;df._si=null;df._pm=null;df.ccam=stp;df.cseq=X.steps.slice(X.si+1);df.mv=mv;
+    if(X.stI!==X.si){X.stI=X.si;X.st=0;X.hj=0;X.cam=stp.cam;camCut=true;X.ts=mv.hits.length?1.1:1.2;df._si=null;df._pm=null;df.ccam=stp;df.cseq=X.steps.slice(X.si+1);df.mv=mv;
       if(stp.lines)speedL=mv.d/X.ts;}
     X.st+=dt;trcPlay(df,att,mv,X.st,dt,true);
     while(X.hj<mv.hits.length&&X.st>=mv.hits[X.hj].t){const h=mv.hits[X.hj++];trcHit(df,att,mv,h,TR_CNT*att.max/X.nh,'hit');if(att.st==='ko')return;}
@@ -1859,21 +1866,21 @@ function trcRes(dt){
    case 'fin':{
     if(!X.init){X.init=1;X.fi=0;X.fI=-1;X.nm=FIN[p.style].nm[X.vi];pop(X.nm,p,'#d98cff');
       X.nh=0;for(const m of X.fl)X.nh+=m.hits.length;p.kind='fin';p.fsup=false;sceneName=X.nm;sceneRed=false;$('cMove').textContent=X.nm;}
-    if(X.fDone){if(X.rt-X.rF>1.1)trcEnd('win');break;}
+    if(X.fDone){if(X.rt-X.rF>1.3)trcEnd('win');break;}
     const mv=X.fl[X.fi],lastM=X.fi===X.fl.length-1;
-    if(X.fI!==X.fi){X.fI=X.fi;X.st=0;X.hj=0;X.cam=TRFC[(X.fi+X.vi)%TRFC.length];camCut=true;X.ts=lastM?.3:.45;p._si=null;p._pm=null;p.mv=mv;}
+    if(X.fI!==X.fi){X.fI=X.fi;X.st=0;X.hj=0;X.cam=TRFC[(X.fi+X.vi)%TRFC.length];camCut=true;X.ts=lastM?.6:1.2;p._si=null;p._pm=null;p.mv=mv;}
     X.st+=dt;trcPlay(p,e,mv,X.st,dt,true);
     while(X.hj<mv.hits.length&&X.st>=mv.hits[X.hj].t){const h=mv.hits[X.hj++],lastH=lastM&&X.hj===mv.hits.length;
       p.fseq=lastH?[]:[0];
       trcHit(p,e,mv,h,TR_FIN*e.max*(lastH?4:1)/(X.nh+3),lastH?'knock':'hit',lastH);
-      if(lastH){X.fDone=1;X.rF=X.rt;X.ts=null;p.kind='norm';p.fseq=null;break;}
+      if(lastH){X.fDone=1;X.rF=X.rt;X.ts=null;p.kind='norm';p.fseq=null;trcGold(e);break;}
       if(e.st==='ko')return;}
     if(!X.fDone&&X.st>=mv.d)X.fi++;
     break;}
    case 'pen':{
     const mv=X.pm;trcPlay(e,p,mv,tt,dt,true);
     if(!X.hj&&tt>=mv.hits[0].t){X.hj=1;X.ts=null;trcHit(e,p,mv,mv.hits[0],TR_PEN*p.max*(b.t==='fin'?.6:1)*(DP.dmgM||1),b.t==='fin'||X.i>=1?'knock':'hit',true);}
-    if(tt>=mv.d+.25)trcEnd('lose');
+    if(tt>=mv.d+.2)trcEnd('lose');
     break;}
   }
 }
