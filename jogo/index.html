@@ -416,12 +416,12 @@ function ambTick(rdt){if(!AC||paused||!AMB)return;ambSync();if((ambNext-=rdt)>0)
 function cheer(v){return;if(!AC||STAGE!==0||paused)return;const a=Math.min(1,v);noise(.7+a*.9,1000+a*600,.09+.13*a,'bandpass');noise(.5+a*.6,500,.07+.1*a,'bandpass');
   for(const f of [250,380,520]){tone(f*.9,f*1.4,.45+a*.5,.012+.02*a,'sawtooth');}}
 const sfx={
- hit:k=>{noise(.1,2200,.45);tone(170*(1+k*.02),55,.12,.5)},
- heavy:()=>{noise(.25,900,.7);tone(120,32,.32,.9)},
+ hit:k=>{noise(.1,2200,.45);noise(.05,900,.3);tone(230,150,.05,.16,'triangle')},
+ heavy:()=>{noise(.25,900,.7);noise(.14,420,.45);tone(170,95,.07,.24,'triangle')},
  swoosh:()=>noise(.14,2600,.12,'bandpass'),
- counter:()=>{tone(1300,2100,.12,.12,'square');noise(.2,1200,.6);tone(140,40,.3,.8)},
+ counter:()=>{tone(1300,2100,.12,.12,'square');noise(.2,1200,.6);noise(.12,500,.4);tone(190,110,.08,.22,'triangle')},
  block:()=>{noise(.06,4000,.25,'highpass');tone(600,300,.06,.1,'triangle')},
- hurt:()=>{noise(.15,700,.5);tone(90,40,.2,.6)},
+ hurt:()=>{noise(.15,700,.5);noise(.08,380,.3);tone(140,90,.06,.18,'triangle')},
  perfect:()=>tone(988,1480,.09,.06,'square'),
  rupt:()=>{tone(180,520,.16,.14,'sawtooth');noise(.14,1600,.4,'bandpass')},
  bell:()=>{tone(880,860,.9,.2,'triangle');tone(1320,1300,.6,.08,'sine')},
