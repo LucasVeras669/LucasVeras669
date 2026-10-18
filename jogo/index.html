@@ -106,6 +106,9 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 .screen .sub{margin:0;font-size:calc(14px*var(--m));opacity:.85;max-width:44ch}
 .cards{display:flex;gap:calc(12px*var(--m));flex-wrap:wrap;justify-content:center}
 .card{width:calc(150px*var(--m));background:rgba(239,230,210,.06);border:3px solid rgba(239,230,210,.35);color:var(--paper);font-family:var(--body);padding:calc(8px*var(--m)) calc(8px*var(--m)) calc(10px*var(--m));cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:calc(4px*var(--m))}
+.card.selP{border-color:#ffffff;box-shadow:0 0 0 2px #fff,0 0 22px 4px rgba(255,255,255,.75);background:rgba(255,255,255,.1)}
+.card.selE{border-color:#4da3ff;box-shadow:0 0 0 2px #4da3ff,0 0 24px 5px rgba(77,163,255,.85);background:rgba(77,163,255,.12)}
+.card.selP.selE{box-shadow:0 0 0 2px #fff,0 0 0 6px #4da3ff,0 0 26px 6px rgba(77,163,255,.8)}
 .card:hover,.card:active{border-color:var(--amber);background:rgba(242,169,59,.12)}
 .card canvas{width:calc(120px*var(--m));height:calc(120px*var(--m));image-rendering:pixelated}
 .card strong{font-family:var(--display);font-size:calc(13px*var(--m));letter-spacing:.06em}
@@ -147,7 +150,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
   </div>
   <div id="combo"><div id="cWrap"><b id="cNum">0</b><span>HITS</span><em id="cMove"></em></div><div id="flow">FLUXO <i></i><i></i><i></i><div id="imp"><div id="impF"></div></div></div></div>
   <div id="banner"><h2 id="bTitle"></h2><p id="bSub"></p></div>
-  <button class="exit" id="bExit" aria-label="Pausar ou sair" hidden>SAIR</button>
+  <button class="exit" id="bExit" aria-label="Pausar" hidden>II PAUSE</button>
   <div id="stickHint" hidden>MOVER</div>
   <div id="stick"><div id="knob"></div></div>
   <div id="pad" hidden>
@@ -166,9 +169,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
     <p class="sub" id="pickT">Escolha a dificuldade e o seu lutador.</p>
     <div class="difs" role="radiogroup" aria-label="Dificuldade"><button class="dif" data-d="facil" role="radio">FÁCIL</button><button class="dif" data-d="medio" role="radio">MÉDIO</button><button class="dif" data-d="mestre" role="radio">MESTRE</button></div>
     <p class="difd" id="difd"></p>
-    <button class="cta alt" id="backE" hidden>‹ VOLTAR</button>
     <div class="cards" id="cardsP"></div>
-    <div class="cards" id="cardsE" hidden></div>
   </div>
   <div class="screen pz" id="pause" hidden>
     <h1>PAUSADO</h1>
@@ -178,7 +179,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
   <div class="screen" id="over" hidden>
     <h1 id="oTitle">NOCAUTE</h1>
     <p class="sub" id="oSub"></p>
-    <div class="ctas"><button class="cta" id="again">LUTAR DE NOVO</button><button class="cta alt" id="quit2">SAIR PARA O MENU</button><button class="cta alt" id="swap">TROCAR DE PERSONAGEM</button></div>
+    <div class="ctas"><button class="cta" id="again">LUTAR DE NOVO</button><button class="cta alt" id="quit2">VOLTAR AO MENU</button></div>
   </div>
 </div>
 
@@ -1689,7 +1690,6 @@ function endMatch(won){
   running=false;matchOver=true;inp.act=null;
   $('oTitle').textContent=won?'VITÓRIA':'DERROTA';
   $('oSub').textContent=`Dificuldade ${DNAMES[DIFF]}. ${won?'Você venceu':'O rival venceu'} por ${Math.max(...wins)} a ${Math.min(...wins)}. Maior combo: ${best} hits. Pontos: ${score}.`;
-  $('swap').textContent='TROCAR LUTADORES';
   $('over').hidden=false;$('pad').hidden=true;$('stickHint').hidden=true;$('bExit').hidden=true;
 }
 
@@ -3225,14 +3225,18 @@ const FIGHTERS=[
  {s:'box',id:'Box',t:'BOXEADOR',n:'Rocco "Martelo"',d:'Jab, direto, gancho, uppercut. Esquiva no pêndulo.'},
  {s:'tkd',id:'Tkd',t:'TAEKWONDO',n:'Ji-ho "Vendaval"',d:'Bandal, dollyo, dwi chagi, tornado. Acrobacias.'},
  {s:'mt',id:'Mt',t:'MUAY THAI',n:'Kaen "Garra do Tigre"',d:'Cotovelos, joelhos e canelas. Acrobacias de cinema.'}];
-for(const [box,pre,pk] of [[$('cardsP'),'pick','P'],[$('cardsE'),'e','E']])for(const F of FIGHTERS){
-  const b=document.createElement('button');b.className='card';b.id=pre+F.id;
-  b.innerHTML=`<canvas id="pv${pk}${F.id}" width="60" height="60"></canvas><strong>${F.t}</strong><small>${F.n}<br>${F.d}</small>`;box.appendChild(b);
-  b.onclick=()=>{if(pk==='P'){chosen=F.s;const am=/^#auto(?:=(\w+))?$/.exec(location.hash);if(am){chosenE=am[1]||(F.s==='box'?'tkd':'box');begin(chosen,chosenE);return;}menuStep(1);}else{chosenE=F.s;begin(chosen,chosenE);}};}
-function menuStep(n){$('cardsP').hidden=n===1;$('cardsE').hidden=n!==1;$('backE').hidden=n!==1;
-  $('pickT').textContent=n===1?'Agora escolha o seu adversário.':'Escolha a dificuldade e o seu lutador.';
-  const c=n===1?$('cardsE').firstChild:$('cardsP').firstChild;if(c&&c.focus)c.focus();}
-$('backE').onclick=()=>menuStep(0);
+// uma tela só: o 1º toque marca o SEU lutador (borda branca brilhante), o 2º marca o ADVERSÁRIO (borda azul brilhante) e a luta começa
+let selStep=0;
+for(const F of FIGHTERS){
+  const b=document.createElement('button');b.className='card';b.id='pick'+F.id;b.dataset.s=F.s;
+  b.innerHTML=`<canvas id="pvP${F.id}" width="60" height="60"></canvas><strong>${F.t}</strong><small>${F.n}<br>${F.d}</small>`;$('cardsP').appendChild(b);
+  b.onclick=()=>{
+    const am=/^#auto(?:=(\w+))?$/.exec(location.hash);
+    if(selStep===0){chosen=F.s;if(am){chosenE=am[1]||(F.s==='box'?'tkd':'box');begin(chosen,chosenE);return;}
+      selStep=1;b.classList.add('selP');$('pickT').textContent='Agora escolha o seu adversário.';return;}
+    if(selStep===1){chosenE=F.s;selStep=2;b.classList.add('selE');
+      setTimeout(()=>{begin(chosen,chosenE);},380);}};}
+function menuStep(){selStep=0;for(const c of $('cardsP').children)c.classList.remove('selP','selE');$('pickT').textContent='Escolha a dificuldade e o seu lutador.';}
 $('again').onclick=()=>begin(chosen,chosenE);
 // pausa e saída: o botão SAIR pausa a luta e pergunta (sem diálogos do navegador); Esc faz o mesmo no PC
 function setPause(v){ambMute(v);if(!running&&!v&&!paused)return;if(v&&!running&&!(introT>0))return;paused=v;$('pause').hidden=!v;if(v){inp.x=0;inp.z=0;inp.act=null;sid=null;stick.classList.remove('on');for(const k in keys)keys[k]=0;$('resume').focus();}}
@@ -3246,9 +3250,8 @@ function showMenu(){
 }
 $('bExit').onclick=()=>setPause(true);$('resume').onclick=()=>setPause(false);$('quit').onclick=showMenu;$('quit2').onclick=showMenu;
 addEventListener('keydown',e=>{if(e.code==='Escape'&&!e.repeat&&(running||introT>0))setPause(!paused);});
-$('swap').onclick=showMenu;
 
-function previewAll(){for(const F of FIGHTERS){preview('pvP'+F.id,F.s,palFor(F.s,0,true));preview('pvE'+F.id,F.s,palFor(F.s,0,true));}}
+function previewAll(){for(const F of FIGHTERS){preview('pvP'+F.id,F.s,palFor(F.s,0,true));}}
 // prévias animadas no menu (mostram golpes do estilo)
 function preview(id,style,pal){const c=$(id).getContext('2d');const f=mkF(style,true,pal,0,0);const list=SEQ[style].flat();let li=0,mt=0,mv=null,pt=performance.now();
   (function draw(now){if(c.canvas.offsetParent===null){if(!$('menu').hidden)requestAnimationFrame(draw);return;}const dt=Math.min(.05,((now||pt)-pt)/1000);pt=now||pt;time+=0;mt+=dt;
