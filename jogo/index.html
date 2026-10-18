@@ -1051,7 +1051,7 @@ WIN.mt=[-.1,-.35,2.8,.3,2.6,.4,.3,-.2,-.25,-.1];
 WK.mt={f:4,b:-11,y:-25.6,c:15,a:.27,L:4};STR.mt=15;
 const MTK={
  // --- socos de apoio (mãos enfaixadas) ---
- tp:mk('Teep',{lim:'ft',d:.32,a:.08,h:.15,A:[-.1,.05,1.3,2.1,1.1,2.3,1.25,-2.0,-.4,-.3],S:[-.55,.1,1.2,2.0,1.0,2.2,1.6,-.05,-.4,-.15],dmg:6,r:30,tw:0,lv:'body',kb:95,lunge:6}),
+ tp:mk('Te Trong',{lim:'ft',d:.32,a:.08,h:.15,A:[-.1,.05,1.3,2.1,1.1,2.3,1.25,-2.0,-.4,-.3],S:[-.55,.1,1.2,2.0,1.0,2.2,1.6,-.05,-.4,-.15],dmg:6,r:30,tw:0,lv:'body',kb:95,lunge:6}),
  sok:mk('Sok Tat',{lim:'fe',d:.3,a:.06,h:.12,A:[.05,-.1,.95,2.95,1.2,2.4,.5,-.5,-.45,-.3],S:[.5,-.1,1.55,3.0,1.25,2.35,.6,-.7,-.5,-.3],dmg:9,r:22,tw:1.1,lunge:12,kb:40,lv:'head'}),
  sob:mk('Sok Ti',{lim:'be',d:.34,a:.07,h:.14,A:[.08,-.1,1.3,2.2,.7,3.0,.4,-.45,-.5,-.3],S:[.62,-.15,1.15,2.3,1.55,3.0,.7,-.85,-.65,-.15],dmg:11,r:22,tw:1.2,lunge:14,react:'stagger',lv:'head'}),
  sokt:mk('Sok Ngat',{lim:'be',d:.38,a:.1,h:.17,A:[.55,.05,1.2,2.2,.4,2.95,.65,-1.0,-.5,-.6],S:[-.05,-.35,1.2,2.2,2.35,3.0,.3,-.3,-.35,-.2],dmg:12,r:20,tw:.6,react:'stagger',lv:'head',kb:50}),
@@ -1070,19 +1070,21 @@ const MTK={
  sokc:mk('Sok Klab',{lim:'be',d:.62,a:.16,h:.38,A:[.3,.1,1.3,2.2,.9,2.8,.5,-.7,-.5,-.5],S:[.6,-.15,1.25,2.2,1.55,3.0,.55,-.8,-.55,-.25],dmg:14,r:22,spin:TAU,sa:.5,wa:.3,ve:1.4,sm:.3,react:'knock',kb:90,lv:'head',lunge:10}),
  sokw:mk('Sok Wian',{lim:'fe',d:.66,a:.16,h:.4,A:[.3,.1,1.2,2.2,.9,2.6,.5,-.7,-.5,-.5],S:[.6,-.1,1.55,3.0,1.3,2.3,.6,-.8,-.5,-.3],dmg:13,r:22,spin:TAU,sa:1,wa:.3,ve:1.4,sm:.3,react:'knock',kb:85,lv:'head',lunge:10}),
  bkf:mk('Punho Giratório',{lim:'bh',d:.6,a:.15,h:.36,A:[.3,.1,1.2,2.2,.8,2.7,.5,-.7,-.5,-.5],S:[.4,-.15,1.1,2.2,1.55,.1,.6,-.8,-.5,-.25],dmg:12,r:30,spin:TAU,sa:.5,wa:.3,ve:1.45,sm:.28,react:'knock',kb:80,lv:'head',lunge:10}),
+ tcl:mk('Te Chiang Loi',{lim:'bf',d:.78,a:.2,h:.42,A:[.35,.1,.9,2.1,.7,2.3,1.6,-2.3,.9,-1.9],S:[-1.0,.3,.6,2.0,.2,1.6,-.05,-.2,2.25,-.12],dmg:15,r:32,jump:44,spin:TAU,sa:.5,wa:.3,ve:1.4,sm:.34,react:'knock',kb:120,lv:'head',lunge:16}),
  ent:mk('Teep de entrada',{lim:'ft',d:.34,a:.08,h:.15,A:[-.05,.05,1.3,2.1,1.1,2.3,1.3,-1.9,-.5,-.4],S:[-.5,.1,1.2,2.0,1.0,2.2,1.65,-.05,-.4,-.15],dmg:7,r:30,lunge:22,kb:100,lv:'body'}),
  cct:mk('Cotovelo de contra',{lim:'be',d:.46,a:.12,h:.19,A:[.2,-.1,1.3,2.2,.5,3.0,.4,-.5,-.5,-.3],S:[.7,-.2,1.1,2.3,1.6,3.0,.75,-.9,-.7,-.1],dmg:15,r:22,tw:1.2,react:'knock',kb:90,ka:900,lv:'head'}),
  cdw:mk('Khao Loi de contra',{lim:'fk',d:.6,a:.18,h:.25,A:[.5,.1,1.25,2.0,1.0,2.2,1.5,-2.3,.6,-1.5],S:[.12,-.15,2.3,1.0,2.45,1.25,2.35,-2.35,.2,-.55],dmg:16,r:28,jump:40,lunge:20,react:'knock',kb:120,ka:900,lv:'head'}),
  air:mk('Sok no ar',{lim:'fe',d:.4,a:.09,h:.16,A:TUCK,S:[.6,-.2,1.5,3.0,1.3,2.4,1.3,-1.8,.4,-1.4],dmg:8,r:26,jump:0,react:'launch',kb:25,lv:'head'}),
 };
-Object.assign(MTK,{jb:cl(BX.jab,{n:'Jab'}),cx:cl(BX.dir,{n:'Direto'})});
+Object.assign(MTK,{jb:cl(BX.jab,{n:'Mat Trong'}),cx:cl(BX.dir,{n:'Mat Trong Lang'})});
+AreaAdd();function AreaAdd(){Object.assign(AREAS,{'Mat Trong':['head','head','arm'],'Mat Trong Lang':['head','head','chest'],'Te Chiang Loi':['head','head']});}
 // sequência dupla de joelhos no ar (Khao Khu): primeiro o da frente, depois o de trás
 MTK.khok=mk('Khao Khu',{d:.62,jump:34,keys:[[0,[.55,.1,1.25,2.0,1.0,2.2,1.5,-2.2,.5,-1.5],700,.7],[.1,[.1,-.1,2.1,1.1,2.2,1.3,2.15,-2.3,.4,-.7],1800,.55],[.2,[.05,-.2,2.2,1.0,2.3,1.2,.5,-.8,2.1,-2.3],1800,.55],[.34,null,280,.7]],
   hits:[{t:.13,dmg:7,react:'hit',lim:'fk',lv:'body',kb:20},{t:.25,dmg:9,react:'knock',lim:'bk',lv:'head',kb:90}]});
 MOV.mt=MTK;
-Object.assign(AREAS,{'Teep':['belly','chest'],'Teep de entrada':['belly','chest'],'Khao Trong':['belly','chest'],'Khao Khong':['side','belly'],'Te Tat':['side','chest'],'Te Lang':['leg'],'Te Sung':['head','head','arm'],'Te Sung Khao':['head'],'Sok Tat':['head'],'Sok Ti':['head','head'],'Sok Ngat':['head'],'Sok Ton':['head'],'Khao Loi':['chest','head'],'Khao Khu':['chest','head'],'Sok Kratok':['head'],'Sok Klab':['head'],'Sok Wian':['head'],'Punho Giratório':['head','head','arm'],'Cotovelo de contra':['head'],'Khao Loi de contra':['chest','head'],'Sok no ar':['head']});
-SEQ.mt=[['sok','sokc','sokw'],['tp','sokw','sokc','bkf'],['jb','cx','sokc'],['sokt','sokw','bkf'],['sokc','sokw','sokd'],['sok','sob','sokc','sokw'],['tp','sokc'],['tp','sok'],['jb','cx','khao'],['sok','sob','sokt'],['tec','sok','khao'],['tp','kok','sokd'],['jb','cx','tec','khao'],['sok','khao','sokt','sokd'],['tel','te','sob'],['khok','sok'],['tp','sob','khao','tes']];
-ESEQ.mt=[['sokc'],['sokw','sok'],['tp','sok'],['jb','cx','khao'],['sok','sob'],['te','khao'],['khao','sokt'],['tel','sob'],['tp','khao'],['sokd']];
+Object.assign(AREAS,{'Te Trong':['belly','chest'],'Teep de entrada':['belly','chest'],'Khao Trong':['belly','chest'],'Khao Khong':['side','belly'],'Te Tat':['side','chest'],'Te Lang':['leg'],'Te Sung':['head','head','arm'],'Te Sung Khao':['head'],'Sok Tat':['head'],'Sok Ti':['head','head'],'Sok Ngat':['head'],'Sok Ton':['head'],'Khao Loi':['chest','head'],'Khao Khu':['chest','head'],'Sok Kratok':['head'],'Sok Klab':['head'],'Sok Wian':['head'],'Punho Giratório':['head','head','arm'],'Cotovelo de contra':['head'],'Khao Loi de contra':['chest','head'],'Sok no ar':['head']});
+SEQ.mt=[['jb','cx','tp','khaof'],['tp','tec','sokc','tcl'],['jb','cx','sokp','sokw'],['sok','sob','sokt','sokd'],['tec','khao','sokc','tcl'],['tp','khaof','sokw','tcl'],['sok','sokc','sokw'],['tp','sokw','sokc','bkf'],['jb','cx','sokc'],['sokt','sokw','bkf'],['sokc','sokw','sokd'],['sok','sob','sokc','sokw'],['tp','sokc'],['tp','sok'],['jb','cx','khao'],['sok','sob','sokt'],['tec','sok','khao'],['tp','kok','sokd'],['jb','cx','tec','khao'],['sok','khao','sokt','sokd'],['tel','te','sob'],['khok','sok'],['tp','sob','khao','tes']];
+ESEQ.mt=[['tcl'],['khaof'],['sokc'],['sokw','sok'],['tp','sok'],['jb','cx','khao'],['sok','sob'],['te','khao'],['khao','sokt'],['tel','sob'],['tp','khao'],['sokd']];
 BASIC.mt={b1:'tec',b2:'sok',b3:'khao'};BLABEL.mt=['CHUTE ALTO','COTOVELO','JOELHADA'];
 FIN.mt={nm:['FÚRIA DO TIGRE','COTOVELOS DO DRAGÃO','REI DOS JOELHOS'],
   n:[['jb','tec','khao','khaof'],['sok','sob','sokt','sokc'],['khao','kok','te','khaof']],
