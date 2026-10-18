@@ -796,11 +796,12 @@ function limpPose(t,k,w){
   const L=[-.1+.15*c,-.3+.2*a,2.3+.5*a*w,.35+.2*b,2.1+.5*b*w,.4+.2*a,.7+.5*b*w,-1+.4*a,.5+.5*a*w,-.8+.4*b];
   return lerpPose(BENT,L,k);
 }
-const GRABP=['idle','block','hurt','atk','dash'];
+// o agarrão só falha se o alvo estiver em DEFESA (botão segurado / guarda) ou longe; fora isso pega em qualquer estado (menos já caído, no ar ou já preso)
+const NOGRAB=['ko','down','getup','held','thrown','throw','air','intro','win'];
 function beginThrow(p){
   const e=p===player?enemy:player;p.thrT=time;
   const near=Math.abs(e.x-p.x)<42&&Math.abs(e.z-p.z)<26;
-  const ok=e===enemy?(GRABOK.includes(e.st)&&e.st!=='guard'&&!e.red&&!e.armor):(GRABP.includes(e.st)&&!e.inv&&!(e.st==='atk'&&e.kind!=='norm'));
+  const ok=!NOGRAB.includes(e.st);
   // a DEFESA (botão segurado, ou a guarda do rival) é a única coisa que barra o agarrão: quem tenta é repelido e fica aberto
   if(near&&(e.st==='defend'||e.st==='guard')){
     pop('AGARRÃO DEFENDIDO',e,'#9fe2bd');sfx.block();sparks(e.x-p.face*4,34,e.z-1,6,false,'#cfe3ff');kick(e,0,-5);kick(e,2,-4);kick(e,4,-4);e.vx+=p.face*60;
@@ -1467,7 +1468,7 @@ const GRI={facil:6,medio:4,mestre:2.6};
 function eGrab(e){e.chain=[];e.mv=THRMV;e.st='wind';e.t=0;e.wd=.4;e.wx=null;e.feint=false;e.armor=false;e.thrT=time;setPose(e,(THRP[e.style]||THRP.def).GRAB,520,.65);pop('AGARRÃO!',e,'#f2a93b');}
 function eGrabTry(e,p,dt){
   if(e.red||time-(e.thrT||-9)<GRI[DIFF]*(1.15-.08*round))return false;
-  if(Math.abs(p.x-e.x)>88||Math.abs(p.z-e.z)>30||!(GRABP.includes(p.st)||p.st==='defend')||p.inv)return false;
+  if(Math.abs(p.x-e.x)>88||Math.abs(p.z-e.z)>30||NOGRAB.includes(p.st))return false;
   return Math.random()<dt*(p.st==='defend'?.5:.5);
 }
 function eSpecial(e){
