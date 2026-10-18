@@ -213,6 +213,21 @@ const PAL={
   tkdP:{skin:'#e8be90',skinD:'#9b7452',skinH:'#ffe0bb',hair:'#141414',hairH:'#3c3c40',gi:'#f0efe9',giD:'#a9a8b6',giH:'#ffffff',lap:'#6c6b78',belt:'#151515',band:'#c62828',trail:'#7fd6ff'},
   tkdE:{skin:'#d9a477',skinD:'#8c6141',skinH:'#f3c79f',hair:'#2a1d16',hairH:'#54402f',gi:'#2c2c34',giD:'#141418',giH:'#4a4a58',lap:'#62627a',belt:'#c62828',band:null,trail:'#c43d3d'},
 };
+// CORES DOS UNIFORMES (todo o jogo usa as mesmas cinco): preta, azul, verde, vermelha e branca. O menu mostra tudo em preto; ao começar
+// a luta cada lutador recebe uma cor sorteada, e dois lutadores do MESMO estilo nunca ficam com a mesma cor (colorsFor).
+const COLS=[
+ {n:'preta',main:'#26262d',dark:'#101014',light:'#52525e',acc:'#c9a24a'},
+ {n:'azul',main:'#2456b8',dark:'#12306e',light:'#6a95ea',acc:'#e8e8ee'},
+ {n:'verde',main:'#1f8a44',dark:'#0e4d25',light:'#5cc982',acc:'#f0e6b0'},
+ {n:'vermelha',main:'#c62a32',dark:'#6e1218',light:'#f2766f',acc:'#f2e6c8'},
+ {n:'branca',main:'#efeee8',dark:'#a8a7b4',light:'#ffffff',acc:'#c62a32'}];
+function palFor(style,ci,isP){
+  const b=PAL[style+(isP?'P':'E')],C=COLS[ci],o=Object.assign({},b);
+  if(style==='tkd'){Object.assign(o,{gi:C.main,giD:C.dark,giH:C.light,lap:mixHex(C.main,C.dark,.55),belt:C.acc,band:isP?C.acc:null,trail:C.light});}
+  else if(style==='box'){Object.assign(o,{sh:C.main,shD:C.dark,trim:C.acc,trimD:mixHex(C.acc,'#000000',.3),gl:C.main,glD:C.dark,glH:C.light,trail:C.light});}
+  else{Object.assign(o,{sh:C.main,shD:C.dark,trim:C.acc,trimD:mixHex(C.acc,'#000000',.3),band:C.acc,trail:C.light});}
+  return o;}
+function colorsFor(style,es){const a=Math.floor(Math.random()*5);let b=Math.floor(Math.random()*5);if(style===es)while(b===a)b=Math.floor(Math.random()*5);return [a,b];}
 const NAMES={box:'Rocco "Martelo"',tkd:'Ji-ho "Vendaval"'};
 
 // ---------- poses: [inclinação, cabeça, ombroF, cotoveloF, ombroT, cotoveloT, quadrilF, joelhoF, quadrilT, joelhoT] ----------
@@ -465,8 +480,9 @@ function mkF(style,isP,pal,x,z){return {style,isP,pal,x,z,y:0,vx:0,vz:0,vy:0,fac
 
 function newMatch(style,es){
   es=es||(style==='box'?'tkd':'box');
-  player=mkF(style,true,PAL[style+'P'],-70,225);
-  enemy=mkF(es,false,PAL[es+'E'],70,225);
+  const [cp,ce]=colorsFor(style,es);
+  player=mkF(style,true,palFor(style,cp,true),-70,225);
+  enemy=mkF(es,false,palFor(es,ce,false),70,225);
   $('pName').textContent=NAMES[style];$('eName').textContent=NAMES[es];
   aiReset();DP=aiParams();$('ai').hidden=DIFF!=='mestre';
   wins=[0,0];round=1;score=0;best=0;matchOver=false;decals.length=0;STG=shuffle([0,1,2]);startRound();
@@ -1380,7 +1396,7 @@ const DNAMES={facil:'FÁCIL',medio:'MÉDIO',mestre:'MESTRE'};
 const D_NEUTRO={agg:1,cdM:1,wdM:1,evM:1,grdM:1,rupM:1,dmgM:1,react:0,chainX:0,recM:1,close:1,hpM:1,getM:1,spR:2.6,spH:26};
 // MÉDIO: ataca sem parar (pausa entre ataques 3x menor), preparação curta, combos longos, esquiva e defende bem, causa mais dano
 const D_MEDIO={agg:1.65,cdM:.2,wdM:.6,evM:2.2,grdM:1.8,rupM:1.8,dmgM:1.4,react:.9,chainX:.8,recM:.45,close:.75,hpM:1.4,getM:.55,spR:5,spH:36};
-const STAT={atk:0,hits:0};window.__stat=STAT;window.__st=()=>[enemy.st,player.st,enemy.cd,enemy.sp];window.__spec=()=>{enemy.sp=100;};window.__red=()=>enemy.red;window.__fix=()=>{enemy.x=player.x+30;enemy.z=player.z;enemy.st="idle";enemy.cd=9;};window.__pm=()=>player.mv&&player.mv.n;window.__mvn=()=>[enemy.mv&&enemy.mv.n,enemy.red,enemy.st,enemy.armor,enemy.feint];window.__php=()=>player.hp;window.__ez=()=>[enemy.st,enemy.x,enemy.z,enemy.y,enemy.hp,0,0,eFin];window.__go=(k,kd)=>{const e=enemy,p=player;e.x=p.x+p.face*34;e.z=p.z;e.st="idle";e.cd=99;e.y=0;p.fc=Math.max(p.fc,0);dashTo(p,kd||"norm",{mv:typeof k==="string"?MOV[p.style][k]:k});};window.__fin=(sup)=>{enemy.x=player.x+player.face*34;enemy.z=player.z;enemy.st="idle";enemy.cd=99;player.fc=sup?12:5;doFinisher(player);};window.__dmn=()=>player.dm&&player.dm.v.n;window.__ea2=(st,k)=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[st][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__ri=()=>{introT=INTRO;introN=99;player.st="intro";enemy.st="intro";running=false;player.t=enemy.t=0;banner("","",.01);};window.__stg=n=>{SKI();setStage(n);};window.__gs=()=>[STAGE,round,STG.join()];window.__amb=()=>AMB?["rain","rain2","sea","sea2","hum","crowd","crowd2"].map(k=>+AMB[k].gain.value.toFixed(3)).join(",")+" ctx:"+AC.state:"sem AMB";window.__echo=()=>SFXB?[SFXB.wet.gain.value,SFXB.ev.gain.value].map(v=>+v.toFixed(2)).join(","):"sem";window.__rain=()=>[+RAIN.fl.toFixed(3),RAIN.th];window.__rms=()=>{if(!AMB)return -1;if(!window.__an){window.__an=AC.createAnalyser();window.__an.fftSize=2048;AMB.master.connect(window.__an);}const d=new Float32Array(2048);window.__an.getFloatTimeDomainData(d);let q=0;for(const v of d)q+=v*v;return Math.sqrt(q/2048);};window.__nm=()=>{const o=[];for(let i=0;i<400;i++){player.seq=null;const sq=pick(SEQ[player.style]);o.push(...sq);}return o;};window.__spd=(a,b,c)=>{STY.box.spd=a;STY.tkd.spd=b;STY.mt.spd=c;};window.__hpr=()=>{enemy.hp=enemy.max;};window.__sq=a=>{player.seq=a;player.si=0;};window.__def=v=>{inp.def=v;};window.__eg=()=>{enemy.x=player.x+player.face*40;enemy.z=player.z;enemy.cd=99;eGrab(enemy);};window.__es=()=>{enemy.x=player.x+player.face*50;enemy.z=player.z;eSpecial(enemy);};window.__hp=()=>[player.hp,enemy.hp,player.st,enemy.st];window.__dd=x=>{inp.x=x;inp.z=0;doDodge(player);};window.__cs=n=>{player.cStreak=n;};window.__tp=()=>{enemy.x=player.x-40;enemy.cd=99;};window.__dbg=()=>({rot:player.rot,rotR:player.rotR,yw:player.yw,spin:player.spin,turn:player.turn,ro:player.ro,tw:player.tw,gz:player.gz});window.__pose=()=>[player.pose.map(v=>+v.toFixed(2)),player.pt.map(v=>+v.toFixed(2)),player.y,player.k];window.__ea=k=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[e.style][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__sk=w=>{const S=skel(w==='e'?enemy:player),o={};for(const k in S)if(Array.isArray(S[k]))o[k]=[S[k][0],S[k][1]];const f=w==='e'?enemy:player;o.x=f.x;return o;};window.__pl=()=>[player.st,player.x,player.y,player.spin,player.turn,player.rot,player.mv&&player.mv.n,player.t];
+const STAT={atk:0,hits:0};window.__stat=STAT;window.__st=()=>[enemy.st,player.st,enemy.cd,enemy.sp];window.__spec=()=>{enemy.sp=100;};window.__red=()=>enemy.red;window.__fix=()=>{enemy.x=player.x+30;enemy.z=player.z;enemy.st="idle";enemy.cd=9;};window.__pm=()=>player.mv&&player.mv.n;window.__mvn=()=>[enemy.mv&&enemy.mv.n,enemy.red,enemy.st,enemy.armor,enemy.feint];window.__php=()=>player.hp;window.__ez=()=>[enemy.st,enemy.x,enemy.z,enemy.y,enemy.hp,0,0,eFin];window.__go=(k,kd)=>{const e=enemy,p=player;e.x=p.x+p.face*34;e.z=p.z;e.st="idle";e.cd=99;e.y=0;p.fc=Math.max(p.fc,0);dashTo(p,kd||"norm",{mv:typeof k==="string"?MOV[p.style][k]:k});};window.__fin=(sup)=>{enemy.x=player.x+player.face*34;enemy.z=player.z;enemy.st="idle";enemy.cd=99;player.fc=sup?12:5;doFinisher(player);};window.__dmn=()=>player.dm&&player.dm.v.n;window.__ea2=(st,k)=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[st][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__ri=()=>{introT=INTRO;introN=99;player.st="intro";enemy.st="intro";running=false;player.t=enemy.t=0;banner("","",.01);};window.__stg=n=>{SKI();setStage(n);};window.__gs=()=>[STAGE,round,STG.join()];window.__amb=()=>AMB?["rain","rain2","sea","sea2","hum","crowd","crowd2"].map(k=>+AMB[k].gain.value.toFixed(3)).join(",")+" ctx:"+AC.state:"sem AMB";window.__echo=()=>SFXB?[SFXB.wet.gain.value,SFXB.ev.gain.value].map(v=>+v.toFixed(2)).join(","):"sem";window.__rain=()=>[+RAIN.fl.toFixed(3),RAIN.th];window.__rms=()=>{if(!AMB)return -1;if(!window.__an){window.__an=AC.createAnalyser();window.__an.fftSize=2048;AMB.master.connect(window.__an);}const d=new Float32Array(2048);window.__an.getFloatTimeDomainData(d);let q=0;for(const v of d)q+=v*v;return Math.sqrt(q/2048);};window.__nm=()=>{const o=[];for(let i=0;i<400;i++){player.seq=null;const sq=pick(SEQ[player.style]);o.push(...sq);}return o;};window.__spd=(a,b,c)=>{STY.box.spd=a;STY.tkd.spd=b;STY.mt.spd=c;};window.__hpr=()=>{enemy.hp=enemy.max;};window.__col=()=>{const r=[];for(let i=0;i<2000;i++){const [a,b]=colorsFor("mt","mt");if(a===b)return "IGUAIS";r.push(a);}return [...new Set(r)].join();};window.__pal=(s,c)=>{player.pal=palFor(s,c,true);player.style=s;};window.__sq=a=>{player.seq=a;player.si=0;};window.__def=v=>{inp.def=v;};window.__eg=()=>{enemy.x=player.x+player.face*40;enemy.z=player.z;enemy.cd=99;eGrab(enemy);};window.__es=()=>{enemy.x=player.x+player.face*50;enemy.z=player.z;eSpecial(enemy);};window.__hp=()=>[player.hp,enemy.hp,player.st,enemy.st];window.__dd=x=>{inp.x=x;inp.z=0;doDodge(player);};window.__cs=n=>{player.cStreak=n;};window.__tp=()=>{enemy.x=player.x-40;enemy.cd=99;};window.__dbg=()=>({rot:player.rot,rotR:player.rotR,yw:player.yw,spin:player.spin,turn:player.turn,ro:player.ro,tw:player.tw,gz:player.gz});window.__pose=()=>[player.pose.map(v=>+v.toFixed(2)),player.pt.map(v=>+v.toFixed(2)),player.y,player.k];window.__ea=k=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[e.style][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__sk=w=>{const S=skel(w==='e'?enemy:player),o={};for(const k in S)if(Array.isArray(S[k]))o[k]=[S[k][0],S[k][1]];const f=w==='e'?enemy:player;o.x=f.x;return o;};window.__pl=()=>[player.st,player.x,player.y,player.spin,player.turn,player.rot,player.mv&&player.mv.n,player.t];
 window.__thr=()=>({t:(enemy.st==="wind"||enemy.st==="brk"||enemy.st==="strike"&&enemy.hi===0),red:enemy.red,feint:enemy.feint,armor:enemy.armor,st:enemy.st,wd:enemy.wd,et:enemy.t});
 let DP=D_NEUTRO;
 const AI0=.6;
@@ -3232,7 +3248,7 @@ $('bExit').onclick=()=>setPause(true);$('resume').onclick=()=>setPause(false);$(
 addEventListener('keydown',e=>{if(e.code==='Escape'&&!e.repeat&&(running||introT>0))setPause(!paused);});
 $('swap').onclick=showMenu;
 
-function previewAll(){for(const F of FIGHTERS){preview('pvP'+F.id,F.s,PAL[F.s+'P']);preview('pvE'+F.id,F.s,PAL[F.s+'E']);}}
+function previewAll(){for(const F of FIGHTERS){preview('pvP'+F.id,F.s,palFor(F.s,0,true));preview('pvE'+F.id,F.s,palFor(F.s,0,true));}}
 // prévias animadas no menu (mostram golpes do estilo)
 function preview(id,style,pal){const c=$(id).getContext('2d');const f=mkF(style,true,pal,0,0);const list=SEQ[style].flat();let li=0,mt=0,mv=null,pt=performance.now();
   (function draw(now){if(c.canvas.offsetParent===null){if(!$('menu').hidden)requestAnimationFrame(draw);return;}const dt=Math.min(.05,((now||pt)-pt)/1000);pt=now||pt;time+=0;mt+=dt;
@@ -3257,7 +3273,7 @@ function fontRebuild(){try{if(!wallFont&&[...document.fonts].some(f=>/Silkscreen
 try{document.fonts.load('700 12px Silkscreen').then(fontRebuild,()=>{});document.fonts.ready.then(fontRebuild);document.fonts.addEventListener('loadingdone',fontRebuild);}catch(e){}
 setTimeout(fontRebuild,3000);
 addEventListener('resize',resize);resize();
-function demoFighters(){player=mkF('box',true,PAL.boxP,-60,230);enemy=mkF('tkd',false,PAL.tkdE,60,230);enemy.st='idle';}
+function demoFighters(){player=mkF('box',true,palFor('box',0,true),-60,230);enemy=mkF('tkd',false,palFor('tkd',0,false),60,230);enemy.st='idle';}
 demoFighters();
 previewAll();
 requestAnimationFrame(loop);
