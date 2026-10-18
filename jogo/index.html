@@ -366,7 +366,7 @@ const FIN={box:{n:['fly','fly','fly','cor','finUpp','finOvr'],s:['fly','fly','fl
 
 // ---------- áudio ----------
 let AC=null,NB=null;
-function au(){try{if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();const n=AC.sampleRate*.5;NB=AC.createBuffer(1,n,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;}if(AC.state==='suspended')AC.resume();if(!AMB)ambSet(STAGE);}catch(e){AC=null}}
+function au(){try{if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();const n=AC.sampleRate*.5;NB=AC.createBuffer(1,n,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;}if(AC.state==='suspended')AC.resume();ambSet();}catch(e){AC=null}}
 function noise(dur,f,vol,type){if(!AC)return;const t=AC.currentTime,s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();s.buffer=NB;fl.type=type||'lowpass';fl.frequency.value=f;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);s.connect(fl);fl.connect(g);g.connect(sfxOut());s.start(t);s.stop(t+dur);}
 function tone(f0,f1,dur,vol,w){if(!AC)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type=w||'sine';o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+dur);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(sfxOut());o.start(t);o.stop(t+dur);}
 // ---------- eco da arena (subsolo): todo efeito passa por um barramento com reverberação de concreto + eco curto ----------
@@ -384,7 +384,7 @@ function sfxOut(){if(SFXB)return SFXB.dry;
 function echoSet(on){if(!AC)return;sfxOut();const t=AC.currentTime;for(const [g,v] of [[SFXB.wet,on?.55:0],[SFXB.ev,on?.3:0]]){g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(v,t+.5);}}
 // ---------- som ambiente por cenário: chuva (cidade), mar (praia), zumbido do porão ----------
 // ruído em laço filtrado; o mar ganha duas ondas lentas (LFO) no volume e na espuma; gotas e gaivotas esparsas
-let AMB=null,ambStage=-1,ambPause=false;
+let AMB=null,ambStage=-1;
 function ambBuf(sec){const n=Math.floor(AC.sampleRate*sec),b=AC.createBuffer(2,n,AC.sampleRate);for(let c=0;c<2;c++){const d=b.getChannelData(c);let l=0;for(let i=0;i<n;i++){const w=Math.random()*2-1;l=(l+.02*w)/1.02;d[i]=w*.5+l*3;}}return b;}
 function ambNode(type,f,q,vol,lfo){const s=AC.createBufferSource();s.buffer=AMB.buf;s.loop=true;s.loopStart=Math.random()*1.5;s.start(0,s.loopStart);const fl=AC.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q||.7;const g=AC.createGain();g.gain.value=0;s.connect(fl);
   // a oscilação lenta (mar, multidão) fica num estágio próprio, antes do volume do cenário: com o volume em 0 o som some de verdade
@@ -393,19 +393,27 @@ function ambNode(type,f,q,vol,lfo){const s=AC.createBufferSource();s.buffer=AMB.
 function ambInit(){if(!AC||AMB)return;AMB={buf:ambBuf(4),master:AC.createGain()};AMB.master.gain.value=0;AMB.master.connect(AC.destination);
   AMB.rain=ambNode('highpass',1500,.5,0);AMB.rain2=ambNode('bandpass',5200,.8,0);AMB.rumb=ambNode('lowpass',200,.7,0);
   AMB.sea=ambNode('lowpass',560,.6,0,[.11,.7]);AMB.sea2=ambNode('bandpass',2600,.9,0,[.13,.6]);AMB.hum=ambNode('lowpass',90,1,0);AMB.crowd=ambNode('bandpass',680,.55,0,[.23,.25]);AMB.crowd2=ambNode('bandpass',1700,.7,0,[.31,.3]);}
-let ambT0=0;
-function ambSet(st){ambStage=st;ambT0=time;if(!AC)return;echoSet(st===0);ambInit();if(!AMB)return;const t=AC.currentTime,r=(g,v)=>{g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(v,t+.6);};
+// sincronismo: a cada 250 ms o som ambiente é conferido contra o estado real do jogo (cenário e pausa) e corrigido se estiver
+// diferente; assim nenhuma sequência de menu/pausa/troca de cenário deixa o som mudo, preso no cenário antigo ou sobreposto
+let ambApplied=null;
+function ambSync(){
+  if(!AC)return;ambInit();if(!AMB)return;if(AC.state==='suspended'){try{AC.resume();}catch(e){}}
+  const key=STAGE+'|'+(paused?1:0);if(key===ambApplied)return;ambApplied=key;ambStage=STAGE;
+  const t=AC.currentTime,r=(g,v)=>{g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(v,t,.18);},st=STAGE;
+  echoSet(st===0);
   r(AMB.rain,st===1?.055:0);r(AMB.rain2,st===1?.022:0);r(AMB.rumb,st===1?.016:0);r(AMB.sea,st===2?.11:0);r(AMB.sea2,st===2?.03:0);r(AMB.hum,0);r(AMB.crowd,0);r(AMB.crowd2,0);
-  AMB.master.gain.setTargetAtTime(ambPause?0:1,t,.2);}
-function ambMute(v){ambPause=v;if(AMB&&AC)AMB.master.gain.setTargetAtTime(v?0:1,AC.currentTime,.15);}
+  AMB.master.gain.cancelScheduledValues(t);AMB.master.gain.setTargetAtTime(paused?0:1,t,.15);}
+function ambSet(){ambApplied=null;ambSync();}
+function ambMute(){ambApplied=null;}
+setInterval(ambSync,250);
 let ambNext=3;
 // gotas isoladas na chuva e gaivotas na praia (chamado a cada quadro)
-function ambTick(rdt){if(!AC||ambPause||!AMB)return;if(ambStage!==STAGE)ambSet(STAGE);if((ambNext-=rdt)>0)return;
+function ambTick(rdt){if(!AC||paused||!AMB)return;ambSync();if((ambNext-=rdt)>0)return;
   if(STAGE===1){tone(2800+Math.random()*1800,1400,.03,.018,'sine');ambNext=rnd(.15,.5);}
   else if(STAGE===2)ambNext=9;
   else ambNext=3;}
 // torcida reagindo: explosão de vozes (ruído em banda + dois tons de voz subindo) proporcional à força do momento
-function cheer(v){return;if(!AC||STAGE!==0||ambPause)return;const a=Math.min(1,v);noise(.7+a*.9,1000+a*600,.09+.13*a,'bandpass');noise(.5+a*.6,500,.07+.1*a,'bandpass');
+function cheer(v){return;if(!AC||STAGE!==0||paused)return;const a=Math.min(1,v);noise(.7+a*.9,1000+a*600,.09+.13*a,'bandpass');noise(.5+a*.6,500,.07+.1*a,'bandpass');
   for(const f of [250,380,520]){tone(f*.9,f*1.4,.45+a*.5,.012+.02*a,'sawtooth');}}
 const sfx={
  hit:k=>{noise(.1,2200,.45);tone(170*(1+k*.02),55,.12,.5)},
@@ -1240,7 +1248,7 @@ const DNAMES={facil:'FÁCIL',medio:'MÉDIO',mestre:'MESTRE'};
 const D_NEUTRO={agg:1,cdM:1,wdM:1,evM:1,grdM:1,rupM:1,dmgM:1,react:0,chainX:0,recM:1,close:1,hpM:1,getM:1,spR:2.6,spH:26};
 // MÉDIO: ataca sem parar (pausa entre ataques 3x menor), preparação curta, combos longos, esquiva e defende bem, causa mais dano
 const D_MEDIO={agg:1.65,cdM:.2,wdM:.6,evM:2.2,grdM:1.8,rupM:1.8,dmgM:1.4,react:.9,chainX:.8,recM:.45,close:.75,hpM:1.4,getM:.55,spR:5,spH:36};
-const STAT={atk:0,hits:0};window.__stat=STAT;window.__st=()=>[enemy.st,player.st,enemy.cd,enemy.sp];window.__spec=()=>{enemy.sp=100;};window.__red=()=>enemy.red;window.__fix=()=>{enemy.x=player.x+30;enemy.z=player.z;enemy.st="idle";enemy.cd=9;};window.__pm=()=>player.mv&&player.mv.n;window.__mvn=()=>[enemy.mv&&enemy.mv.n,enemy.red,enemy.st,enemy.armor,enemy.feint];window.__php=()=>player.hp;window.__ez=()=>[enemy.st,enemy.x,enemy.z,enemy.y,enemy.hp,0,0,eFin];window.__go=(k,kd)=>{const e=enemy,p=player;e.x=p.x+p.face*34;e.z=p.z;e.st="idle";e.cd=99;e.y=0;p.fc=Math.max(p.fc,0);dashTo(p,kd||"norm",{mv:typeof k==="string"?MOV[p.style][k]:k});};window.__fin=(sup)=>{enemy.x=player.x+player.face*34;enemy.z=player.z;enemy.st="idle";enemy.cd=99;player.fc=sup?12:5;doFinisher(player);};window.__dmn=()=>player.dm&&player.dm.v.n;window.__ea2=(st,k)=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[st][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__ri=()=>{introT=INTRO;introN=99;player.st="intro";enemy.st="intro";running=false;player.t=enemy.t=0;banner("","",.01);};window.__stg=n=>{SKI();setStage(n);};window.__gs=()=>[STAGE,round,STG.join()];window.__amb=()=>AMB?["rain","rain2","sea","sea2","hum","crowd","crowd2"].map(k=>+AMB[k].gain.value.toFixed(3)).join(",")+" ctx:"+AC.state:"sem AMB";window.__echo=()=>SFXB?[SFXB.wet.gain.value,SFXB.ev.gain.value].map(v=>+v.toFixed(2)).join(","):"sem";window.__rain=()=>[+RAIN.fl.toFixed(3),RAIN.th];window.__sq=a=>{player.seq=a;player.si=0;};window.__def=v=>{inp.def=v;};window.__eg=()=>{enemy.x=player.x+player.face*40;enemy.z=player.z;enemy.cd=99;eGrab(enemy);};window.__es=()=>{enemy.x=player.x+player.face*50;enemy.z=player.z;eSpecial(enemy);};window.__hp=()=>[player.hp,enemy.hp,player.st,enemy.st];window.__dd=x=>{inp.x=x;inp.z=0;doDodge(player);};window.__cs=n=>{player.cStreak=n;};window.__tp=()=>{enemy.x=player.x-40;enemy.cd=99;};window.__dbg=()=>({rot:player.rot,rotR:player.rotR,yw:player.yw,spin:player.spin,turn:player.turn,ro:player.ro,tw:player.tw,gz:player.gz});window.__pose=()=>[player.pose.map(v=>+v.toFixed(2)),player.pt.map(v=>+v.toFixed(2)),player.y,player.k];window.__ea=k=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[e.style][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__sk=w=>{const S=skel(w==='e'?enemy:player),o={};for(const k in S)if(Array.isArray(S[k]))o[k]=[S[k][0],S[k][1]];const f=w==='e'?enemy:player;o.x=f.x;return o;};window.__pl=()=>[player.st,player.x,player.y,player.spin,player.turn,player.rot,player.mv&&player.mv.n,player.t];
+const STAT={atk:0,hits:0};window.__stat=STAT;window.__st=()=>[enemy.st,player.st,enemy.cd,enemy.sp];window.__spec=()=>{enemy.sp=100;};window.__red=()=>enemy.red;window.__fix=()=>{enemy.x=player.x+30;enemy.z=player.z;enemy.st="idle";enemy.cd=9;};window.__pm=()=>player.mv&&player.mv.n;window.__mvn=()=>[enemy.mv&&enemy.mv.n,enemy.red,enemy.st,enemy.armor,enemy.feint];window.__php=()=>player.hp;window.__ez=()=>[enemy.st,enemy.x,enemy.z,enemy.y,enemy.hp,0,0,eFin];window.__go=(k,kd)=>{const e=enemy,p=player;e.x=p.x+p.face*34;e.z=p.z;e.st="idle";e.cd=99;e.y=0;p.fc=Math.max(p.fc,0);dashTo(p,kd||"norm",{mv:typeof k==="string"?MOV[p.style][k]:k});};window.__fin=(sup)=>{enemy.x=player.x+player.face*34;enemy.z=player.z;enemy.st="idle";enemy.cd=99;player.fc=sup?12:5;doFinisher(player);};window.__dmn=()=>player.dm&&player.dm.v.n;window.__ea2=(st,k)=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[st][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__ri=()=>{introT=INTRO;introN=99;player.st="intro";enemy.st="intro";running=false;player.t=enemy.t=0;banner("","",.01);};window.__stg=n=>{SKI();setStage(n);};window.__gs=()=>[STAGE,round,STG.join()];window.__amb=()=>AMB?["rain","rain2","sea","sea2","hum","crowd","crowd2"].map(k=>+AMB[k].gain.value.toFixed(3)).join(",")+" ctx:"+AC.state:"sem AMB";window.__echo=()=>SFXB?[SFXB.wet.gain.value,SFXB.ev.gain.value].map(v=>+v.toFixed(2)).join(","):"sem";window.__rain=()=>[+RAIN.fl.toFixed(3),RAIN.th];window.__rms=()=>{if(!AMB)return -1;if(!window.__an){window.__an=AC.createAnalyser();window.__an.fftSize=2048;AMB.master.connect(window.__an);}const d=new Float32Array(2048);window.__an.getFloatTimeDomainData(d);let q=0;for(const v of d)q+=v*v;return Math.sqrt(q/2048);};window.__sq=a=>{player.seq=a;player.si=0;};window.__def=v=>{inp.def=v;};window.__eg=()=>{enemy.x=player.x+player.face*40;enemy.z=player.z;enemy.cd=99;eGrab(enemy);};window.__es=()=>{enemy.x=player.x+player.face*50;enemy.z=player.z;eSpecial(enemy);};window.__hp=()=>[player.hp,enemy.hp,player.st,enemy.st];window.__dd=x=>{inp.x=x;inp.z=0;doDodge(player);};window.__cs=n=>{player.cStreak=n;};window.__tp=()=>{enemy.x=player.x-40;enemy.cd=99;};window.__dbg=()=>({rot:player.rot,rotR:player.rotR,yw:player.yw,spin:player.spin,turn:player.turn,ro:player.ro,tw:player.tw,gz:player.gz});window.__pose=()=>[player.pose.map(v=>+v.toFixed(2)),player.pt.map(v=>+v.toFixed(2)),player.y,player.k];window.__ea=k=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[e.style][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__sk=w=>{const S=skel(w==='e'?enemy:player),o={};for(const k in S)if(Array.isArray(S[k]))o[k]=[S[k][0],S[k][1]];const f=w==='e'?enemy:player;o.x=f.x;return o;};window.__pl=()=>[player.st,player.x,player.y,player.spin,player.turn,player.rot,player.mv&&player.mv.n,player.t];
 window.__thr=()=>({t:(enemy.st==="wind"||enemy.st==="brk"||enemy.st==="strike"&&enemy.hi===0),red:enemy.red,feint:enemy.feint,armor:enemy.armor,st:enemy.st,wd:enemy.wd,et:enemy.t});
 let DP=D_NEUTRO;
 const AI0=.6;
@@ -2624,11 +2632,11 @@ function thunder(a){
 function rainUpd(dt){
   if(RAIN.fn===undefined)rainInit();
   RAIN.fn-=dt;
-  if(RAIN.fn<=0){RAIN.fn=rnd(6,12);RAIN.t0=0;RAIN.pk=Math.random()<.5?1:.75;RAIN.th=.08;}
+  if(RAIN.fn<=0){RAIN.fn=rnd(6,12);RAIN.t0=0;RAIN.pk=Math.random()<.5?1:.75;}
   if(RAIN.t0>=0){RAIN.t0+=dt;const t=RAIN.t0,pk=RAIN.pk;let f=0;
     for(const [d,a] of [[0,.62],[.09,.26],[.19,.55],[.33,.3],[.5,.18]])if(t>=d)f=Math.max(f,a*pk*Math.exp(-(t-d)*9));
     RAIN.fl=f;if(t>1.6)RAIN.t0=-1;}else RAIN.fl=0;
-  if(RAIN.th>0){RAIN.th-=dt;if(RAIN.th<=0)thunder(RAIN.pk);}
+  
   if(dt>0){const n=Math.floor(dt*90+Math.random());for(let i=0;i<n;i++)RAIN.sp.push({x:camX+rnd(-230,230),z:rnd(112,330),l:0,ml:rnd(.28,.5)});
     for(const s of RAIN.sp)s.l+=dt;RAIN.sp=RAIN.sp.filter(s=>s.l<s.ml);}
 }
