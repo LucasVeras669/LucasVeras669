@@ -1307,7 +1307,7 @@ function eSpecial(e){
   const q=SPSEQ[e.style].slice();e.mv=MOV[e.style][q.shift()];e.chain=q;e.seqHit=false;e.sp=0;e.red=true;e.armor=true;e.feint=false;e.stun=0;e.punish=false;
   if(player.st==='defend'){const q=player;q.dm=null;q.rot=0;q.rotDir=0;q.st='hurt';q.t=0;q.stum=true;q.hurtD=.32;q.vx=e.face*70;setPose(q,STAG,600,.45);kick(q,0,-9);kick(q,2,-8);kick(q,4,-8);pop('DEFESA QUEBRADA',q,'#ff4a4a');pops[pops.length-1].x+=4;pops[pops.length-1].y+=12;sfx.heavy();slow(.4,.3);}
   e.st='wind';e.t=0;e.wx=null;e.cd=1.2;e.wd=Math.max(.55,.95*(DIFF==='mestre'?lerp(1,.7,AI.skill):DIFF==='medio'?.85:1));
-  setPose(e,e.mv.A,420,.7);pop('ESPECIAL!',e,'#ff4a4a');sfx.rupt();buzz([20,40,20]);quake(.35,0,0);camPunch(.5);hype(.2,e.x);flashA=Math.max(flashA,.18);
+  setPose(e,e.mv.A,420,.7);pop('ESPECIAL!',e,'#ff4a4a');buzz([20,40,20]);quake(.35,0,0);camPunch(.5);hype(.2,e.x);flashA=Math.max(flashA,.18);
 }
 function eAttack(e,first){
   if(first){e.chain=pick(ESEQ[e.style]).slice();STAT.atk++;}
