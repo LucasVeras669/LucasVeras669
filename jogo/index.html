@@ -340,7 +340,7 @@ const SCENES={
   huryeo:{n:'GIRO E DWI HURYEO',steps:[{mv:PARRY.spinEv,cam:'wide',slow:.3},{mv:cl(TK.hur,{dmg:15}),cam:'close',slow:.4,impact:1,lines:1}]},
   axe:{n:'SALTO E NAERYO',steps:[{mv:PARRY.leap,cam:'low',slow:.25},{mv:cl(TK.nae,{dmg:15}),cam:'face',slow:.38,impact:1}]},
   twio:{n:'TWIO DWI CHAGI',steps:[{mv:PARRY.back,cam:'wide',slow:.3},{mv:cl(TK.dwi,{n:'Twio Dwi Chagi',jump:20,dmg:16,react:'knock',kb:130}),cam:'dutchR',slow:.32,impact:1,lines:1}]},
-  lethal:{n:'TEMPESTADE',red:1,steps:[{mv:PARRY.makki,cam:'face',slow:.2},{mv:cl(TK.ban,{react:'hit'}),cam:'close',slow:.6},{mv:cl(TK.dol,{react:'launch'}),cam:'dutchL',slow:.5},{mv:cl(TK.tor,{dmg:10}),cam:'low',slow:.5,lines:1},{mv:cl(TK.f540,{dmg:18,n:'540 de contra'}),cam:'dutchR',slow:.28,impact:1,lines:1}]},
+  lethal:{n:'TEMPESTADE',red:1,steps:[{mv:PARRY.makki,cam:'face',slow:.2},{mv:cl(TK.ban,{react:'hit'}),cam:'close',slow:.6},{mv:cl(TK.dol,{react:'launch'}),cam:'dutchL',slow:.5},{mv:cl(TK.mir,{dmg:10,react:'hit'}),cam:'low',slow:.5,lines:1},{mv:cl(TK.f540,{dmg:18,n:'540 de contra'}),cam:'dutchR',slow:.28,impact:1,lines:1}]},
  },
 };
 function pickScene(p,e,perfect){
@@ -362,7 +362,7 @@ function pickScene(p,e,perfect){
 }
 const BASIC={box:{b1:'jab',b2:'dir',b3:'gan'},tkd:{b1:'ban',b2:'dol',b3:'dwi'}};
 const BLABEL={box:['JAB','DIRETO','GANCHO'],tkd:['BANDAL','DOLLYO','DWI CHAGI']};
-const FIN={box:{n:['fly','fly','fly','cor','finUpp','finOvr'],s:['fly','fly','fly','fly','cor','gan','finUpp','finOvr']},tkd:{n:['ban','dol','tor','f540'],s:['dub','dol','hur','tor','f540']}};
+const FIN={box:{n:['fly','fly','fly','cor','finUpp','finOvr'],s:['fly','fly','fly','fly','cor','gan','finUpp','finOvr']},tkd:{n:['ban','dol','mir','f540'],s:['dub','dol','mir','yeop','f540']}};
 
 // ---------- áudio ----------
 let AC=null,NB=null;
@@ -1309,7 +1309,7 @@ function eGrabTry(e,p,dt){
   if(Math.abs(p.x-e.x)>88||Math.abs(p.z-e.z)>30||!GRABP.includes(p.st)||p.inv)return false;
   return Math.random()<dt*(p.st==='defend'?1:.5);
 }
-const SPSEQ={box:['dir','gan','finOvr'],tkd:['dol','hur','f540']};
+const SPSEQ={box:['dir','gan','finOvr'],tkd:['dol','mir','f540']};
 function eSpecial(e){
   const box=e.style==='box';
   const q=SPSEQ[e.style].slice();e.mv=MOV[e.style][q.shift()];e.chain=q;e.seqHit=false;e.sp=0;e.red=true;e.armor=true;e.feint=false;e.stun=0;e.punish=false;
