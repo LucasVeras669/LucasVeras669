@@ -166,9 +166,9 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
     <p class="sub" id="pickT">Escolha a dificuldade e o seu lutador.</p>
     <div class="difs" role="radiogroup" aria-label="Dificuldade"><button class="dif" data-d="facil" role="radio">FÁCIL</button><button class="dif" data-d="medio" role="radio">MÉDIO</button><button class="dif" data-d="mestre" role="radio">MESTRE</button></div>
     <p class="difd" id="difd"></p>
+    <button class="cta alt" id="backE" hidden>‹ VOLTAR</button>
     <div class="cards" id="cardsP"></div>
     <div class="cards" id="cardsE" hidden></div>
-    <button class="cta alt" id="backE" hidden>VOLTAR</button>
   </div>
   <div class="screen pz" id="pause" hidden>
     <h1>PAUSADO</h1>
@@ -3195,7 +3195,7 @@ const FIGHTERS=[
 for(const [box,pre,pk] of [[$('cardsP'),'pick','P'],[$('cardsE'),'e','E']])for(const F of FIGHTERS){
   const b=document.createElement('button');b.className='card';b.id=pre+F.id;
   b.innerHTML=`<canvas id="pv${pk}${F.id}" width="60" height="60"></canvas><strong>${F.t}</strong><small>${F.n}<br>${F.d}</small>`;box.appendChild(b);
-  b.onclick=()=>{if(pk==='P'){chosen=F.s;if(location.hash==='#auto'){chosenE=F.s==='box'?'tkd':'box';begin(chosen,chosenE);return;}menuStep(1);}else{chosenE=F.s;begin(chosen,chosenE);}};}
+  b.onclick=()=>{if(pk==='P'){chosen=F.s;const am=/^#auto(?:=(\w+))?$/.exec(location.hash);if(am){chosenE=am[1]||(F.s==='box'?'tkd':'box');begin(chosen,chosenE);return;}menuStep(1);}else{chosenE=F.s;begin(chosen,chosenE);}};}
 function menuStep(n){$('cardsP').hidden=n===1;$('cardsE').hidden=n!==1;$('backE').hidden=n!==1;
   $('pickT').textContent=n===1?'Agora escolha o seu adversário.':'Escolha a dificuldade e o seu lutador.';
   const c=n===1?$('cardsE').firstChild:$('cardsP').firstChild;if(c&&c.focus)c.focus();}
