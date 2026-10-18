@@ -1062,6 +1062,7 @@ const MTK={
  // --- chutes de canela ---
  te:mk('Te Tat',{lim:'bf',d:.42,a:.11,h:.2,A:[-.15,.05,.5,1.4,.1,1.5,-.1,-.2,1.05,-2.2],S:[-.6,.1,.3,1.6,-.3,1.2,-.1,-.15,1.62,-.3],dmg:10,r:28,tw:1.0,lv:'body',kb:60,spin:.85,sa:1,ret:1}),
  tel:mk('Te Lang',{lim:'bf',d:.38,a:.1,h:.17,A:[-.05,.05,.6,1.5,.2,1.6,-.05,-.2,.9,-1.9],S:[-.35,.1,.5,1.6,-.1,1.4,-.1,-.15,1.15,-.25],dmg:7,r:28,tw:.8,lv:'body',kb:35,spin:.7,sa:1,ret:1}),
+ tec:mk('Te Sung Khao',{lim:'bf',d:.5,a:.12,h:.22,A:[-.2,.05,1.25,2.2,1.05,2.4,-.1,-.2,.95,-2.2],S:[-1.0,.3,.6,2.0,.2,1.6,-.05,-.2,2.25,-.12],dmg:12,r:32,tw:1.1,react:'knock',kb:90,lv:'head',spin:.95,sa:1,ret:1,lunge:8}),
  tes:mk('Te Sung',{lim:'bt',d:.5,a:.13,h:.23,A:[-.1,.05,.5,1.4,.2,1.6,-.1,-.2,1.1,-2.2],S:[-.95,.25,.3,1.7,-.4,1.1,-.1,-.2,2.05,-.1],dmg:12,r:30,tw:1.0,react:'knock',kb:80,lv:'head',spin:.95,sa:1,ret:1}),
  // --- acrobacias (cinema) ---
  khaof:mk('Khao Loi',{lim:'fk',d:.66,a:.2,h:.27,A:[.55,.1,1.25,2.0,1.0,2.2,1.55,-2.4,.6,-1.5],S:[.12,-.15,2.3,1.0,2.45,1.25,2.35,-2.35,.2,-.55],dmg:16,r:28,jump:46,lunge:26,react:'knock',kb:135,lv:'head'}),
@@ -1079,12 +1080,12 @@ Object.assign(MTK,{jb:cl(BX.jab,{n:'Jab'}),cx:cl(BX.dir,{n:'Direto'})});
 MTK.khok=mk('Khao Khu',{d:.62,jump:34,keys:[[0,[.55,.1,1.25,2.0,1.0,2.2,1.5,-2.2,.5,-1.5],700,.7],[.1,[.1,-.1,2.1,1.1,2.2,1.3,2.15,-2.3,.4,-.7],1800,.55],[.2,[.05,-.2,2.2,1.0,2.3,1.2,.5,-.8,2.1,-2.3],1800,.55],[.34,null,280,.7]],
   hits:[{t:.13,dmg:7,react:'hit',lim:'fk',lv:'body',kb:20},{t:.25,dmg:9,react:'knock',lim:'bk',lv:'head',kb:90}]});
 MOV.mt=MTK;
-Object.assign(AREAS,{'Teep':['belly','chest'],'Teep de entrada':['belly','chest'],'Khao Trong':['belly','chest'],'Khao Khong':['side','belly'],'Te Tat':['side','chest'],'Te Lang':['leg'],'Te Sung':['head','head','arm'],'Sok Tat':['head'],'Sok Ti':['head','head'],'Sok Ngat':['head'],'Sok Ton':['head'],'Khao Loi':['chest','head'],'Khao Khu':['chest','head'],'Sok Kratok':['head'],'Sok Klab':['head'],'Sok Wian':['head'],'Punho Giratório':['head','head','arm'],'Cotovelo de contra':['head'],'Khao Loi de contra':['chest','head'],'Sok no ar':['head']});
-SEQ.mt=[['sok','sokc','sokw'],['tp','sokw','sokc','bkf'],['jb','cx','sokc'],['sokt','sokw','bkf'],['sokc','sokw','sokd'],['sok','sob','sokc','sokw'],['tp','sokc'],['tp','sok'],['jb','cx','khao'],['sok','sob','sokt'],['te','sok','khao'],['tp','kok','sokd'],['jb','cx','te','khao'],['sok','khao','sokt','sokd'],['tel','te','sob'],['khok','sok'],['tp','sob','khao','tes']];
+Object.assign(AREAS,{'Teep':['belly','chest'],'Teep de entrada':['belly','chest'],'Khao Trong':['belly','chest'],'Khao Khong':['side','belly'],'Te Tat':['side','chest'],'Te Lang':['leg'],'Te Sung':['head','head','arm'],'Te Sung Khao':['head'],'Sok Tat':['head'],'Sok Ti':['head','head'],'Sok Ngat':['head'],'Sok Ton':['head'],'Khao Loi':['chest','head'],'Khao Khu':['chest','head'],'Sok Kratok':['head'],'Sok Klab':['head'],'Sok Wian':['head'],'Punho Giratório':['head','head','arm'],'Cotovelo de contra':['head'],'Khao Loi de contra':['chest','head'],'Sok no ar':['head']});
+SEQ.mt=[['sok','sokc','sokw'],['tp','sokw','sokc','bkf'],['jb','cx','sokc'],['sokt','sokw','bkf'],['sokc','sokw','sokd'],['sok','sob','sokc','sokw'],['tp','sokc'],['tp','sok'],['jb','cx','khao'],['sok','sob','sokt'],['tec','sok','khao'],['tp','kok','sokd'],['jb','cx','tec','khao'],['sok','khao','sokt','sokd'],['tel','te','sob'],['khok','sok'],['tp','sob','khao','tes']];
 ESEQ.mt=[['sokc'],['sokw','sok'],['tp','sok'],['jb','cx','khao'],['sok','sob'],['te','khao'],['khao','sokt'],['tel','sob'],['tp','khao'],['sokd']];
-BASIC.mt={b1:'tp',b2:'sok',b3:'khao'};BLABEL.mt=['TEEP','COTOVELO','JOELHADA'];
+BASIC.mt={b1:'tec',b2:'sok',b3:'khao'};BLABEL.mt=['CHUTE ALTO','COTOVELO','JOELHADA'];
 FIN.mt={nm:['FÚRIA DO TIGRE','COTOVELOS DO DRAGÃO','REI DOS JOELHOS'],
-  n:[['jb','cx','khao','khaof'],['sok','sob','sokt','sokc'],['khao','kok','te','khaof']],
+  n:[['jb','tec','khao','khaof'],['sok','sob','sokt','sokc'],['khao','kok','te','khaof']],
   s:[['jb','cx','sok','khao','sokt','khaof','sokp'],['sok','sob','sokt','sokd','khao','sokc'],['tp','khao','kok','khok','te','khaof']]};
 SPSEQ.mt=[['sok','khao','khaof'],['te','sokt','sokp'],['tp','khao','sokc']];
 NAMES.mt='Kaen "Garra do Tigre"';
