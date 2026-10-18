@@ -362,7 +362,16 @@ function pickScene(p,e,perfect){
 }
 const BASIC={box:{b1:'jab',b2:'dir',b3:'gan'},tkd:{b1:'ban',b2:'dol',b3:'dwi'}};
 const BLABEL={box:['JAB','DIRETO','GANCHO'],tkd:['BANDAL','DOLLYO','DWI CHAGI']};
-const FIN={box:{n:['fly','fly','fly','cor','finUpp','finOvr'],s:['fly','fly','fly','fly','cor','gan','finUpp','finOvr']},tkd:{n:['ban','dol','mir','f540'],s:['dub','dol','mir','yeop','f540']}};
+// REGRA DO JOGO: todo personagem tem TRÊS variações de ESPECIAL e três de SUPER, sorteadas a cada uso (doFinisher), e três
+// sequências para o especial do rival (SPSEQ). Para criar um personagem novo basta definir 3 listas em cada um destes quadros.
+// Cada variação gira o corpo no máximo uma vez (só um golpe giratório por sequência).
+const FIN={
+ box:{nm:['MARTELO','CORPO A CORPO','RELÂMPAGO'],
+  n:[['fly','fly','fly','cor','finUpp','finOvr'],['est','fig','cor','upp','finOvr'],['fly','fly','dir','gan','cor','finUpp']],
+  s:[['fly','fly','fly','fly','cor','gan','finUpp','finOvr'],['est','fig','est','fig','cor','finUpp','finOvr'],['jab','jab','dir','gan','cor','dir','finUpp','finOvr']]},
+ tkd:{nm:['VENDAVAL','DEMOLIDOR','TORNADO'],
+  n:[['ban','dol','mir','f540'],['ara','mom','yeop','nae'],['ban','mir','dol','tor']],
+  s:[['dub','dol','mir','yeop','f540'],['ara','ban','mom','dol','yeop','nae'],['dub','mom','dol','yeop','hur']]}};
 
 // ---------- áudio ----------
 let AC=null,NB=null;
@@ -943,9 +952,9 @@ function doDodge(p){
   sfx.swoosh();dust(p.x,p.z,4);
 }
 function doFinisher(p){
-  const sup=p.fc>=12;const list=(sup?FIN[p.style].s:FIN[p.style].n).map(k=>MOV[p.style][k]);
+  const sup=p.fc>=12,F=FIN[p.style],vi=Math.floor(Math.random()*3),list=(sup?F.s:F.n)[vi].map(k=>MOV[p.style][k]);
   p.fseq=list.slice(1);p.fsup=sup;p.fc=0;cine=Math.max(cine,.5);p.finBuf=null;p.hold=null;p.buf=null;p.queued=null;p.preK=null;enemy.stun=0;
-  pop(sup?'SUPER ESPECIAL':'ESPECIAL',p,sup?'#7fd6ff':'#f2a93b');
+  pop((sup?'SUPER ':'')+F.nm[vi],p,sup?'#7fd6ff':'#f2a93b');
   dashTo(p,'fin',{mv:list[0]});updHud();
 }
 
@@ -1309,10 +1318,10 @@ function eGrabTry(e,p,dt){
   if(Math.abs(p.x-e.x)>88||Math.abs(p.z-e.z)>30||!GRABP.includes(p.st)||p.inv)return false;
   return Math.random()<dt*(p.st==='defend'?1:.5);
 }
-const SPSEQ={box:['dir','gan','finOvr'],tkd:['dol','mir','f540']};
+const SPSEQ={box:[['dir','gan','finOvr'],['est','fig','finOvr'],['jab','upp','finOvr']],tkd:[['dol','mir','f540'],['ara','yeop','tor'],['ban','mom','nae']]};
 function eSpecial(e){
   const box=e.style==='box';
-  const q=SPSEQ[e.style].slice();e.mv=MOV[e.style][q.shift()];e.chain=q;e.seqHit=false;e.sp=0;e.red=true;e.armor=true;e.feint=false;e.stun=0;e.punish=false;
+  const q=pick(SPSEQ[e.style]).slice();e.mv=MOV[e.style][q.shift()];e.chain=q;e.seqHit=false;e.sp=0;e.red=true;e.armor=true;e.feint=false;e.stun=0;e.punish=false;
   if(player.st==='defend'){const q=player;q.dm=null;q.rot=0;q.rotDir=0;q.st='hurt';q.t=0;q.stum=true;q.hurtD=.32;q.vx=e.face*70;setPose(q,STAG,600,.45);kick(q,0,-9);kick(q,2,-8);kick(q,4,-8);pop('DEFESA QUEBRADA',q,'#ff4a4a');pops[pops.length-1].x+=4;pops[pops.length-1].y+=12;sfx.heavy();slow(.4,.3);}
   e.st='wind';e.t=0;e.wx=null;e.cd=1.2;e.wd=Math.max(.55,.95*(DIFF==='mestre'?lerp(1,.7,AI.skill):DIFF==='medio'?.85:1));
   setPose(e,e.mv.A,420,.7);pop('ESPECIAL!',e,'#ff4a4a');buzz([20,40,20]);quake(.35,0,0);camPunch(.5);hype(.2,e.x);flashA=Math.max(flashA,.18);
