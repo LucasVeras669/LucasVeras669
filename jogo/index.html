@@ -385,8 +385,8 @@ let SFXB=null;
 function sfxOut(){if(SFXB)return SFXB.dry;
   const n=Math.floor(AC.sampleRate*1.9),ir=AC.createBuffer(2,n,AC.sampleRate);
   for(let c=0;c<2;c++){const d=ir.getChannelData(c);let lp=0;for(let i=0;i<n;i++){const t=i/n;lp+=(Math.random()*2-1-lp)*(.55-.4*t);d[i]=lp*Math.pow(1-t,2.6)*(i<AC.sampleRate*.02?i/(AC.sampleRate*.02):1);}}
-  const dry=AC.createGain(),send=AC.createGain(),cv=AC.createConvolver(),wet=AC.createGain(),dl=AC.createDelay(1),fb=AC.createGain(),ef=AC.createBiquadFilter(),ev=AC.createGain();
-  cv.buffer=ir;send.gain.value=1;wet.gain.value=0;dl.delayTime.value=.19;fb.gain.value=.38;ef.type='lowpass';ef.frequency.value=2400;ev.gain.value=0;
+  const dry=AC.createGain(),send=AC.createBiquadFilter(),cv=AC.createConvolver(),wet=AC.createGain(),dl=AC.createDelay(1),fb=AC.createGain(),ef=AC.createBiquadFilter(),ev=AC.createGain();
+  cv.buffer=ir;send.type='highpass';send.frequency.value=450;wet.gain.value=0;dl.delayTime.value=.19;fb.gain.value=.38;ef.type='lowpass';ef.frequency.value=2400;ev.gain.value=0;
   dry.connect(AC.destination);dry.connect(send);send.connect(cv);cv.connect(wet);wet.connect(AC.destination);
   send.connect(dl);dl.connect(ef);ef.connect(fb);fb.connect(dl);ef.connect(ev);ev.connect(AC.destination);
   SFXB={dry,wet,ev};return dry;}
@@ -421,18 +421,15 @@ function ambTick(rdt){if(!AC||paused||!AMB)return;ambSync();if((ambNext-=rdt)>0)
   if(STAGE===1){tone(2800+Math.random()*1800,1400,.03,.018,'sine');ambNext=rnd(.15,.5);}
   else if(STAGE===2)ambNext=9;
   else ambNext=3;}
-// torcida reagindo: explosão de vozes (ruído em banda + dois tons de voz subindo) proporcional à força do momento
-function cheer(v){return;if(!AC||STAGE!==0||paused)return;const a=Math.min(1,v);noise(.7+a*.9,1000+a*600,.09+.13*a,'bandpass');noise(.5+a*.6,500,.07+.1*a,'bandpass');
-  for(const f of [250,380,520]){tone(f*.9,f*1.4,.45+a*.5,.012+.02*a,'sawtooth');}}
 const sfx={
- hit:k=>{noise(.1,2200,.45);noise(.05,900,.3);tone(230,150,.05,.16,'triangle')},
- heavy:()=>{noise(.25,900,.7);noise(.14,420,.45);tone(170,95,.07,.24,'triangle')},
+ hit:k=>{noise(.1,2200,.45);noise(.05,1300,.3)},
+ heavy:()=>{noise(.22,1500,.7);noise(.12,950,.5)},
  swoosh:()=>noise(.14,2600,.12,'bandpass'),
- counter:()=>{tone(1300,2100,.12,.12,'square');noise(.2,1200,.6);noise(.12,500,.4);tone(190,110,.08,.22,'triangle')},
+ counter:()=>{tone(1300,2100,.12,.12,'square');noise(.2,1500,.6);noise(.1,900,.4)},
  block:()=>{noise(.06,4000,.25,'highpass');tone(600,300,.06,.1,'triangle')},
- hurt:()=>{noise(.15,700,.5);noise(.08,380,.3);tone(140,90,.06,.18,'triangle')},
+ hurt:()=>{noise(.14,1200,.5);noise(.07,800,.3)},
  perfect:()=>tone(988,1480,.09,.06,'square'),
- rupt:()=>{tone(180,520,.16,.14,'sawtooth');noise(.14,1600,.4,'bandpass')},
+ rupt:()=>{noise(.14,1600,.3,'bandpass')},
  bell:()=>{tone(880,860,.9,.2,'triangle');tone(1320,1300,.6,.08,'sine')},
 };
 const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
@@ -1540,7 +1537,7 @@ function update(dt,rdt){
   for(const t of trails)t.l-=rdt;trails=trails.filter(t=>t.l>0);
   for(const q of pops){q.l-=rdt;q.y+=rdt*22;}pops=pops.filter(q=>q.l>0);
   if(running&&!roundOver&&(enemy.st==='ko'||player.st==='ko')){
-    cheer(1.5);const pw=enemy.st==='ko';wins[pw?0:1]++;roundMsg=pw;const fin=wins[pw?0:1]>=2;roundOver=fin?7.6:4.6;winAt=fin?6.8:3.8;updHud();
+    const pw=enemy.st==='ko';wins[pw?0:1]++;roundMsg=pw;const fin=wins[pw?0:1]>=2;roundOver=fin?7.6:4.6;winAt=fin?6.8:3.8;updHud();
     setTimeout(()=>{banner(pw?'NOCAUTE!':'VOCÊ CAIU',pw?'Round seu':'Round do rival');sfx.bell();},350);
   }
   if(roundOver>0){roundOver-=rdt;
@@ -1855,7 +1852,7 @@ const lampX=i=>LAMPS[i]+Math.sin(LSW[i].a)*45,lampF=i=>lampX(i)+Math.tan(LSW[i].
 function lampKick(v){for(const s of LSW)s.v+=v*rnd(.5,1)*(Math.random()<.5?-1:1);}
 // plateia: empolgação (0..1) sobe com golpe pesado, contra, especial e nocaute; a onda parte de onde foi o golpe (VISU-11)
 let crowdHype=0,hypeX=0,hypeT=-9;
-function hype(v,x){crowdHype=Math.min(1,crowdHype+v);hypeX=x;hypeT=rclock;if(v>=.15)cheer(v*2);}
+function hype(v,x){crowdHype=Math.min(1,crowdHype+v);hypeX=x;hypeT=rclock;}
 const NEON={on:1,nx:5,bt:0,ok:false},FLS=[],PH=[];
 // objetos no limite da arena (VISU-10): pneus e tambores; um com fogo (luz laranja nos lutadores, ver lightOf)
 const PROPS=[{k:'T',x:-268,z:198,n:4,j:[0,1.2,-.8,.6]},{k:'B',x:-262,z:262,h:24,r:8,c:'#5b3b26',fire:1,fk:1,fp:[],acc:0},{k:'B',x:-286,z:234,h:24,r:8,c:'#6b2b23'},
@@ -2630,14 +2627,6 @@ const RAIN={snd:0};
 function rainInit(){RAIN.fl=0;RAIN.fn=rnd(3,6);RAIN.sp=[];RAIN.th=0;RAIN.t0=-1;RAIN.pk=1;}
 // relâmpago: clarão curto e sutil (três pulsos que decaem rápido, como luz de nuvem) e, na hora, o trovão: estalo seco, rolamento
 // grave que dura alguns segundos e um tom baixo; os raios mais fortes vêm com um segundo estrondo
-function thunder(a){
-  // estalo rachando, rolamento grave longo em ondas que vão e voltam, sub-grave que chacoalha e estrondos distantes
-  noise(.1,4200,.5*a,'highpass');noise(.45,1100,.7*a,'lowpass');noise(.9,380,.8*a,'lowpass');
-  noise(4.5+a*2,190,.95*a,'lowpass');noise(5+a*2,90,.9*a,'lowpass');
-  tone(70,26,3.6,.7*a,'sine');tone(48,22,4.8,.55*a,'sine');tone(110,40,1.6,.25*a,'sawtooth');
-  const rolls=[[650,.7],[1500,.55],[2700,.45],[4200,.3]];
-  for(const [d,v] of rolls)setTimeout(()=>{noise(2.6,150+Math.random()*80,.75*a*v/.7,'lowpass');tone(58-Math.random()*8,26,2.4,.45*a*v/.7,'sine');},d+Math.random()*350);
-  setTimeout(()=>{noise(.5,2400,.18*a,'highpass');},1100+Math.random()*600);}
 function rainUpd(dt){
   if(RAIN.fn===undefined)rainInit();
   RAIN.fn-=dt;
