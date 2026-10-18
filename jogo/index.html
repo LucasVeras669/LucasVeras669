@@ -803,6 +803,11 @@ function beginThrow(p){
   const near=Math.abs(e.x-p.x)<42&&Math.abs(e.z-p.z)<26;
   const ok=!NOGRAB.includes(e.st);
   // a DEFESA (botão segurado, ou a guarda do rival) é a única coisa que barra o agarrão: quem tenta é repelido e fica aberto
+  // esquiva em andamento no instante do agarrão: o agarrão passa em falso e quem tentou fica aberto (esquivou a tempo)
+  if(near&&(e.st==='dodge'||e.st==='evade')){
+    pop('ESQUIVOU DO AGARRÃO',e,'#7fd6ff');sfx.swoosh();setPose(p,STAG,500,.5);kick(p,0,-5);
+    if(p===player){p.st='hurt';p.t=0;p.stum=true;p.hurtD=.42;p.queued=null;p.buf=null;}else{p.st='rec';p.t=-.6;p.punish=true;p.chain=[];p.cd=rnd(.8,1.4);}
+    return;}
   if(near&&(e.st==='defend'||e.st==='guard')){
     pop('AGARRÃO DEFENDIDO',e,'#9fe2bd');sfx.block();sparks(e.x-p.face*4,34,e.z-1,6,false,'#cfe3ff');kick(e,0,-5);kick(e,2,-4);kick(e,4,-4);e.vx+=p.face*60;
     setPose(p,STAG,500,.5);kick(p,0,-6);p.vx-=p.face*70;hitstop=Math.max(hitstop,.05);camPunch(.3);
