@@ -2614,17 +2614,20 @@ function rainInit(){RAIN.fl=0;RAIN.fn=rnd(3,6);RAIN.sp=[];RAIN.th=0;RAIN.t0=-1;R
 // relâmpago: clarão curto e sutil (três pulsos que decaem rápido, como luz de nuvem) e, na hora, o trovão: estalo seco, rolamento
 // grave que dura alguns segundos e um tom baixo; os raios mais fortes vêm com um segundo estrondo
 function thunder(a){
-  noise(.12,3200,.18*a,'highpass');noise(.35,900,.3*a,'lowpass');
-  noise(2.8+a*1.4,170,.5*a,'lowpass');tone(62,30,2.2,.34*a,'sine');tone(45,26,2.8,.24*a,'sine');
-  setTimeout(()=>{noise(2.2,130,.32*a,'lowpass');tone(52,28,1.8,.2*a,'sine');},700+Math.random()*500);
-  if(a>.8)setTimeout(()=>{noise(1.6,200,.26*a,'lowpass');},1700+Math.random()*600);}
+  // estalo rachando, rolamento grave longo em ondas que vão e voltam, sub-grave que chacoalha e estrondos distantes
+  noise(.1,4200,.5*a,'highpass');noise(.45,1100,.7*a,'lowpass');noise(.9,380,.8*a,'lowpass');
+  noise(4.5+a*2,190,.95*a,'lowpass');noise(5+a*2,90,.9*a,'lowpass');
+  tone(70,26,3.6,.7*a,'sine');tone(48,22,4.8,.55*a,'sine');tone(110,40,1.6,.25*a,'sawtooth');
+  const rolls=[[650,.7],[1500,.55],[2700,.45],[4200,.3]];
+  for(const [d,v] of rolls)setTimeout(()=>{noise(2.6,150+Math.random()*80,.75*a*v/.7,'lowpass');tone(58-Math.random()*8,26,2.4,.45*a*v/.7,'sine');},d+Math.random()*350);
+  setTimeout(()=>{noise(.5,2400,.18*a,'highpass');},1100+Math.random()*600);}
 function rainUpd(dt){
   if(RAIN.fn===undefined)rainInit();
   RAIN.fn-=dt;
-  if(RAIN.fn<=0){RAIN.fn=rnd(6,12);RAIN.t0=0;RAIN.pk=Math.random()<.4?1:.65;RAIN.th=.08;}
+  if(RAIN.fn<=0){RAIN.fn=rnd(6,12);RAIN.t0=0;RAIN.pk=Math.random()<.5?1:.75;RAIN.th=.08;}
   if(RAIN.t0>=0){RAIN.t0+=dt;const t=RAIN.t0,pk=RAIN.pk;let f=0;
-    for(const [d,a] of [[0,.34],[.1,.15],[.2,.3]])if(t>=d)f=Math.max(f,a*pk*Math.exp(-(t-d)*13));
-    RAIN.fl=f;if(t>1)RAIN.t0=-1;}else RAIN.fl=0;
+    for(const [d,a] of [[0,.62],[.09,.26],[.19,.55],[.33,.3],[.5,.18]])if(t>=d)f=Math.max(f,a*pk*Math.exp(-(t-d)*9));
+    RAIN.fl=f;if(t>1.6)RAIN.t0=-1;}else RAIN.fl=0;
   if(RAIN.th>0){RAIN.th-=dt;if(RAIN.th<=0)thunder(RAIN.pk);}
   if(dt>0){const n=Math.floor(dt*90+Math.random());for(let i=0;i<n;i++)RAIN.sp.push({x:camX+rnd(-230,230),z:rnd(112,330),l:0,ml:rnd(.28,.5)});
     for(const s of RAIN.sp)s.l+=dt;RAIN.sp=RAIN.sp.filter(s=>s.l<s.ml);}
@@ -2917,7 +2920,7 @@ function drawShadows2(fs,SK){
 function gradeDay(){
   ctx.globalCompositeOperation='screen';ctx.imageSmoothingEnabled=true;
   if(STAGE===2&&!LQ){const sp=P(-300,540,1500),s=toScr(sp[0],sp[1]),r=Math.max(W,H)*.7;ctx.globalAlpha=.34;const g=ctx.createRadialGradient(s[0],s[1],0,s[0],s[1],r);g.addColorStop(0,'rgba(255,236,190,1)');g.addColorStop(1,'rgba(255,236,190,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
-  if(STAGE===1&&RAIN.fl>.005){ctx.globalAlpha=Math.min(.5,RAIN.fl);ctx.fillStyle='#d4e2ff';ctx.fillRect(0,0,W,H);}
+  if(STAGE===1&&RAIN.fl>.005){ctx.globalAlpha=Math.min(.72,RAIN.fl);ctx.fillStyle='#e0ebff';ctx.fillRect(0,0,W,H);}
   ctx.globalCompositeOperation='multiply';ctx.globalAlpha=STAGE===1?.5:.3;ctx.fillStyle=STAGE===1?'#a9bac6':'#ffe9c4';ctx.fillRect(0,0,W,H);
   ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';ctx.imageSmoothingEnabled=false;
 }
