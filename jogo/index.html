@@ -1694,7 +1694,7 @@ function trcBeats(first){
   for(let i=0;i<TRN[DIFF];i++){
     if(t==='atk'){let k;do{k=pick(['b1','b2','b3']);}while(k===lk);lk=k;out.push({t:'atk',key:k,mv:MOV[p.style][BASIC[p.style][k]]});}
     else{let k,mv;do{k=pick(['dod','cnt','def']);}while(k===le);le=k;do{mv=MOV[e.style][pick(pick(ESEQ[e.style]))];}while(!mv||!mv.hits.length);out.push({t:'def',key:k,mv});}
-    t=t==='atk'?'def':'atk';}
+    t=first==='def'?'def':t==='atk'?'def':'atk';}
   out.push({t:'fin',key:'trc'});return out;
 }
 function startTrc(a,d){
@@ -1705,7 +1705,7 @@ function startTrc(a,d){
     f.armor=false;f.punish=false;f.stun=0;f.tw=0;f._si=null;f.smear=[];}
   inp.act=null;if(inp.def){inp.def=false;$('bDef').classList.remove('on');}
   const beats=trcBeats(a.isP?'atk':'def');
-  TRC={a,d,beats,i:-1,ph:'lock',pt:0,rt:0,ts:.7,cam:'close',pips:beats.map(()=>0),score:0,g:24,init:0};
+  TRC={mode:a.isP?'p':'e',fails:0,a,d,beats,i:-1,ph:'lock',pt:0,rt:0,ts:.7,cam:'close',pips:beats.map(()=>0),score:0,g:24,init:0};
   trcUi(true,null);trcPips();
   flashA=Math.max(flashA,.55);hitstop=Math.max(hitstop,.12);camPunch(1.4);quake(.7,a.face,0);camCut=true;sfx.heavy();sfx.counter();buzz([30,40,30]);
   ring((a.x+d.x)/2,d.z,50,'#d98cff');hype(.3,d.x);banner('TROCAÇÃO!','',.7);
@@ -1719,6 +1719,12 @@ function trcGap(dt,g,k){
 }
 function trcBeat(){
   const X=TRC,b=X.beats[X.i],p=player,e=enemy;
+  X.cont=0;X.efin=0;
+  if(b.t==='fin'&&X.mode==='e'&&X.fails>0){
+    // o rival levou a troca: fecha com o próprio golpe final (sem botão para apertar)
+    const l=FIN[e.style].n[Math.floor(Math.random()*3)];X.b=b;X.ph='res';X.pt=0;X.rt=0;X.tt=0;X.hj=0;X.init=0;X.ts=1.15;X.sc='pen';X.efin=1;X.pm=MOV[e.style][l[l.length-1]];X.att=e;X.df=p;
+    for(const f of [e,p]){unspin(f);f.rot=0;f.y=0;f.tw=0;f.dm=null;f._si=null;f._pm=null;}
+    e.mv=X.pm;setPose(e,X.pm.A||X.pm.keys[0][1],800,.7);X.cam=trcCam('def');camCut=true;X.pips[X.i]=-1;trcPips();trcUi(true,null);pop('GOLPE FINAL DO RIVAL',e,'#ff4a4a');return;}
   X.b=b;X.ph='lead';X.pt=0;X.rt=0;X.ts=.9;X.init=0;X.hj=0;X.tt=0;X.sc='';X.did=0;X.stag=0;X.fDone=0;X.ps=null;
   const att=b.t==='def'?e:p,df=att===p?e:p;X.att=att;X.df=df;
   let mv=b.mv;
@@ -1745,7 +1751,7 @@ function trcResolve(ok,why,perf){
   pop(why==='late'?'TARDE DEMAIS!':'BOTÃO ERRADO!',p,'#ff4a4a');sfx.rupt();
   // punição: o rival ataca na hora (o golpe da própria rodada, ou um golpe rápido se era a vez do jogador)
   const mv=b.t==='def'?b.mv:MOV[e.style][STY[e.style].quick];
-  X.sc='pen';X.pm=mv;X.att=e;X.df=p;e.mv=mv;e._si=null;e._pm=null;
+  X.sc='pen';X.pm=mv;X.att=e;X.df=p;e.mv=mv;e._si=null;e._pm=null;X.fails++;X.cont=X.mode==='e'&&b.t==='def'?1:0;
   if(b.t!=='def'){unspin(e);setPose(e,mv.A||mv.keys[0][1],800,.7);X.cam='dutchR';camCut=true;}
 }
 // toca um golpe real do repertório por roteiro (poses, giro, salto, avanço e rastro), sem colisão
@@ -1879,8 +1885,10 @@ function trcRes(dt){
     break;}
    case 'pen':{
     const mv=X.pm;trcPlay(e,p,mv,tt,dt,true);
-    if(!X.hj&&tt>=mv.hits[0].t){X.hj=1;X.ts=null;trcHit(e,p,mv,mv.hits[0],TR_PEN*p.max*(b.t==='fin'?.6:1)*(DP.dmgM||1),b.t==='fin'||X.i>=1?'knock':'hit',true);}
-    if(tt>=mv.d+.2)trcEnd('lose');
+    if(!X.hj&&tt>=mv.hits[0].t){X.hj=1;if(!X.cont)X.ts=null;
+      // troca do rival: cada erro seu é apanhar e a troca continua; só o golpe final derruba
+      trcHit(e,p,mv,mv.hits[0],TR_PEN*p.max*(X.cont?.6:X.efin?1.2:b.t==='fin'?.6:1)*(DP.dmgM||1),!X.cont&&(X.efin||b.t==='fin'||X.i>=1)?'knock':'hit',!X.cont);if(p.st==='ko')return;}
+    if(tt>=mv.d+(X.cont?.1:.2)){if(X.cont)trcNext();else trcEnd('lose');}
     break;}
   }
 }
