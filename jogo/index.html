@@ -741,7 +741,7 @@ function goAtk(p,k){
   dashTo(p,fl?'flank':'norm',optK(p,k));
 }
 function nextSeqMove(p){
-  if(!p.seq||p.si>=p.seq.length||combo===0&&p.si>0){p.seq=pick(SEQ[p.style]);p.si=0;}
+  if(!p.seq||p.si>=p.seq.length||combo===0&&p.si>0){p.seq=pick(SEQ[p.style]);if(STY[p.style].spd>1.2)p.seq=p.seq.concat(pick(SEQ[p.style]));p.si=0;}
   return MOV[p.style][p.seq[p.si++]];
 }
 
@@ -1113,7 +1113,7 @@ const DMM={
   low:[{n:'check',p:MTCHECK,dx:6,d:.46},{n:'skip',p:BSKIP,y:16,ev:1,d:.54},{n:'pivot',p:BPIV,dx:6,dz:24,sp:.7,ev:1,d:.5}],
   kick:[{n:'cover',p:MTCOVER,dx:20,d:.5},{n:'duck',p:ROLLP,dx:4,dz:20,sp:.6,ev:1,d:.56},{n:'flip',p:HOPO,dx:34,y:22,rot:-1,ev:1,d:.64,tkd:1}]};
 DEFP.mt={head:MTCOVER,body:MTELB,low:MTCHECK,kick:MTCOVER};
-STY.mt={bare:1,acro:1,pace:96,pace2:76,R:58,Rv:10,sp:56,hop:3,punish:'tp',quick:'tp',grd:.12,dodge:'acro',dodgeName:'MORTAL',spec:'FÚRIA DO TIGRE',fe:['tp','sok','khao'],scn:'mt',
+STY.mt={spd:1.32,bare:1,acro:1,pace:96,pace2:76,R:58,Rv:10,sp:56,hop:3,punish:'tp',quick:'tp',grd:.12,dodge:'acro',dodgeName:'MORTAL',spec:'FÚRIA DO TIGRE',fe:['tp','sok','khao'],scn:'mt',
   cnt:(M,d)=>d<40?M.cct:M.cdw,far:['khaof','sokp'],mid:'ent',dm:DMM,
   pickScn:({em,e,p,kickAtk,body})=>em.lunge>=10||e.st==='strike'&&Math.abs(e.x-p.x)>40?['joelho','teep']:kickAtk?['pegar','canela','teep']:body?['canela','joelho']:['cotovelo','pegar','joelho']};
 // contra-ataques de cinema do muay thai
@@ -1227,7 +1227,7 @@ function applyHit(a,d,hit,mv){
 
 // ---------- jogador ----------
 function updPlayer(p,rdt){
-  const lt=(p.st==='atk'||p.st==='dash')?1+p.flow*.12:1;const dt=rdt*lt;
+  const lt=(p.st==='atk'||p.st==='dash')?(1+p.flow*.12)*(STY[p.style].spd||1):1;const dt=rdt*lt;
   p.t+=dt;
   const a=inp.act,e=enemy;
   // buffer de toque em tempo de JOGO (não expira na câmera lenta; 1,5 s reais como teto); a validade é checada
