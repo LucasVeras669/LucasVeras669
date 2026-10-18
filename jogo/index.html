@@ -163,13 +163,12 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
   </div>
   <div class="screen" id="menu">
     <h1>FLUXO<br>BRUTAL</h1>
-    <p class="sub">Um contra um no subsolo. Escolha a dificuldade e o seu estilo.</p>
+    <p class="sub" id="pickT">Escolha a dificuldade e o seu lutador.</p>
     <div class="difs" role="radiogroup" aria-label="Dificuldade"><button class="dif" data-d="facil" role="radio">FÁCIL</button><button class="dif" data-d="medio" role="radio">MÉDIO</button><button class="dif" data-d="mestre" role="radio">MESTRE</button></div>
     <p class="difd" id="difd"></p>
-    <div class="cards">
-      <button class="card" id="pickBox"><canvas id="pvBox" width="60" height="60"></canvas><strong>BOXEADOR</strong><small>Rocco "Martelo"<br>Jab, direto, gancho, uppercut. Esquiva no pêndulo.</small></button>
-      <button class="card" id="pickTkd"><canvas id="pvTkd" width="60" height="60"></canvas><strong>TAEKWONDO</strong><small>Ji-ho "Vendaval"<br>Bandal, dollyo, dwi chagi, tornado. Acrobacias.</small></button>
-    </div>
+    <div class="cards" id="cardsP"></div>
+    <div class="cards" id="cardsE" hidden></div>
+    <button class="cta alt" id="backE" hidden>VOLTAR</button>
   </div>
   <div class="screen pz" id="pause" hidden>
     <h1>PAUSADO</h1>
@@ -238,11 +237,12 @@ const WIN={box:[-.1,-.4,2.9,.2,.5,2.3,.2,-.1,-.2,-.1],tkd:[-.05,-.3,.5,1.4,.3,1.
 // twS: lado que a torção leva à frente (+1 golpe do membro de trás, -1 do da frente) (FLUI-1).
 // Chaves automáticas: antecipação mais firme nos golpes curtos e recâmara logo depois do impacto (o chute recolhe o joelho,
 // o soco dobra o cotovelo) antes de voltar à guarda (FLUI-7)
-const recoil=(S,lim)=>{if(!S)return null;const R=S.slice(),i={fh:2,bh:4,ft:6,bt:8}[lim];if(i===undefined)return null;
+const LIMJ={fh:2,bh:4,fe:2,be:4,ft:6,bt:8,ff:6,bf:8,fk:6,bk:8},LEGLIM={ft:1,ff:1,fk:1,bt:1,bf:1,bk:1},BACKLIM={bh:1,be:1,bt:1,bf:1,bk:1};
+const recoil=(S,lim)=>{if(!S)return null;const R=S.slice(),i=LIMJ[lim];if(i===undefined)return null;
   if(i>=6){R[i]*=.75;R[i+1]=-1.9;}else{R[i]*=.9;R[i+1]=Math.max(R[i+1],1.6);}return R;};
 function mk(n,o){
   const m=Object.assign({n,kb:40,jump:0,spin:0,sa:1,lunge:0,r:24,react:'hit',lv:'head',tw:0,lim:'fh'},o);
-  m.twS=m.lim==='bh'||m.lim==='bt'?1:-1;
+  m.twS=BACKLIM[m.lim]?1:-1;
   if(!m.keys){const R=recoil(m.S,m.lim);m.keys=[[0,m.A,o.ka||(m.a<=.07?900:520),.75],[m.a,m.S,o.ks||1700,.55]];
     if(R)m.keys.push([m.h+Math.max(.03,(m.d-m.h)*.18),R,1000,.65]);m.keys.push([m.h+(m.d-m.h)*.5,null,280,.7]);}
   if(!m.hits)m.hits=[{t:m.h,dmg:m.dmg,react:m.react,lim:m.lim,lv:m.lv,kb:m.kb}];
@@ -303,6 +303,7 @@ TK.ara=mk('Arae Chagi',{lim:'ft',d:.28,a:.07,h:.12,A:[-.05,.05,.5,1.4,.25,1.6,.9
 TK.mom=mk('Momtong Dollyo',{lim:'bt',d:.36,a:.1,h:.17,A:[-.15,.05,.5,1.4,.1,1.5,-.15,-.2,1.05,-2.2],S:[-.6,.1,.3,1.6,-.3,1.2,-.1,-.15,1.85,-.08],dmg:9,r:28,tw:1.0,spin:.8,sa:1,ret:1,lv:'body',kb:45});
 TK.yeop=mk('Yeop Chagi',{lim:'ft',d:.38,a:.1,h:.17,A:[-.2,0,.8,1.4,.3,1.8,1.4,-2.4,-.5,-.1],S:[-.8,.2,.9,1.1,-.4,1.0,1.75,0,-.4,-.05],dmg:10,r:30,lunge:10,kb:80,lv:'body'});
 TK.f540=mk('VENDAVAL 540',{lim:'ft',d:1.0,a:.17,h:.57,keys:T5(1),dmg:22,r:26,spin:TAU,wa:.4,ve:1.35,sm:.42,jump:34,react:'knock',kb:150,ka:900});
+const SPSEQ={box:[['dir','gan','finOvr'],['est','fig','finOvr'],['jab','upp','finOvr']],tkd:[['dol','mir','f540'],['ara','yeop','tor'],['ban','mom','nae']]};
 const MOV={box:BX,tkd:TK};
 // CARACTERÍSTICAS POR ESTILO (padrão para todo personagem novo): o resto do jogo consulta esta tabela em vez de comparar nomes
 // bare: tronco nu (boxe, muay thai) · acro: esquivas e investidas acrobáticas (mortais) · pace: velocidade a pé · R/Rv: distância
@@ -352,7 +353,7 @@ const SCENES={
  },
 };
 function pickScene(p,e,perfect){
-  const em=e.mv||{},lim=em.hits&&em.hits[0]?em.hits[0].lim:'fh',kickAtk=lim==='ft'||lim==='bt',body=em.hits&&em.hits[0]&&em.hits[0].lv==='body';
+  const em=e.mv||{},lim=em.hits&&em.hits[0]?em.hits[0].lim:'fh',kickAtk=!!LEGLIM[lim],body=em.hits&&em.hits[0]&&em.hits[0].lv==='body';
   let opts;
   if(perfect&&p.cStreak>=2)opts=['lethal'];
   else opts=STY[p.style].pickScn({em,e,p,kickAtk,body});
@@ -462,8 +463,8 @@ function mkF(style,isP,pal,x,z){return {style,isP,pal,x,z,y:0,vx:0,vz:0,vy:0,fac
   stun:0,stunT:0,armor:false,jg:0,landV:0,bounced:false,spk:false,
   tv:0,rv:0,fb:0,lk:0,gw:0,gx:1,str:0,ro:0,ank:null,yb:0,lvx:0,lvz:0,wx:null,wz:0,twS:-1,yl:0};}
 
-function newMatch(style){
-  const es=style==='box'?'tkd':'box';
+function newMatch(style,es){
+  es=es||(style==='box'?'tkd':'box');
   player=mkF(style,true,PAL[style+'P'],-70,225);
   enemy=mkF(es,false,PAL[es+'E'],70,225);
   $('pName').textContent=NAMES[style];$('eName').textContent=NAMES[es];
@@ -508,9 +509,15 @@ function introAnim(f){
   const el=Math.max(0,INTRO-introT),box=f.style==='box';f.rot=lerp(f.rot,0,.2);f.y=0;
   const a=f.isP?T0:T1,u=el-a,b=Math.abs(Math.sin(el*8)),gd=G[f.style].slice();
   const guard=(k)=>{f._si=null;f.spin=lerp(f.spin,0,.3);f.tw=lerp(f.tw,0,.2);
-    if(box){gd[0]+=.14;gd[1]-=.12;gd[7]-=.14+b*.14;gd[9]-=.1+b*.1;gd[2]+=Math.sin(el*9)*.1;}else{gd[7]-=.05+b*.3;gd[9]-=.05+b*.25;gd[6]+=b*.1;}
+    if(box||f.style==='mt'){gd[0]+=.14;gd[1]-=.12;gd[7]-=.14+b*.14;gd[9]-=.1+b*.1;gd[2]+=Math.sin(el*9)*.1;}else{gd[7]-=.05+b*.3;gd[9]-=.05+b*.25;gd[6]+=b*.1;}
     setPose(f,gd,k||260,.7);};
   if(el<a||el>=a+TW||el>=T2){guard();return;}
+  if(f.style==='mt'){
+    // WAI KHRU: mãos em prece, reverência profunda ao oponente, e o RAM MUAY: braços abertos e joelho levantado, pose do tigre
+    f._si=null;f.spin=0;f.tw=0;const PRAY=[.12,.1,1.0,2.1,.95,2.15,.4,-.35,-.35,-.2],BOW=[1.0,.55,1.0,2.1,.95,2.15,.4,-.35,-.35,-.2],TIG=[-.1,-.2,2.05,1.1,1.0,1.0,1.55,-1.85,-.45,-.25],OPEN=[.05,-.1,1.75,.5,1.8,.5,.4,-.4,-.4,-.25];
+    const k1=clamp(u/.35,0,1),k2=clamp((u-.35)/.5,0,1)-clamp((u-.95)/.3,0,1),k3=clamp((u-1.15)/.3,0,1);
+    const o=lerpPose(lerpPose(G.mt,PRAY,ease(k1)),BOW,ease(Math.max(0,k2)));
+    setPose(f,k3>0?lerpPose(lerpPose(o,OPEN,ease(k3)),TIG,ease(clamp((u-1.3)/.3,0,1))):o,380,.7);return;}
   if(box){
     const seq=['jab','jab','dir','gan','upp','ovr'],L=seq.map(k=>MOV.box[k].d*.72);let w=u,i=0;
     while(i<5&&w>=L[i]){w-=L[i];i++;}
@@ -530,6 +537,20 @@ function introAnim(f){
 // e termina com o chute ao céu e a saudação
 function winAnim(f){
   const t=f.t,box=f.style==='box';
+  if(f.style==='mt'){
+    // vitória Ong Bak: respiração, wai ao rival caído, mortal para trás, demonstração de joelhos e cotovelos e pose do tigre
+    const PRAY=[.12,.1,1.0,2.1,.95,2.15,.4,-.35,-.35,-.2],BOW=[1.0,.55,1.0,2.1,.95,2.15,.4,-.35,-.35,-.2];
+    if(t<.6){f.spin=0;f.tw=0;setPose(f,[.4+.06*Math.sin(t*8),.25,.35,.5,.25,.45,.3,-.4,-.3,-.3],220,.7);}
+    else if(t<1.9){const u=(t-.6)/1.3,bw=Math.sin(PI*clamp(u,0,1));f.spin=0;f.tw=0;setPose(f,lerpPose(PRAY,BOW,ease(bw)),380,.7);if(u>.45&&!f._wpop){f._wpop=1;pop('WAI KHRU',f,'#e9c869');}}
+    else if(t<3.0){f.tw=0;
+      if(!f.wj){f.wj=1;f.vy=215;f.rotDir=-1;f.wjt=t;}
+      if(f.wj===1){if(f.y>.5||t<f.wjt+.14){f.rot=-clamp((t-f.wjt)/.74,0,1)*TAU;setPose(f,TUCK,700,.6);}else{f.wj=2;f.rot=0;f.rotDir=0;f.wjt=t;pop('ONG BAK!',f,'#f2a93b');land(f,-260);}}
+      else{f.rot=0;setPose(f,[.5,-.1,1.4,2.2,1.2,2.3,.9,-1.3,-.5,-.9],400,.6);}}
+    else if(t<4.6){f.rot=0;f.rotDir=0;const u=t-3.0,seq=[[MTK.khao,.4],[MTK.sokt,.4],[MTK.khaof,.66]];let a=0,i=0;while(i<2&&u>=a+seq[i][1]){a+=seq[i][1];i++;}
+      sampleMv(f,seq[i][0],Math.min(u-a,seq[i][0].d));}
+    else{f._si=null;f.tw=0;f.spin=lerp(f.spin,0,.2);const u=t-4.6;
+      setPose(f,u<1.2?[-.1,-.2,2.05,1.1,1.0,1.0,1.55,-1.85,-.45,-.25]:[-.05,-.25,2.7,.3,2.6,.35,.3,-.2,-.25,-.1],420,.65);}
+    return;}
   if(box){
     if(t<.8){f.spin=0;setPose(f,[.4+.06*Math.sin(t*8),.25,.3,.4,.2,.3,.3,-.4,-.3,-.3],220,.7);}
     else if(t<2.0){f.spin=lerp(f.spin,0,.1);const u=t-.8;
@@ -640,7 +661,7 @@ function spOf(mv,st,ro){
   return clamp(mv[c]+6+(ro===undefined?mv['ro'+st]:ro),15,mv.r+10);
 }
 // pé de apoio do golpe: no chute, a perna que não chuta; no soco, o pé da frente (o pivô do check hook) (FLUI-9)
-const ankK=mv=>{const l=mv.hits&&mv.hits[0]?mv.hits[0].lim:mv.lim;return l==='ft'?'bf':'ff';};
+const ankK=mv=>{const l=mv.hits&&mv.hits[0]?mv.hits[0].lim:mv.lim;return l==='ft'||l==='ff'||l==='fk'?'bf':'ff';};
 // planta o pé e prevê o deslocamento dele no impacto (o magnetismo do golpe já conta com isso)
 function setAnk(f,k,tag){const S=skel(f);f.ank={k,x:S[k][0],tag};f.roI=0;
   if(tag&&tag.hits&&tag.hits[0])f.roI=clamp(f.ank.x-(skel(impF(tag,f.style))[k][0]),-14,14);}
@@ -660,7 +681,9 @@ function footLock(f,dt){
 }
 function idlePose(f){
   const o=G[f.style].slice();
-  if(!STY[f.style].acro){const b=Math.sin(time*5.2+f.bob),w=Math.sin(time*1.7+f.bob);o[0]+=w*.08+b*.02;o[1]-=w*.08;o[7]-=.1+b*.12;o[9]-=.08+b*.1;o[6]+=.04+b*.05;o[2]+=Math.sin(time*3.1+f.bob)*.08;o[4]+=Math.cos(time*2.7+f.bob)*.08;}
+  if(f.style==='mt'){const b=Math.abs(Math.sin(time*4.8+f.bob)),w=Math.sin(time*1.9+f.bob);o[0]+=w*.05;o[7]-=.06+b*.2;o[9]-=.05+b*.16;o[6]+=b*.06;o[2]+=Math.sin(time*3.3+f.bob)*.07;o[4]+=Math.cos(time*2.9+f.bob)*.07;
+    const fl=Math.sin(time*1.1+f.bob*2);if(fl>.9){o[6]+=.55;o[7]-=.9;}}
+  else if(!STY[f.style].acro){const b=Math.sin(time*5.2+f.bob),w=Math.sin(time*1.7+f.bob);o[0]+=w*.08+b*.02;o[1]-=w*.08;o[7]-=.1+b*.12;o[9]-=.08+b*.1;o[6]+=.04+b*.05;o[2]+=Math.sin(time*3.1+f.bob)*.08;o[4]+=Math.cos(time*2.7+f.bob)*.08;}
   else{const b=Math.abs(Math.sin(time*4.4+f.bob));o[7]-=.05+b*.28;o[9]-=.05+b*.22;o[6]+=b*.08;o[0]+=Math.sin(time*2+f.bob)*.03;
     const fl=Math.sin(time*1.3+f.bob*2);if(fl>.86){o[6]+=.9;o[7]-=1.2;}}
   o[0]+=Math.sin(time*2.1)*.012;return o;
@@ -760,7 +783,7 @@ function beginThrow(p){
   if(e===player){e.dm=null;e.queued=null;e.buf=null;e.hold=null;e.preK=null;e.fseq=null;e.cseq=null;e.inScene=false;e.ank=null;e.dash=null;e.finBuf=null;e.stum=false;}
   else{e.chain=[];e.feint=false;e.stun=0;e.punish=false;e.red=false;}
   e.st='held';e.t=0;e.thBy=p;unspin(e);unrot(e);e.rot=0;e.cen=true;e.y=TH.hip;setFace(e,-p.face);
-  setPose(p,GRAB,520,.65);setPose(e,BENT,260,.6);pop('AGARROU!',p,'#f2a93b');sfx.block();hype(.15,p.x);
+  setPose(p,(THRP[p.style]||THRP.def).GRAB,520,.65);setPose(e,BENT,260,.6);pop('AGARROU!',p,'#f2a93b');sfx.block();hype(.15,p.x);
 }
 function endThrow(p){if(p===player)endChain(p);else{p.st='rec';p.t=0;p.chain=[];p.cd=rnd(.7,1.4);setPose(p,G[p.style],300,.7);}}
 function throwStep(p,dt){
@@ -768,17 +791,17 @@ function throwStep(p,dt){
   if(t<TH.c){
     // agarra e puxa: o rival é trazido para o peito do lutador, dobrado na cintura e já erguido nas pontas dos pés
     const u=t<TH.g?0:sm((t-TH.g)/(TH.c-TH.g));
-    setPose(p,t<TH.g?GRAB:CRCH,t<TH.g?520:700,.62);
+    const TP=THRP[p.style]||THRP.def;setPose(p,t<TH.g?TP.GRAB:TP.CRCH,t<TH.g?520:700,.62);
     const q=1-Math.exp(-dt*22);e.x=lerp(e.x,p.x+f*(16-3*u),q);e.z=lerp(e.z,p.z-1,q);e.y=TH.hip+8*u;e.rot=-1.0*u;
     setPose(e,limpPose(t,.1+.3*u,.4),240,.6);
   }else if(t<TH.r){
     // explode das pernas e levanta: o rival sobe girando para a posição invertida sobre a cabeça; o corpo vai ficando solto
     const u=t<TH.l?sm((t-TH.c)/(TH.l-TH.c)):1;
-    setPose(p,LIFT,520,.58);
+    setPose(p,(THRP[p.style]||THRP.def).LIFT,520,.58);
     e.x=p.x+f*(13-10*u);e.z=p.z-1;e.y=lerp(TH.hip+8,80,u);e.rot=lerp(-1.0,-PI,u);
     setPose(e,limpPose(t,.4+.5*u,.6),200,.55);
   }else if(!p.thrDone){
-    p.thrDone=true;setPose(p,TOSS,760,.5);kick(p,0,6);
+    p.thrDone=true;setPose(p,(THRP[p.style]||THRP.def).TOSS,760,.5);kick(p,0,6);
     e.st='thrown';e.t=0;e.thBy=p;e.th={x0:e.x,z0:e.z,y0:e.y,rot0:e.rot,xT:clamp(e.x+f*42,-AX+10,AX-10),zT:150,rotT:-TAU-1.45,tr:0};
     slow(.55,.16);camPunch(.9);quake(.3,f,0);sfx.swoosh();pop('ARREMESSO!',p,'#f2a93b');buzz([10,30]);hype(.2,e.x);
   }
@@ -855,7 +878,7 @@ const DEFP={box:{head:[.1,-.45,1.5,2.4,1.35,2.5,.3,-.5,-.35,-.35],body:[.45,-.2,
   tkd:{head:[-.05,-.4,1.45,2.3,1.25,2.45,.4,-.4,-.45,-.25],body:[.3,-.2,.6,2.7,.5,2.8,.5,-.8,-.5,-.5],low:[0,-.15,.8,1.5,.4,1.7,1.1,-1.8,-.5,-.2],kick:[-.2,-.4,1.5,2.3,1.35,2.4,.4,-.5,-.45,-.25]}};
 // cada golpe do rival pede uma defesa própria: rosto, corpo, perna ou chute alto
 function defCat(mv){const h=mv.hits&&mv.hits[0];if(!h)return 'head';const ar=(AREAS[mv.n]||[])[0];
-  if(ar==='leg')return 'low';if(h.lv==='body'||ar==='belly'||ar==='side'||ar==='chest')return 'body';return h.lim==='ft'||h.lim==='bt'?'kick':'head';}
+  if(ar==='leg')return 'low';if(h.lv==='body'||ar==='belly'||ar==='side'||ar==='chest')return 'body';return LEGLIM[h.lim]?'kick':'head';}
 // DEFESA DINÂMICA: cada tipo de golpe do rival pede um movimento diferente do corpo inteiro (não uma guarda parada):
 // esquiva de cabeça, parada de luva, mergulho sob o gancho, ponte para trás, dobra do corpo com recuo, pulo sobre a canela,
 // guarda cruzada com passo atrás e, no taekwondo, mortal para trás. d = duração, dx = recuo, dz = passo lateral, y = salto,
@@ -883,7 +906,7 @@ const DMB={
   low:[{n:'skip',p:BSKIP,y:16,ev:1,d:.54},{n:'check',p:BCHK,dx:10,d:.46},{n:'pivot',p:BPIV,dx:6,dz:24,sp:.7,ev:1,d:.5}],
   kick:[{n:'duck',p:ROLLP,dx:4,dz:20,sp:.6,ev:1,d:.56},{n:'cross',p:XARM,dx:22,sp:.3,d:.5},{n:'slip',p:BSLIP,dx:14,dz:16,sp:.5,ev:1,d:.5}]};
 STY.box.dm=DMB;
-function dmCat(mv){const h=mv.hits[0],ar=(AREAS[mv.n]||[])[0],punch=h.lim==='fh'||h.lim==='bh';
+function dmCat(mv){const h=mv.hits[0],ar=(AREAS[mv.n]||[])[0],punch=!LEGLIM[h.lim];if(h.lim==='fk'||h.lim==='bk')return h.lv==='head'?'kick':'body';
   if(punch){if(h.lv==='body'||ar==='belly'||ar==='side'||ar==='chest')return 'body';if(/Uppercut/.test(mv.n))return 'upper';return mv.tw>=1?'hook':'jab';}
   if(ar==='leg')return 'low';if(h.lv==='body'||ar==='belly'||ar==='side'||ar==='chest')return 'body';return 'kick';}
 function startDm(p,e){
@@ -1014,6 +1037,87 @@ function hitArea(mv,hit,fb){
   if(fb&&a!=='head'&&a!=='leg')a='back';
   return a;
 }
+// ================= MUAY THAI (estilo de cinema: cotovelos, joelhos, canelas e acrobacias) — lutador 3 =================
+// Padrão de ouro: mesmas regras de física, cadência (antecipação → impacto → recuperação), defesa dinâmica, contra-ataques e
+// especiais dos dois lutadores modelo; golpes fiéis à arte marcial. Poses: [inclinação, cabeça, ombroF, cotoveloF, ombroT, cotoveloT,
+// quadrilF, joelhoF, quadrilT, joelhoT]. Membros de contato: fe/be = cotovelos, fk/bk = joelhos, ff/bf = canela, ft/bt = pé
+G.mt=[.1,-.12,1.12,2.1,.98,2.28,.5,-.45,-.42,-.3];
+DASHP.mt=[.35,-.1,1.2,2.1,.9,2.3,.85,-1.2,-.7,-.5];
+BLOCK.mt=[.12,-.3,1.3,2.4,1.2,2.5,.45,-.55,-.4,-.35];
+WIN.mt=[-.1,-.35,2.8,.3,2.6,.4,.3,-.2,-.25,-.1];
+WK.mt={f:4,b:-11,y:-25.6,c:15,a:.27,L:4};STR.mt=15;
+const MTK={
+ // --- socos de apoio (mãos enfaixadas) ---
+ tp:mk('Teep',{lim:'ft',d:.32,a:.08,h:.15,A:[-.1,.05,1.3,2.1,1.1,2.3,1.25,-2.0,-.4,-.3],S:[-.55,.1,1.2,2.0,1.0,2.2,1.6,-.05,-.4,-.15],dmg:6,r:30,tw:0,lv:'body',kb:95,lunge:6}),
+ sok:mk('Sok Tat',{lim:'fe',d:.3,a:.06,h:.12,A:[.05,-.1,.95,2.95,1.2,2.4,.5,-.5,-.45,-.3],S:[.5,-.1,1.55,3.0,1.25,2.35,.6,-.7,-.5,-.3],dmg:9,r:22,tw:1.1,lunge:12,kb:40,lv:'head'}),
+ sob:mk('Sok Ti',{lim:'be',d:.34,a:.07,h:.14,A:[.08,-.1,1.3,2.2,.7,3.0,.4,-.45,-.5,-.3],S:[.62,-.15,1.15,2.3,1.55,3.0,.7,-.85,-.65,-.15],dmg:11,r:22,tw:1.2,lunge:14,react:'stagger',lv:'head'}),
+ sokt:mk('Sok Ngat',{lim:'be',d:.38,a:.1,h:.17,A:[.55,.05,1.2,2.2,.4,2.95,.65,-1.0,-.5,-.6],S:[-.05,-.35,1.2,2.2,2.35,3.0,.3,-.3,-.35,-.2],dmg:12,r:20,tw:.6,react:'stagger',lv:'head',kb:50}),
+ sokd:mk('Sok Ton',{lim:'fe',d:.44,a:.14,h:.22,A:[-.15,-.1,2.95,2.7,1.2,2.4,.4,-.5,-.45,-.3],S:[.85,-.2,1.25,3.05,1.15,2.3,.7,-.9,-.55,-.2],dmg:13,r:22,tw:.9,lunge:14,react:'knock',kb:85,lv:'head'}),
+ // --- joelhadas ---
+ khao:mk('Khao Trong',{lim:'bk',d:.38,a:.1,h:.17,A:[.28,-.1,1.65,.7,1.6,.8,.35,-.45,.25,-.6],S:[.02,-.2,1.75,.6,1.7,.7,.3,-.45,1.95,-2.25],dmg:11,r:22,tw:0,lunge:16,kb:70,lv:'body'}),
+ kok:mk('Khao Khong',{lim:'fk',d:.4,a:.11,h:.18,A:[.3,-.05,1.5,1.0,1.4,1.1,.3,-.4,-.5,-.4],S:[.12,-.25,1.2,1.5,1.0,1.7,1.95,-2.3,-.45,-.3],dmg:10,r:22,tw:.7,lunge:12,kb:60,lv:'body'}),
+ // --- chutes de canela ---
+ te:mk('Te Tat',{lim:'bf',d:.42,a:.11,h:.2,A:[-.15,.05,.5,1.4,.1,1.5,-.1,-.2,1.05,-2.2],S:[-.6,.1,.3,1.6,-.3,1.2,-.1,-.15,1.62,-.3],dmg:10,r:28,tw:1.0,lv:'body',kb:60,spin:.85,sa:1,ret:1}),
+ tel:mk('Te Lang',{lim:'bf',d:.38,a:.1,h:.17,A:[-.05,.05,.6,1.5,.2,1.6,-.05,-.2,.9,-1.9],S:[-.35,.1,.5,1.6,-.1,1.4,-.1,-.15,1.15,-.25],dmg:7,r:28,tw:.8,lv:'body',kb:35,spin:.7,sa:1,ret:1}),
+ tes:mk('Te Sung',{lim:'bt',d:.5,a:.13,h:.23,A:[-.1,.05,.5,1.4,.2,1.6,-.1,-.2,1.1,-2.2],S:[-.95,.25,.3,1.7,-.4,1.1,-.1,-.2,2.05,-.1],dmg:12,r:30,tw:1.0,react:'knock',kb:80,lv:'head',spin:.95,sa:1,ret:1}),
+ // --- acrobacias (cinema) ---
+ khaof:mk('Khao Loi',{lim:'fk',d:.66,a:.2,h:.27,A:[.55,.1,1.25,2.0,1.0,2.2,1.55,-2.4,.6,-1.5],S:[.12,-.15,2.3,1.0,2.45,1.25,2.35,-2.35,.2,-.55],dmg:16,r:28,jump:46,lunge:26,react:'knock',kb:135,lv:'head'}),
+ sokp:mk('Sok Kratok',{lim:'fe',d:.6,a:.18,h:.26,A:[.7,.1,1.4,2.2,1.1,2.4,1.35,-2.1,.5,-1.8],S:[.9,-.3,1.3,3.05,2.5,2.9,.9,-.6,.6,-1.1],dmg:16,r:24,jump:34,lunge:20,react:'knock',kb:120,lv:'head'}),
+ sokc:mk('Sok Klab',{lim:'be',d:.62,a:.16,h:.38,A:[.3,.1,1.3,2.2,.9,2.8,.5,-.7,-.5,-.5],S:[.6,-.15,1.25,2.2,1.55,3.0,.55,-.8,-.55,-.25],dmg:14,r:22,spin:TAU,sa:.5,wa:.3,ve:1.4,sm:.3,react:'knock',kb:90,lv:'head',lunge:10}),
+ ent:mk('Teep de entrada',{lim:'ft',d:.34,a:.08,h:.15,A:[-.05,.05,1.3,2.1,1.1,2.3,1.3,-1.9,-.5,-.4],S:[-.5,.1,1.2,2.0,1.0,2.2,1.65,-.05,-.4,-.15],dmg:7,r:30,lunge:22,kb:100,lv:'body'}),
+ cct:mk('Cotovelo de contra',{lim:'be',d:.46,a:.12,h:.19,A:[.2,-.1,1.3,2.2,.5,3.0,.4,-.5,-.5,-.3],S:[.7,-.2,1.1,2.3,1.6,3.0,.75,-.9,-.7,-.1],dmg:15,r:22,tw:1.2,react:'knock',kb:90,ka:900,lv:'head'}),
+ cdw:mk('Khao Loi de contra',{lim:'fk',d:.6,a:.18,h:.25,A:[.5,.1,1.25,2.0,1.0,2.2,1.5,-2.3,.6,-1.5],S:[.12,-.15,2.3,1.0,2.45,1.25,2.35,-2.35,.2,-.55],dmg:16,r:28,jump:40,lunge:20,react:'knock',kb:120,ka:900,lv:'head'}),
+ air:mk('Sok no ar',{lim:'fe',d:.4,a:.09,h:.16,A:TUCK,S:[.6,-.2,1.5,3.0,1.3,2.4,1.3,-1.8,.4,-1.4],dmg:8,r:26,jump:0,react:'launch',kb:25,lv:'head'}),
+};
+Object.assign(MTK,{jb:cl(BX.jab,{n:'Jab'}),cx:cl(BX.dir,{n:'Direto'})});
+// sequência dupla de joelhos no ar (Khao Khu): primeiro o da frente, depois o de trás
+MTK.khok=mk('Khao Khu',{d:.62,jump:34,keys:[[0,[.55,.1,1.25,2.0,1.0,2.2,1.5,-2.2,.5,-1.5],700,.7],[.1,[.1,-.1,2.1,1.1,2.2,1.3,2.15,-2.3,.4,-.7],1800,.55],[.2,[.05,-.2,2.2,1.0,2.3,1.2,.5,-.8,2.1,-2.3],1800,.55],[.34,null,280,.7]],
+  hits:[{t:.13,dmg:7,react:'hit',lim:'fk',lv:'body',kb:20},{t:.25,dmg:9,react:'knock',lim:'bk',lv:'head',kb:90}]});
+MOV.mt=MTK;
+Object.assign(AREAS,{'Teep':['belly','chest'],'Teep de entrada':['belly','chest'],'Khao Trong':['belly','chest'],'Khao Khong':['side','belly'],'Te Tat':['side','chest'],'Te Lang':['leg'],'Te Sung':['head','head','arm'],'Sok Tat':['head'],'Sok Ti':['head','head'],'Sok Ngat':['head'],'Sok Ton':['head'],'Khao Loi':['chest','head'],'Khao Khu':['chest','head'],'Sok Kratok':['head'],'Sok Klab':['head'],'Cotovelo de contra':['head'],'Khao Loi de contra':['chest','head'],'Sok no ar':['head']});
+SEQ.mt=[['tp','sok'],['jb','cx','khao'],['sok','sob','sokt'],['te','sok','khao'],['tp','kok','sokd'],['jb','cx','te','khao'],['sok','khao','sokt','sokd'],['tel','te','sob'],['khok','sok'],['tp','sob','khao','tes']];
+ESEQ.mt=[['tp','sok'],['jb','cx','khao'],['sok','sob'],['te','khao'],['khao','sokt'],['tel','sob'],['tp','khao'],['sokd']];
+BASIC.mt={b1:'tp',b2:'sok',b3:'khao'};BLABEL.mt=['TEEP','COTOVELO','JOELHADA'];
+FIN.mt={nm:['FÚRIA DO TIGRE','COTOVELOS DO DRAGÃO','REI DOS JOELHOS'],
+  n:[['jb','cx','khao','khaof'],['sok','sob','sokt','sokc'],['khao','kok','te','khaof']],
+  s:[['jb','cx','sok','khao','sokt','khaof','sokp'],['sok','sob','sokt','sokd','khao','sokc'],['tp','khao','kok','khok','te','khaof']]};
+SPSEQ.mt=[['sok','khao','khaof'],['te','sokt','sokp'],['tp','khao','sokc']];
+NAMES.mt='Kaen "Garra do Tigre"';
+// paletas: pele morena, cabelo preto curto, calção de seda (vermelho / azul), cordas das mãos e dos braços (prajioud), mongkol
+PAL.mtP={skin:'#c68b58',skinD:'#86532f',skinH:'#e7b886',hair:'#15110f',hairH:'#383029',sh:'#b4222d',shD:'#661118',trim:'#e9c869',trimD:'#a88a38',wrap:'#ece1c6',wrapD:'#a99e80',rope:'#d9c58f',ropeD:'#8f7f55',band:'#efe4c6',gl:'#ece1c6',glD:'#a99e80',glH:'#ffffff',boot:'#c68b58',bootD:'#86532f',bootH:'#e7b886',sole:'#e7b886',trail:'#ffb347'};
+PAL.mtE={skin:'#b87d4d',skinD:'#7a4a29',skinH:'#d9a874',hair:'#1b1410',hairH:'#40352c',sh:'#1d3e82',shD:'#0f2250',trim:'#d8d8e0',trimD:'#8e8ea0',wrap:'#e8dfc8',wrapD:'#9f957a',rope:'#cdbb84',ropeD:'#85774f',band:'#e6d8b4',gl:'#e8dfc8',glD:'#9f957a',glH:'#ffffff',boot:'#b87d4d',bootD:'#7a4a29',bootH:'#d9a874',sole:'#d9a874',trail:'#6fb0ff'};
+// defesa dinâmica do muay thai: guarda alta de cotovelos, check de joelho/canela, inclinação para trás, mergulho e mortal
+const MTCOVER=[.2,-.45,1.58,2.58,1.45,2.7,.45,-.5,-.4,-.3],MTLEAN=[-.75,.2,1.3,2.2,1.1,2.35,.45,-.4,-.45,-.3],MTCHECK=[.15,-.2,1.25,2.35,1.1,2.4,1.45,-1.95,-.4,-.3],MTELB=[.45,-.2,.4,2.95,.35,3.0,.55,-.9,-.4,-.6];
+const DMM={
+  jab:[{n:'lean',p:MTLEAN,dx:20,ev:1,d:.46},{n:'parry',p:PARRYP,dx:8,d:.42},{n:'cover',p:MTCOVER,dx:8,d:.44}],
+  hook:[{n:'cover',p:MTCOVER,dx:10,d:.46},{n:'weave',p:BWEAVE,dz:10,sp:.4,ev:1,d:.54},{n:'lean',p:MTLEAN,dx:20,ev:1,d:.48}],
+  upper:[{n:'lean',p:MTLEAN,dx:24,ev:1,d:.5},{n:'slip',p:BSLIP,dx:12,dz:14,sp:.5,ev:1,d:.46},{n:'cover',p:MTCOVER,dx:12,d:.46}],
+  body:[{n:'check',p:MTCHECK,dx:8,d:.46},{n:'elbow',p:MTELB,dx:14,sp:.3,d:.46},{n:'pivot',p:BPIV,dx:8,dz:26,sp:.8,ev:1,d:.52}],
+  low:[{n:'check',p:MTCHECK,dx:6,d:.46},{n:'skip',p:BSKIP,y:16,ev:1,d:.54},{n:'pivot',p:BPIV,dx:6,dz:24,sp:.7,ev:1,d:.5}],
+  kick:[{n:'cover',p:MTCOVER,dx:20,d:.5},{n:'duck',p:ROLLP,dx:4,dz:20,sp:.6,ev:1,d:.56},{n:'flip',p:HOPO,dx:34,y:22,rot:-1,ev:1,d:.64,tkd:1}]};
+DEFP.mt={head:MTCOVER,body:MTELB,low:MTCHECK,kick:MTCOVER};
+STY.mt={bare:1,acro:1,pace:96,pace2:76,R:58,Rv:10,sp:56,hop:3,punish:'tp',quick:'tp',grd:.12,dodge:'acro',dodgeName:'MORTAL',spec:'FÚRIA DO TIGRE',fe:['tp','sok','khao'],scn:'mt',
+  cnt:(M,d)=>d<40?M.cct:M.cdw,far:['khaof','sokp'],mid:'ent',dm:DMM,
+  pickScn:({em,e,p,kickAtk,body})=>em.lunge>=10||e.st==='strike'&&Math.abs(e.x-p.x)>40?['joelho','teep']:kickAtk?['pegar','canela','teep']:body?['canela','joelho']:['cotovelo','pegar','joelho']};
+// contra-ataques de cinema do muay thai
+Object.assign(PARRY,{
+ mtlean:pm('Corpo para trás',{d:.28,keys:[[0,MTLEAN,1300,.55],[.2,G.mt,500,.7]],lunge:-8}),
+ mtcheck:pm('Check de canela',{d:.3,keys:[[0,MTCHECK,1500,.5],[.22,G.mt,500,.7]]}),
+ mtcatch:pm('Captura o chute',{d:.34,keys:[[0,[.3,-.1,1.4,.8,1.2,2.3,.45,-.65,-.45,-.35],1400,.55],[.26,[.3,-.1,1.2,1.2,.6,2.4,.45,-.6,-.45,-.3],400,.7]]}),
+ mtleap:pm('Salto',{d:.34,jump:28,keys:[[0,TUCK,1300,.6],[.25,HOP,600,.7]]}),
+ mtslip:pm('Esquiva de tronco',{d:.26,keys:[[0,BSLIP,1300,.55],[.18,G.mt,500,.7]],zs:14}),
+});
+SCENES.mt={
+ teep:{n:'TEEP DE CONTRA',steps:[{mv:PARRY.mtlean,cam:'wide',slow:.28},{mv:cl(MTK.tp,{n:'Teep de contra',dmg:14,react:'knock',kb:140}),cam:'dutchR',slow:.4,impact:1,lines:1}]},
+ pegar:{n:'CHUTE CAPTURADO',hold:1,steps:[{mv:PARRY.mtcatch,cam:'wide',slow:.3},{mv:cl(MTK.sob,{dmg:12,react:'stagger'}),cam:'face',slow:.4,impact:1},{mv:cl(MTK.te,{dmg:14,react:'knock',kb:120}),cam:'dutchL',slow:.36,impact:1,lines:1}]},
+ cotovelo:{n:'COTOVELO CORTANTE',steps:[{mv:PARRY.mtslip,cam:'face',slow:.25},{mv:cl(MTK.sokt,{dmg:12,react:'stagger'}),cam:'low',slow:.45,impact:1},{mv:cl(MTK.sokd,{dmg:14,react:'knock',kb:110}),cam:'dutchR',slow:.4,lines:1}]},
+ joelho:{n:'JOELHO VOADOR',steps:[{mv:PARRY.mtleap,cam:'low',slow:.25},{mv:cl(MTK.khaof,{dmg:16}),cam:'face',slow:.36,impact:1,lines:1}]},
+ canela:{n:'CHECK E CONTRA',steps:[{mv:PARRY.mtcheck,cam:'close',slow:.28},{mv:cl(MTK.tel,{dmg:8,react:'hit'}),cam:'dutchL',slow:.55},{mv:cl(MTK.tes,{dmg:15,react:'knock',kb:130}),cam:'face',slow:.36,impact:1,lines:1}]},
+ lethal:{n:'FÚRIA DO TIGRE',red:1,steps:[{mv:PARRY.mtslip,cam:'face',slow:.2},{mv:cl(MTK.jb,{react:'hit'}),cam:'close',slow:.6},{mv:cl(MTK.khao,{react:'hit',dmg:10}),cam:'dutchL',slow:.5},{mv:cl(MTK.sokt,{dmg:10,react:'stagger'}),cam:'low',slow:.5,lines:1},{mv:cl(MTK.khaof,{dmg:18,n:'Khao Loi de contra'}),cam:'dutchR',slow:.28,impact:1,lines:1}]},
+};
+// arremesso do muay thai: clinch no pescoço (plum), joelhada de puxada e arremesso por cima do quadril
+const THRP={def:{GRAB,CRCH,LIFT,TOSS},mt:{GRAB:[.35,-.15,1.95,.7,1.9,.8,.45,-.6,-.45,-.3],CRCH:[.5,-.1,1.75,1.1,1.7,1.2,.5,-.5,1.95,-2.3],LIFT,TOSS}};
+
 // a região atingida recebe o impulso nas molas da pose: cabeça estala, peito vai para trás, barriga dobra, costas arqueiam, braço balança, perna cede
 function reactArea(d,ar,hv){const m=hv?1.5:1;
   switch(ar){
@@ -1031,7 +1135,7 @@ const AIRMAX=4; // acertos no ar antes do spike que encerra o juggle
 function applyHit(a,d,hit,mv){
   // quadro de impacto controlado: o membro que bateu fica na extensão do golpe (sem cotovelo dobrado nem excesso da mola)
   // durante o hitstop; faíscas e rastro já saem dele (FLUI-7)
-  const J={fh:2,bh:4,ft:6,bt:8}[hit.lim];if(J!==undefined)for(const j of [J,J+1]){a.pose[j]=a.pt[j];a.pv[j]=0;}
+  const J=LIMJ[hit.lim];if(J!==undefined)for(const j of [J,J+1]){a.pose[j]=a.pt[j];a.pv[j]=0;}
   const fromBehind=Math.sign(a.x-d.x)!==d.face;
   if(!a.isP&&d.isP&&d.st==='block'&&!hit.unb){reactArea(d,'arm',false);sfx.block();sparks(d.x+a.face*-4,36,d.z-1,5,false,'#cfe3ff');d.vx=a.face*80;return;}
   // ARMADURA da ruptura: o golpe livre só raspa e não interrompe o golpe blindado; o que nocautearia atravessa (INTE-1/FREE-1)
@@ -1314,13 +1418,12 @@ function eStart(e,st){
 // ESPECIAL do rival: o primeiro golpe é anunciado pelo ⚡ vermelho; se a esquiva não vier, ele emenda uma sequência cinematográfica
 // arremesso do rival: quando o jogador está perto e vulnerável (a defesa não protege), tenta agarrar de tempos em tempos
 const GRI={facil:6,medio:4,mestre:2.6};
-function eGrab(e){e.chain=[];e.mv=THRMV;e.st='wind';e.t=0;e.wd=.4;e.wx=null;e.feint=false;e.armor=false;e.thrT=time;setPose(e,GRAB,520,.65);pop('AGARRÃO!',e,'#f2a93b');}
+function eGrab(e){e.chain=[];e.mv=THRMV;e.st='wind';e.t=0;e.wd=.4;e.wx=null;e.feint=false;e.armor=false;e.thrT=time;setPose(e,(THRP[e.style]||THRP.def).GRAB,520,.65);pop('AGARRÃO!',e,'#f2a93b');}
 function eGrabTry(e,p,dt){
   if(e.red||time-(e.thrT||-9)<GRI[DIFF]*(1.15-.08*round))return false;
   if(Math.abs(p.x-e.x)>88||Math.abs(p.z-e.z)>30||!GRABP.includes(p.st)||p.inv)return false;
   return Math.random()<dt*(p.st==='defend'?1:.5);
 }
-const SPSEQ={box:[['dir','gan','finOvr'],['est','fig','finOvr'],['jab','upp','finOvr']],tkd:[['dol','mir','f540'],['ara','yeop','tor'],['ban','mom','nae']]};
 function eSpecial(e){
   const box=e.style==='box';
   const q=pick(SPSEQ[e.style]).slice();e.mv=MOV[e.style][q.shift()];e.chain=q;e.seqHit=false;e.sp=0;e.red=true;e.armor=true;e.feint=false;e.stun=0;e.punish=false;
@@ -1553,7 +1656,7 @@ function endMatch(won){
   running=false;matchOver=true;inp.act=null;
   $('oTitle').textContent=won?'VITÓRIA':'DERROTA';
   $('oSub').textContent=`Dificuldade ${DNAMES[DIFF]}. ${won?'Você venceu':'O rival venceu'} por ${Math.max(...wins)} a ${Math.min(...wins)}. Maior combo: ${best} hits. Pontos: ${score}.`;
-  const other=chosen==='box'?'tkd':'box';$('swap').textContent='JOGAR DE '+(other==='box'?'BOXEADOR':'TAEKWONDO');
+  $('swap').textContent='TROCAR LUTADORES';
   $('over').hidden=false;$('pad').hidden=true;$('stickHint').hidden=true;$('bExit').hidden=true;
 }
 
@@ -1578,7 +1681,7 @@ function updHud(force){
 
 // ---------- esqueleto ----------
 // pernas que golpeiam no golpe atual (não são puxadas para o chão pelo IK)
-const kickLegs=mv=>mv.kl||(mv.kl=[mv.hits.some(h=>h.lim==='ft'),mv.hits.some(h=>h.lim==='bt')]);
+const kickLegs=mv=>mv.kl||(mv.kl=[mv.hits.some(h=>h.lim==='ft'||h.lim==='ff'||h.lim==='fk'),mv.hits.some(h=>h.lim==='bt'||h.lim==='bf'||h.lim==='bk')]);
 function skel(f){
   const p=f.pose,ln=p[0],sn=Math.sin,co=Math.cos;
   const td=[sn(ln),co(ln)],n=[co(ln),-sn(ln)];
@@ -1592,7 +1695,7 @@ function skel(f){
   P.sF=[P.sh[0]+n[0]*wF,P.sh[1]+n[1]*wF+.5];P.sB=[P.sh[0]-n[0]*wB,P.sh[1]-n[1]*wB+.5];
   const rF=[P.sh[0]-n[0]*sw*g,P.sh[1]-n[1]*sw*g],rB=[P.sh[0]+n[0]*sw*g,P.sh[1]+n[1]*sw*g];
   // silhueta do tronco (VISU-4): cintura, peito (o V do boxeador) e dorsal; e a raiz real de cada braço, com a torção
-  const bx=f.style==='box',tq=(a,b,t,o)=>[a[0]+(b[0]-a[0])*t+n[0]*o,a[1]+(b[1]-a[1])*t+n[1]*o];
+  const bx=!!STY[f.style].bare,tq=(a,b,t,o)=>[a[0]+(b[0]-a[0])*t+n[0]*o,a[1]+(b[1]-a[1])*t+n[1]*o];
   P.wF=tq(P.hF,P.sF,.35,bx?.5:.3);P.cF=tq(P.hF,P.sF,.76,bx?1.5:.8);P.dB=tq(P.hB,P.sB,.66,bx?-1.2:-.7);P.aF=rF;P.aB=rB;
   // base do pescoço (trapézio): os ombros caem até o pescoço em vez de fechar o tronco numa reta
   P.tF=[P.sh[0]+n[0]*1.7+td[0]*1.3,P.sh[1]+n[1]*1.7+td[1]*1.3];P.tB=[P.sh[0]-n[0]*1.5+td[0]*1.3,P.sh[1]-n[1]*1.5+td[1]*1.3];
@@ -1661,7 +1764,7 @@ const PAIN={hit:1,hurt:1,stagger:1,countered:1,air:1,down:1,ko:1,held:1,thrown:1
 // articulações; o contorno entre grupos (perna da frente sobre a de trás, braço sobre o tronco) continua. Contorno de 1 px
 // em qualquer zoom (VISU-1). Sombreado em 3 tons por plano, voltado para a lâmpada (VISU-4); figurino detalhado (VISU-5)
 function drawFighter(c,f,S,T,ps,LI){
-  const fl=f.flash>0,box=f.style==='box',LP=litPal(f.pal,LI?LI.lv:10),col=k=>fl?'#ffffff':LP[k],ow=1/ps,fc=f.face;
+  const fl=f.flash>0,mt=f.style==='mt',box=STY[f.style].bare&&!mt,bare=!!STY[f.style].bare,LP=litPal(f.pal,LI?LI.lv:10),col=k=>fl?'#ffffff':LP[k],ow=1/ps,fc=f.face;
   c.lineCap='round';c.lineJoin='round';
   const mid=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t],off=(a,v,k)=>[a[0]+v[0]*k,a[1]+v[1]*k];
   const nrm=(a,b,d)=>{const x=a[0]-b[0],y=a[1]-b[1],l=Math.hypot(x,y);return l>1e-3?[x/l,y/l]:d||[1,0];};
@@ -1695,6 +1798,13 @@ function drawFighter(c,f,S,T,ps,LI){
   const C=f.cl,cl0=C?Math.hypot(C[0],C[1]):0,cv=cl0>.15?[C[0]/cl0*fc,C[1]/cl0]:[-.3,-.95],cp=[-cv[1],cv[0]];
   const arm=(r0,el,ha,dk)=>{
     const sk=dk?'skinD':'skin',dir=nrm(ha,el);
+    if(mt){
+      // braço nu com a corda do braço (prajioud) e a mão enfaixada com cordas cruzadas
+      const g0=off(ha,dir,.3),pn=[-dir[1],dir[0]],up=pn[0]*Ld[0]+pn[1]*Ld[1]>0?pn:[dir[1],-dir[0]],w1=mid(el,ha,.38);
+      Q.push(['d',r0,2.9,sk],['b',r0,el,4.7,sk,!dk],['b',el,ha,4.2,sk,!dk],['b',mid(r0,el,.2),mid(r0,el,.42),5.4,dk?'ropeD':'rope',0],['b',w1,ha,4.4,dk?'wrapD':'wrap',0],['e',g0,3.1,2.7,dir,dk?'wrapD':'wrap']);flush();
+      if(!fl&&!dk){for(let k=0;k<4;k++){const t=.45+k*.15,a=mid(el,ha,t);seg(off(a,up,2.2),off(mid(el,ha,t+.12),up,-2.2),.55,col('wrapD'));}
+        seg(off(mid(r0,el,.2),up,2.5),off(mid(r0,el,.42),up,-2.5),.5,col('ropeD'));disc(off(off(g0,up,1.2),dir,.6),.8,col('glH'));}
+      return;}
     if(box){const g0=off(ha,dir,.5),pn=[-dir[1],dir[0]],up=pn[0]*Ld[0]+pn[1]*Ld[1]>0?pn:[dir[1],-dir[0]];
       Q.push(['d',r0,2.7,sk],['b',r0,el,4.4,sk,!dk],['b',el,ha,4,sk,!dk],['b',mid(el,ha,.58),mid(el,ha,.84),4.8,dk?'trimD':'trim',0],['e',g0,4.1,3.4,dir,dk?'glD':'gl']);flush();
       // luva: sombra embaixo, brilho em cima e a costura do polegar; cadarço no punho de perto
@@ -1707,6 +1817,11 @@ function drawFighter(c,f,S,T,ps,LI){
       if(!dk)Q.push(['b',mid(el,m,.9),m,5.3,'giM',0]);flush();}
   };
   const leg=(kn,an,toe,dk)=>{const h=S.hip,sk=dk?'skinD':'skin',sd=nrm(an,kn,[0,-1]);
+    if(mt){const m1=mid(h,kn,.55),a1=mid(kn,an,.74);
+      Q.push(['b',an,toe,3.1,sk,0],['b',h,m1,7.2,dk?'shD':'sh',!dk],['b',m1,kn,5.5,sk,!dk],['b',kn,an,4.8,sk,!dk],['b',a1,mid(a1,an,.72),4.5,dk?'ropeD':'rope',0]);flush();
+      if(!fl){seg(mid(h,m1,.3),mid(h,m1,.97),1.2,col(dk?'trimD':'trim'));seg(off(mid(kn,an,.1),Ld,.7),off(mid(kn,an,.55),Ld,.7),.9,col('skinH'));
+        for(let k=0;k<3;k++){const a=mid(a1,an,.15+k*.25);seg(off(a,sd,2.2),off(a,sd,-2.2),.5,col('wrapD'));}}
+      return;}
     if(box){const m1=mid(h,kn,.55),m2=mid(kn,an,.56),bt=dk?'bootD':'boot';
       Q.push(['b',h,m1,7,dk?'shD':'sh',!dk],['b',m1,kn,5.3,sk,!dk],['b',kn,m2,4.6,sk,!dk],['b',mid(kn,m2,.78),m2,4.7,dk?'trimD':'trim',0],['b',m2,an,5.1,bt,0],['b',an,toe,3.5,bt,0]);flush();
       if(!fl){// faixa lateral do calção, brilho do cano da bota e sola clara
@@ -1728,17 +1843,17 @@ function drawFighter(c,f,S,T,ps,LI){
     poly([tpt(.2,1),tpt(.32,1),tpt(.32,0),tpt(.2,0)],col('trim'));};
   const torso=()=>{
     Q.push(['b',S.sh,S.nk,3.8,'skin',0]);flush();
-    c.lineWidth=2*ow*ps;c.strokeStyle=OL;path(tp);c.stroke();poly(tp,col(box?'skin':'gi'));
-    if(!fl){poly([tpt(1,1),tpt(.66,1),tpt(0,1),tpt(0,.68),tpt(.66,.7),tpt(1,.74)],col(box?'skinM':'giM'));
-      if(box){seg(tpt(.69,.08),tpt(.72,.42),.8,col('skinD'));seg(tpt(.8,.14),tpt(.88,.42),1.2,col('skinH'));
+    c.lineWidth=2*ow*ps;c.strokeStyle=OL;path(tp);c.stroke();poly(tp,col(bare?'skin':'gi'));
+    if(!fl){poly([tpt(1,1),tpt(.66,1),tpt(0,1),tpt(0,.68),tpt(.66,.7),tpt(1,.74)],col(bare?'skinM':'giM'));
+      if(bare){seg(tpt(.69,.08),tpt(.72,.42),.8,col('skinD'));seg(tpt(.8,.14),tpt(.88,.42),1.2,col('skinH'));
         for(const h of [.4,.5,.6])seg(tpt(h,.12),tpt(h,.24),.7,col('skinD'));
         seg(tpt(.93,.1),tpt(.42,.1),.8,col('skinH'));}
       else{const A=tpt(.96,.62),B=tpt(.3,.12);seg(mid(A,B,.02),B,1.4,col('giH'));seg(off(A,hw,-.08),off(B,hw,-.08),.8,col('lap'));seg(tpt(.93,.12),tpt(.45,.12),.9,col('giH'));}}
-    if(box)trunks();
+    if(bare)trunks();
   };
   // depois da perna da frente: o calção (boxe) ou a saia do dobok com a faixa (tkd) cobrem a raiz da coxa sem costura
   const hipOver=()=>{
-    if(box){trunks();return;}
+    if(bare){trunks();return;}
     const a=tpt(.22,1),e=tpt(.22,0),b=off(off(S.hB,sp,-4.8),hw,-.12),d=off(off(S.hF,sp,-4.8),hw,.1),sk=[a,S.hB,b,d,S.hF,e];
     c.lineWidth=2*ow*ps;c.strokeStyle=OL;path(sk);c.stroke();poly(sk,col('gi'));
     if(!fl){poly([b,d,mid(d,S.hF,.24),mid(b,S.hB,.24)],col('giM'));poly([a,S.hB,b,mid(b,d,.3),mid(S.hB,S.hF,.3),mid(a,e,.3)],col('giM'));}
@@ -1750,7 +1865,7 @@ function drawFighter(c,f,S,T,ps,LI){
     const sc=S.hsc,at0=(a,b)=>[h[0]+fw[0]*a*HS+u[0]*b*HS,h[1]+fw[1]*a*HS+u[1]*b*HS],at=(a,b)=>at0(a*sc,b);
     const arc=(r,t0,t1,n)=>{const o=[];for(let i=0;i<=n;i++){const t=t0+(t1-t0)*i/n;o.push(at(Math.cos(t)*r,Math.sin(t)*r));}return o;};
     // cabelo por estilo: boxeador curto e rente; taekwondista com franja e uma mecha atrás presa à mola do tecido
-    const hair=box?[...arc(5.35,.95,3.75,9),at(-2.9,-1.7),at(-1.3,1),at(1.9,2.8)]
+    const hair=bare?[...arc(5.35,.95,3.75,9),at(-2.9,-1.7),at(-1.3,1),at(1.9,2.8)]
       :[at(-2.6,-1.6),...arc(5.75,3.85,.5,11),at(5.5,1.9),at(4,2.5),at(3.1,1.7),at(1.4,2.7),at(-1.3,1)];
     if(!box){const r0=at(-4.6,1.3),r1=at(-4,-1.8),tip=off(at(-4.7,-.4),cv,5);Q.push(['p',[r0,tip,r1],'hair']);}
     Q.push(['d',h,5*HS,'skin'],['d',at(2.5,-3.1),1.7*HS,'skin'],['d',at(4.6,-.5),1.05*HS,'skin'],['p',hair,'hair']);flush();
@@ -3056,11 +3171,11 @@ addEventListener('keyup',e=>{keys[e.code]=0;kb();});
 function kb(){if(sid!==null)return;const x=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),z=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0);const m=Math.hypot(x,z)||1;inp.x=x/m;inp.z=z/m;}
 document.addEventListener('contextmenu',e=>e.preventDefault());
 
-function begin(style){
+function begin(style,es){
   au();
   try{const d=document.documentElement;if(d.requestFullscreen&&!document.fullscreenElement)d.requestFullscreen().then(()=>screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})).catch(()=>{});}catch(e){}
   $('menu').hidden=true;$('over').hidden=true;$('pause').hidden=true;paused=false;$('bExit').hidden=false;$('hud').hidden=false;$('pad').hidden=false;$('stickHint').hidden=false;
-  inp.act=null;newMatch(style);computeSafe();
+  inp.act=null;newMatch(style,es);computeSafe();
   ['b1','b2','b3'].forEach((id,i)=>{$(id).textContent=BLABEL[style][i];$(id).setAttribute('aria-label',BLABEL[style][i]);});
   setTimeout(()=>{if(running)$('stickHint').hidden=true;},9000);
 }
@@ -3070,10 +3185,22 @@ function setDiff(d,save){DIFF=DDESC[d]?d:'facil';DP=aiParams();$('difd').textCon
   if(save){try{localStorage.setItem('fb_dif',DIFF);}catch(e){}}}
 document.querySelectorAll('.dif').forEach(b=>b.addEventListener('click',()=>setDiff(b.dataset.d,true)));
 {let d='facil';try{d=localStorage.getItem('fb_dif')||'facil';}catch(e){}setDiff(d,false);}
-let chosen='box';
-$('pickBox').onclick=()=>{chosen='box';begin('box');};
-$('pickTkd').onclick=()=>{chosen='tkd';begin('tkd');};
-$('again').onclick=()=>begin(chosen);
+let chosen='box',chosenE='tkd';
+// SELEÇÃO: o jogador escolhe o lutador e depois o adversário (qualquer um dos três, inclusive o mesmo). Para um personagem novo
+// basta incluí-lo nesta lista (e definir o estilo em STY/MOV/PAL).
+const FIGHTERS=[
+ {s:'box',id:'Box',t:'BOXEADOR',n:'Rocco "Martelo"',d:'Jab, direto, gancho, uppercut. Esquiva no pêndulo.'},
+ {s:'tkd',id:'Tkd',t:'TAEKWONDO',n:'Ji-ho "Vendaval"',d:'Bandal, dollyo, dwi chagi, tornado. Acrobacias.'},
+ {s:'mt',id:'Mt',t:'MUAY THAI',n:'Kaen "Garra do Tigre"',d:'Cotovelos, joelhos e canelas. Acrobacias de cinema.'}];
+for(const [box,pre,pk] of [[$('cardsP'),'pick','P'],[$('cardsE'),'e','E']])for(const F of FIGHTERS){
+  const b=document.createElement('button');b.className='card';b.id=pre+F.id;
+  b.innerHTML=`<canvas id="pv${pk}${F.id}" width="60" height="60"></canvas><strong>${F.t}</strong><small>${F.n}<br>${F.d}</small>`;box.appendChild(b);
+  b.onclick=()=>{if(pk==='P'){chosen=F.s;if(location.hash==='#auto'){chosenE=F.s==='box'?'tkd':'box';begin(chosen,chosenE);return;}menuStep(1);}else{chosenE=F.s;begin(chosen,chosenE);}};}
+function menuStep(n){$('cardsP').hidden=n===1;$('cardsE').hidden=n!==1;$('backE').hidden=n!==1;
+  $('pickT').textContent=n===1?'Agora escolha o seu adversário.':'Escolha a dificuldade e o seu lutador.';
+  const c=n===1?$('cardsE').firstChild:$('cardsP').firstChild;if(c&&c.focus)c.focus();}
+$('backE').onclick=()=>menuStep(0);
+$('again').onclick=()=>begin(chosen,chosenE);
 // pausa e saída: o botão SAIR pausa a luta e pergunta (sem diálogos do navegador); Esc faz o mesmo no PC
 function setPause(v){ambMute(v);if(!running&&!v&&!paused)return;if(v&&!running&&!(introT>0))return;paused=v;$('pause').hidden=!v;if(v){inp.x=0;inp.z=0;inp.act=null;sid=null;stick.classList.remove('on');for(const k in keys)keys[k]=0;$('resume').focus();}}
 function showMenu(){
@@ -3082,15 +3209,16 @@ function showMenu(){
   $('banner').classList.remove('on');$('game').classList.remove('cine');cineOn=false;
   try{if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen();if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}
   setStage(0);demoFighters();camReset=true;koCam=null;cine=0;lbox=0;flashA=0;trauma=0;slowT=0;timeScale=1;hitstop=0;parts.length=0;trails.length=0;pops.length=0;
-  $('menu').hidden=false;preview('pvBox','box',PAL.boxP);preview('pvTkd','tkd',PAL.tkdP);$('pickBox').focus();
+  $('menu').hidden=false;menuStep(0);previewAll();$('pickBox').focus();
 }
 $('bExit').onclick=()=>setPause(true);$('resume').onclick=()=>setPause(false);$('quit').onclick=showMenu;$('quit2').onclick=showMenu;
 addEventListener('keydown',e=>{if(e.code==='Escape'&&!e.repeat&&(running||introT>0))setPause(!paused);});
-$('swap').onclick=()=>{chosen=chosen==='box'?'tkd':'box';begin(chosen);};
+$('swap').onclick=showMenu;
 
+function previewAll(){for(const F of FIGHTERS){preview('pvP'+F.id,F.s,PAL[F.s+'P']);preview('pvE'+F.id,F.s,PAL[F.s+'E']);}}
 // prévias animadas no menu (mostram golpes do estilo)
 function preview(id,style,pal){const c=$(id).getContext('2d');const f=mkF(style,true,pal,0,0);const list=SEQ[style].flat();let li=0,mt=0,mv=null,pt=performance.now();
-  (function draw(now){const dt=Math.min(.05,((now||pt)-pt)/1000);pt=now||pt;time+=0;mt+=dt;
+  (function draw(now){if(c.canvas.offsetParent===null){if(!$('menu').hidden)requestAnimationFrame(draw);return;}const dt=Math.min(.05,((now||pt)-pt)/1000);pt=now||pt;time+=0;mt+=dt;
     if(!mv&&mt>.9){mv=MOV[style][list[li++%list.length]];mt=0;f.ki=-1;f.st='atk';f.mv=mv;}
     if(mv){let ki=0;for(let i=0;i<mv.keys.length;i++)if(mt>=mv.keys[i][0])ki=i;if(ki!==f.ki){f.ki=ki;setPose(f,mv.keys[ki][1],mv.keys[ki][2],mv.keys[ki][3]);}
       f.spin=spinAt(mv,mt);
@@ -3114,7 +3242,7 @@ setTimeout(fontRebuild,3000);
 addEventListener('resize',resize);resize();
 function demoFighters(){player=mkF('box',true,PAL.boxP,-60,230);enemy=mkF('tkd',false,PAL.tkdE,60,230);enemy.st='idle';}
 demoFighters();
-preview('pvBox','box',PAL.boxP);preview('pvTkd','tkd',PAL.tkdP);
+previewAll();
 requestAnimationFrame(loop);
 })();
 </script>
