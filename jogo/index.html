@@ -3164,9 +3164,9 @@ function camUpdate(rdt,SK){
     else{m=1.3;cy=cyB-46;cz=30;fx=v.x;fz=v.z;fy=40;ax=.5+.14*side(v,w);}}
   else if(introT>0&&!shot){const el=INTRO-introT,seg=el<T0?0:el<T1?1:el<T2?2:3,sub=seg===1?p:seg===2?e:null;wF=5;
     // abertura: plano aberto que aproxima, depois plano fechado no destaque de cada um (órbita lenta, contra-plongée) e a encarada
-    if(sub){solo=sub;const o=sub===p?e:p,k=clamp((el-(seg===1?T0:T1))/TW,0,1);m=zB*(1.55+.25*Math.sin(PI*k));cy=cyB-38+10*k;cz=36;yaw=(-.2+.4*k)*(sub===p?1:-1)*face;tl=.03*Math.sin(k*PI*2)*face;fx=sub.x;fz=sub.z;fy=38+sub.y*.6;ax=.5+.1*side(sub,o);}
+    if(sub){solo=sub;const o=sub===p?e:p,k=clamp((el-(seg===1?T0:T1))/TW,0,1);m=zB*(1.55+.25*Math.sin(PI*k));cy=cyB-38+10*k;cz=36;yaw=(-.1+.2*k)*(sub===p?1:-1)*face;tl=0;fx=sub.x;fz=sub.z;fy=38+sub.y*.6;ax=.5+.1*side(sub,o);}
     else if(seg===0){const k=el/T0;m=zB*(1.05+.12*k);cy=cyB-8;cz=0;fx=(p.x+e.x)/2;fz=(p.z+e.z)/2;fy=36;}
-    else{const k=clamp((el-T2)/.6,0,1);m=zB*(1.3+.14*k);cy=cyB-18;cz=22;yaw=.03*Math.sin(el*2);fx=(p.x+e.x)/2;fz=(p.z+e.z)/2;fy=40;}}
+    else{const k=clamp((el-T2)/.6,0,1);m=zB*(1.3+.14*k);cy=cyB-18;cz=22;yaw=0;fx=(p.x+e.x)/2;fz=(p.z+e.z)/2;fy=40;}}
   else if(shot){const sub=shot.f==='p'?p:shot.f==='e'?e:null;wF=6;
     m=shot.m;cy=shot.cy+(cyB-80)*.3;cz=shot.cz;yaw=shot.yaw*face;tl=shot.t*face;crop=TRC?0:shot.crop; // na trocação o corpo inteiro (pés incluídos) precisa caber no quadro
     ay=shot.ay;
