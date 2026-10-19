@@ -187,6 +187,29 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 .card.scn.on strong{color:var(--amber)}
 @media (max-height:420px){.scTitle{font-size:15px;padding:4px 14px}.card.scn{width:118px;padding:4px}.card.scn canvas{width:108px;height:61px}.scbtn{font-size:9px;padding:5px 12px}}
 .screen>:first-child{margin-top:auto}.screen>:last-child{margin-bottom:auto}
+/* MINIMALISTA: bordas de 1px, sem brilhos nem sombras duras grossas; seleção marcada só pela cor da linha */
+.card,.scbtn,.scwarn,.dif,.cta,#pickT,.scTitle,.exit{border-width:1px!important;box-shadow:none!important}
+.card{border-color:rgba(239,230,210,.28)}
+#pickT,.scTitle{text-shadow:none!important;font-size:calc(15px*var(--m))!important;padding:calc(6px*var(--m)) calc(18px*var(--m))!important;letter-spacing:.14em}
+#pickT.pk0{border-color:#fff}#pickT.pk1{border-color:#4da3ff;color:#4da3ff}
+.card.selP{border-color:#fff!important;background:rgba(255,255,255,.1)}
+.card.selE{border-color:#4da3ff!important;background:rgba(77,163,255,.12)}
+.card.selP.selE{border-color:#4da3ff!important}
+.card.scn.on{border-color:var(--amber)!important}
+.card.scn canvas{border:0}
+.scbtn{border-color:var(--amber)}.scbtn.need{animation:none;background:rgba(242,169,59,.25)}
+.scwarn{background:rgba(192,57,43,.9);border-color:rgba(255,255,255,.6)}
+.dif{border-color:rgba(239,230,210,.35)}.dif.on{border-color:var(--paper)}
+.cta{box-shadow:none}
+#menu h1,.screen h1{text-shadow:calc(2px*var(--m)) calc(2px*var(--m)) 0 var(--blood)!important}
+#menu .card strong,#menu .card small,#menu .difd{text-shadow:0 1px 0 #000!important}
+.card:focus-visible,.cta:focus-visible,.dif:focus-visible,.scbtn:focus-visible{outline-width:1px;outline-offset:2px}
+#pad button{border-width:2px;box-shadow:none}#pad button:active,#pad button.dn{box-shadow:none;transform:none;background:rgba(239,230,210,.25)}
+.hp{border-width:1px;box-shadow:none}.aib,#flow i,.wins span,#trcP i,#trcB{border-width:1px}
+#stick,#knob{border-width:1px}
+.fname,#combo span,#combo em,#banner p{text-shadow:0 1px 0 var(--ink)}
+#combo b{text-shadow:2px 2px 0 var(--ink)}
+#banner h2{text-shadow:calc(2px*var(--t)) calc(2px*var(--t)) 0 var(--blood)}
 </style>
 
 <div id="game">
