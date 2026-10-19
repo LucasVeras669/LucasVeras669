@@ -188,10 +188,11 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 @media (max-height:420px){.scTitle{font-size:15px;padding:4px 14px}.card.scn{width:118px;padding:4px}.card.scn canvas{width:108px;height:61px}.scbtn{font-size:9px;padding:5px 12px}}
 .screen>:first-child{margin-top:auto}.screen>:last-child{margin-bottom:auto}
 .mv{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(20px*var(--m));margin:auto 0}.mv[hidden]{display:none}
-#logo{width:min(92vw,calc(520px*var(--m)));height:auto;overflow:visible;filter:drop-shadow(0 4px 0 rgba(0,0,0,.4))}
+#logo,#logo2{width:min(92vw,calc(520px*var(--m)));height:auto;overflow:visible;filter:drop-shadow(0 4px 0 rgba(0,0,0,.4))}
+#logo2{width:min(64vw,calc(300px*var(--m)))}
 .startBtn{font-family:var(--display);font-size:calc(14px*var(--m));letter-spacing:.3em;padding:calc(10px*var(--m)) calc(40px*var(--m));color:var(--paper);background:rgba(13,11,18,.55);border:1px solid var(--paper);box-shadow:none;transform:none;cursor:pointer;min-height:44px;text-shadow:none}
 .startBtn:hover,.startBtn:active{background:rgba(239,230,210,.18)}
-@media (max-height:420px){#logo{width:min(56vw,300px)}.startBtn{font-size:11px;padding:6px 32px;min-height:34px}.mv{gap:8px}}
+@media (max-height:420px){#logo{width:min(56vw,300px)}#logo2{width:min(30vw,170px)}.startBtn{font-size:11px;padding:6px 32px;min-height:34px}.mv{gap:8px}}
 /* MINIMALISTA: bordas de 1px, sem brilhos nem sombras duras grossas; seleção marcada só pela cor da linha */
 .card,.scbtn,.scwarn,.dif,.cta,#pickT,.scTitle,.exit{border-width:1px!important;box-shadow:none!important}
 .card{border-color:rgba(239,230,210,.28)}
@@ -250,7 +251,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
       <button class="startBtn" id="startBtn" aria-label="Começar">START</button>
     </div>
     <div class="mv" id="pickView" hidden>
-    <h1>FIGHT FLOW<br>BRUTAL</h1>
+    <svg id="logo2" class="logoS" viewBox="0 0 380 150" role="img" aria-label="Fight Flow Brutal"></svg>
     <div class="difs" role="radiogroup" aria-label="Dificuldade"><button class="dif" data-d="facil" role="radio">FÁCIL</button><button class="dif" data-d="medio" role="radio">MÉDIO</button><button class="dif" data-d="mestre" role="radio">MESTRE</button></div>
     <p class="difd" id="difd"></p>
     <h2 id="pickT" class="pk0">ESCOLHA O SEU LUTADOR</h2>
@@ -3961,12 +3962,13 @@ $('startBtn').onclick=()=>{au();menuStage();camReset=true;showPick(true);$('pick
 // TELA DE ENTRADA EM ESTILO ANIME: o logo é desenhado em vetor (SVG) com contorno grosso de tinta; o fundo é o Centro de Treino
 const AK='#1b1224';
 function groupPhoto(){
-  const lg=`<defs><linearGradient id="lgR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd166"/><stop offset=".45" stop-color="#ff6a3c"/><stop offset="1" stop-color="#d4202c"/></linearGradient></defs>
+  // o mesmo logo nas duas telas; cada um com seu próprio degradê (um id repetido quebraria quando a outra tela está escondida)
+  const mk=id=>`<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd166"/><stop offset=".45" stop-color="#ff6a3c"/><stop offset="1" stop-color="#d4202c"/></linearGradient></defs>
     <g transform="skewX(-10) translate(14 0)" font-family="Bangers,Impact,sans-serif" text-anchor="middle" stroke-linejoin="round" paint-order="stroke">
       <text x="190" y="62" font-size="58" fill="#fff" stroke="${AK}" stroke-width="12" letter-spacing="3">FIGHT FLOW</text>
-      <text x="190" y="132" font-size="92" fill="url(#lgR)" stroke="${AK}" stroke-width="14" letter-spacing="2">BRUTAL</text>
+      <text x="190" y="132" font-size="92" fill="url(#${id})" stroke="${AK}" stroke-width="14" letter-spacing="2">BRUTAL</text>
       <text x="190" y="132" font-size="92" fill="none" stroke="#fff" stroke-width="2" letter-spacing="2" opacity=".55">BRUTAL</text></g>`;
-  $('logo').innerHTML=lg;
+  $('logo').innerHTML=mk('lgR');$('logo2').innerHTML=mk('lgR2');
 }
 function showMenu(){
   paused=false;running=false;matchOver=false;roundOver=0;inp.act=null;inp.x=0;inp.z=0;sid=null;stick.classList.remove('on');
