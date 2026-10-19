@@ -2629,8 +2629,12 @@ const mip=(src,f)=>{const m=document.createElement('canvas');m.width=Math.max(1,
   q.imageSmoothingEnabled=true;q.imageSmoothingQuality='high';q.drawImage(src,0,0,m.width,m.height);return m;};
 function mkPlane(x0,w,y0,y1,draw){const S=2,c=document.createElement('canvas');c.width=w*S;c.height=Math.ceil((y1-y0)*S);const g=c.getContext('2d');
   g.setTransform(S,0,0,-S,-x0*S,y1*S);draw(g);const c1=mip(c,.5);return {x0,w,y0,y1,L:[{c,s:2},{c:c1,s:1},{c:mip(c1,.5),s:.5}]};}
+// nível de mip com histerese: a textura só troca quando a escala passa claramente do limite, senão o fundo pisca/balança durante o zoom da abertura
+function planeLevel(T,k){let l=T._l;if(l===undefined||CAM.cut)l=k>1.05?0:k>.52?1:2;
+  else{if(l>0&&k>1.05*1.18)l=0;else if(l>1&&k>.52*1.18)l=1;else if(l<2&&k<.52/1.18)l=2;else if(l<1&&k<1.05/1.18)l=1;}
+  return T._l=l;}
 function drawPlane(T,z){
-  const vb=CAM.vb,k=F/(z-camZ)*CAM.zoom.x,M=T.L[k>1.05?0:k>.52?1:2],s=M.s,X1=T.x0+T.w,h=T.y1-T.y0;
+  const vb=CAM.vb,k=F/(z-camZ)*CAM.zoom.x,li=planeLevel(T,k),M=T.L[li],s=M.s,X1=T.x0+T.w,h=T.y1-T.y0;
   if(P(camX,T.y0,z)[1]<vb[1]||P(camX,T.y1,z)[1]>vb[3]+2)return;
   ctx.imageSmoothingEnabled=true;
   if(Math.abs(camYaw)<1e-4){const sw=F/(z-camZ),xa=Math.max(T.x0,Math.floor(camX+(vb[0]-W/2)/sw-4)),xb=Math.min(X1,Math.ceil(camX+(vb[2]-W/2)/sw+4));
@@ -3164,7 +3168,7 @@ function camUpdate(rdt,SK){
     else{m=1.3;cy=cyB-46;cz=30;fx=v.x;fz=v.z;fy=40;ax=.5+.14*side(v,w);}}
   else if(introT>0&&!shot){const el=INTRO-introT,seg=el<T0?0:el<T1?1:el<T2?2:3,sub=seg===1?p:seg===2?e:null;wF=5;
     // abertura: plano aberto que aproxima, depois plano fechado no destaque de cada um (órbita lenta, contra-plongée) e a encarada
-    if(sub){solo=sub;const o=sub===p?e:p,k=clamp((el-(seg===1?T0:T1))/TW,0,1);m=zB*(1.55+.25*Math.sin(PI*k));cy=cyB-38+10*k;cz=36;yaw=(-.1+.2*k)*(sub===p?1:-1)*face;tl=0;fx=sub.x;fz=sub.z;fy=38+sub.y*.6;ax=.5+.1*side(sub,o);}
+    if(sub){solo=sub;const o=sub===p?e:p,k=clamp((el-(seg===1?T0:T1))/TW,0,1);m=zB*(1.55+.25*Math.sin(PI*k));cy=cyB-38+10*k;cz=36;yaw=0;tl=0;/* sem rotação: com yaw o fundo pré-pintado é desenhado em faixas e as junções tremem */fx=sub.x;fz=sub.z;fy=38+sub.y*.6;ax=.5+.1*side(sub,o);}
     else if(seg===0){const k=el/T0;m=zB*(1.05+.12*k);cy=cyB-8;cz=0;fx=(p.x+e.x)/2;fz=(p.z+e.z)/2;fy=36;}
     else{const k=clamp((el-T2)/.6,0,1);m=zB*(1.3+.14*k);cy=cyB-18;cz=22;yaw=0;fx=(p.x+e.x)/2;fz=(p.z+e.z)/2;fy=40;}}
   else if(shot){const sub=shot.f==='p'?p:shot.f==='e'?e:null;wF=6;
