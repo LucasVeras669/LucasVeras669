@@ -251,6 +251,11 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 #pad button{border-width:1px!important;border-color:rgba(239,230,210,.55)!important;font-weight:400;letter-spacing:.1em}
 .hp{border-color:rgba(239,230,210,.5)!important}
 #logo,#logo2{filter:none}
+.scSep{flex:0 0 100%;height:1px;background:rgba(242,169,59,.45);margin:calc(4px*var(--m)) 0}
+.card.scn.trn2{border-color:rgba(242,169,59,.85)!important;background:rgba(60,40,8,.55)!important}
+.card.scn.trn2 .trTag{font-style:normal;font-size:calc(10px*var(--m));letter-spacing:.3em;color:#f2a93b;margin-bottom:2px}
+.card.scn.trn2 strong{color:#f2a93b}
+@media (max-height:420px){.card.scn.trn2 .trTag{font-size:8px}.scSep{margin:0}}
 </style>
 
 <div id="game">
@@ -3951,17 +3956,20 @@ const sceneLabel=()=>{};
 function openScenes(){
   const keep=STAGE;$('scenes').hidden=false;const list=$('cardsS');list.innerHTML='';
   const mkCard=(id,title,sub)=>{const b=document.createElement('button');b.className='card scn'+(SCENE_SEL===id?' on':'');b.dataset.id=id;
-    b.innerHTML=`<canvas width="160" height="90"></canvas><strong>${title}</strong><small>${sub}</small>`;b.onclick=()=>{SCENE_SEL=id;sceneLabel();closeScenes();warnScene(false);if(selStep===2)startPair();};list.appendChild(b);return b.querySelector('canvas');};
+    b.innerHTML=`<canvas width="160" height="90"></canvas><strong>${title}</strong><small>${sub}</small>`;b.onclick=()=>{SCENE_SEL=id;sceneLabel();closeScenes();warnScene(false);trainPanel();if(selStep===2)setTimeout(startPair,id===3?800:0);};list.appendChild(b);return b.querySelector('canvas');};
   // miniaturas: o próprio jogo desenha cada cenário no quadro e a imagem é copiada para o cartão
-  const th=[];for(const c of [SCN[0],SCN[1],SCN[2],SCN[4],SCN[3]]){const cv2=mkCard(c.id,c.t,'');th.push(cv2);
+  const th=[];for(const c of [SCN[0],SCN[1],SCN[2],SCN[4],SCN[3]]){const cv2=mkCard(c.id,c.t,c.id===3?'treino: você contra um boneco de madeira':'');th.push(cv2);
     setStage(c.id);camReset=true;try{render(.016);render(.016);}catch(e){}
     const sw=cv.width,sh=Math.min(cv.height,Math.round(cv.width*9/16)),sy=Math.round((cv.height-sh)/2);
     const g=cv2.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(cv,0,sy,sw,sh,0,0,160,90);}
   setStage(keep);camReset=true;
+  // o treino sai da fileira e fica separado dos outros, em dourado
+  const tc=list.querySelector('.card.scn[data-id="3"]');tc.classList.add('trn2');tc.insertAdjacentHTML('afterbegin','<em class="trTag">MODO TREINO</em>');
   const rc=mkCard(-1,'ALEATÓRIO','um cenário diferente a cada round');
   // cartão aleatório: colagem das cinco miniaturas com um ponto de interrogação
   const g=rc.getContext('2d');g.imageSmoothingEnabled=false;th.forEach((t,i)=>{g.drawImage(t,i*32,0,32,90,i*32,0,32,90);});
   g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,0,160,90);g.fillStyle='#f2a93b';g.font='bold 54px monospace';g.textAlign='center';g.textBaseline='middle';g.fillText('?',80,48);
+  const sep=document.createElement('div');sep.className='scSep';list.appendChild(sep);list.appendChild(tc);
 }
 function closeScenes(){$('scenes').hidden=true;}
 $('sceneBtn').onclick=openScenes;$('scBack').onclick=closeScenes;
@@ -3982,13 +3990,13 @@ for(const F of FIGHTERS){
   b.onpointerenter=e=>{if(e.pointerType==='mouse'&&selStep<2)showPanel(selStep===0?1:2,F);};b.onpointerleave=e=>{if(e.pointerType==='mouse')showPanel(1,PANF[1]),showPanel(2,PANF[2]);};
   b.onclick=()=>{
     const am=/^#auto(?:=(\w+))?$/.exec(location.hash);
-    if(TRAINSEL||SCENE_SEL===3){chosen=F.s;PANF[1]=F;showPanel(1,F);setTimeout(()=>begin(F.s,'box',true),600);return;}
+    if(TRAINSEL||SCENE_SEL===3){chosen=F.s;PANF[1]=F;showPanel(1,F);trainPanel();setTimeout(()=>begin(F.s,'box',true),600);return;}
     if(selStep===0){chosen=F.s;if(am){chosenE=am[1]||(F.s==='box'?'tkd':'box');begin(chosen,chosenE);return;}
       PANF[1]=F;showPanel(1,F);selStep=1;b.classList.add('selP');$('pickT').textContent='ESCOLHA O SEU OPONENTE';$('pickT').className='pk1';return;}
-    if(selStep===1){chosenE=F.s;PANF[2]=F;showPanel(2,F);selStep=2;b.classList.add('selE');
+    if(selStep===1){chosenE=F.s;PANF[2]=F;showPanel(2,F);selStep=2;b.classList.add('selE');$('pickT').style.visibility='hidden';if(SCENE_SEL===3){PANF[2]=DUMMYF;showPanel(2,DUMMYF);}
       if(SCENE_SEL===-2){warnScene(true);return;}
       setTimeout(startPair,900);}};}
-function menuStep(){selStep=0;PANF[1]=PANF[2]=null;showPanel(1,null);showPanel(2,null);warnScene(false);TRAINSEL=false;if($('pickTrain'))$('pickTrain').classList.remove('selT');for(const c of $('cardsP').children)c.classList.remove('selP','selE');$('pickT').textContent='ESCOLHA O SEU LUTADOR';$('pickT').className='pk0';}
+function menuStep(){selStep=0;$('pickT').style.visibility='';PANF[1]=PANF[2]=null;showPanel(1,null);showPanel(2,null);warnScene(false);TRAINSEL=false;if($('pickTrain'))$('pickTrain').classList.remove('selT');for(const c of $('cardsP').children)c.classList.remove('selP','selE');$('pickT').textContent='ESCOLHA O SEU LUTADOR';$('pickT').className='pk0';}
 // TREINO: escolhendo o cenário Centro de Treino, o lutador escolhido entra direto no treino (parceiro de madeira, sem rounds)
 function drawTrainIcon(){const c=$('pvTrain').getContext('2d');c.imageSmoothingEnabled=false;c.clearRect(0,0,60,60);
   c.fillStyle='#7e5834';c.fillRect(0,0,60,40);c.fillStyle='#5a3c21';c.fillRect(0,34,60,6);c.fillStyle='#b88a56';c.fillRect(0,40,60,20);
@@ -4039,7 +4047,9 @@ function faceCard(id,style){
 }
 // PAINEL do lutador (estilo seleção de personagens): nome e estilo em cima e, embaixo, a animação dele golpeando em tamanho grande
 const PANF={1:null,2:null},PAN=[null,{style:null},{style:null}];
-function showPanel(n,F){const p=PAN[n];$('pn'+n+'n').textContent=F?F.n:'?';$('pn'+n+'s').textContent=F?F.t:'escolha';$('pn'+n).classList.toggle('on',!!F);if((F&&F.s)!==p.style){p.style=F?F.s:null;p.f=null;}}
+function trainPanel(){if(SCENE_SEL===3){PANF[2]=DUMMYF;showPanel(2,DUMMYF);}else if(PANF[2]===DUMMYF){PANF[2]=null;showPanel(2,null);}}
+const DUMMYF={n:'Boneco',t:'TREINO',s:'box',dummy:true};
+function showPanel(n,F){const p=PAN[n];p.dummy=!!(F&&F.dummy);$('pn'+n+'n').textContent=F?F.n:'?';$('pn'+n+'s').textContent=F?F.t:'escolha';$('pn'+n).classList.toggle('on',!!F);if((F&&F.s)!==p.style){p.style=F?F.s:null;p.f=null;}}
 function panelLoop(){
   const st=[null,{mt:0,mv:null,li:0,pt:performance.now()},{mt:0,mv:null,li:0,pt:performance.now()}];
   (function draw(now){
@@ -4047,9 +4057,9 @@ function panelLoop(){
     if($('pickView').hidden){requestAnimationFrame(draw);return;}
     for(const n of [1,2]){const p=PAN[n],q=st[n],cv=$('pn'+n+'c'),c=cv.getContext('2d');c.imageSmoothingEnabled=false;c.clearRect(0,0,180,150);
       if(!p.style){c.font='300 96px Jost, Arial, sans-serif';c.textAlign='center';c.fillStyle='rgba(239,230,210,.16)';c.fillText('?',90,112);continue;}
-      if(!p.f){p.f=mkF(p.style,n===1,palFor(p.style,0,n===1),0,Z0);q.mt=0;q.mv=null;q.li=0;q.last=now;p.list=SEQ[p.style].flat();}
+      if(!p.f){p.f=mkF(p.style,n===1,palFor(p.style,0,n===1),0,Z0);if(p.dummy)Object.assign(p.f.pal,WOODPAL);q.mt=0;q.mv=null;q.li=0;q.last=now;p.list=SEQ[p.style].flat();}
       const f=p.f,dt=Math.min(.05,((now||q.pt)-(q.last||now||q.pt))/1000);q.last=now;q.mt+=dt;
-      if(!q.mv&&q.mt>.7){q.mv=MOV[p.style][p.list[q.li++%p.list.length]];q.mt=0;f.ki=-1;f.st='atk';f.mv=q.mv;}
+      if(!q.mv&&q.mt>.7&&!p.dummy){q.mv=MOV[p.style][p.list[q.li++%p.list.length]];q.mt=0;f.ki=-1;f.st='atk';f.mv=q.mv;}
       if(q.mv){const mv=q.mv;let ki=0;for(let i=0;i<mv.keys.length;i++)if(q.mt>=mv.keys[i][0])ki=i;if(ki!==f.ki){f.ki=ki;setPose(f,mv.keys[ki][1],mv.keys[ki][2],mv.keys[ki][3]);}
         f.spin=spinAt(mv,q.mt);f.rot=rotAt(mv,q.mt);f.tw=mv.tw?mv.tw*(q.mt<mv.h0?eout(clamp(q.mt/mv.h0,0,1)):1-ease(clamp((q.mt-mv.h0)/(mv.d-mv.h0),0,1))):0;f.twS=mv.twS;
         f.y=mv.jump?Math.sin(Math.min(1,q.mt/(mv.d*.85))*PI)*mv.jump*.6:0;
