@@ -3829,7 +3829,11 @@ addEventListener('resize',resize);resize();
 // cenário do fundo do menu: sorteado entre os quatro (subsolo, cidade, praia e centro de treino) a cada vez, sem repetir o anterior
 let lastMenuStage=-1,menuBag=[];
 // saco embaralhado: os quatro cenários aparecem todos antes de qualquer um repetir
-function menuStage(){if(!menuBag.length){menuBag=shuffle([0,1,2,3]);if(menuBag[menuBag.length-1]===lastMenuStage)menuBag.reverse();}const n=menuBag.pop();lastMenuStage=n;setStage(n);}
+// o último cenário também fica guardado no aparelho: ao abrir o jogo do zero ele nunca repete o da visita anterior
+function menuStage(){
+  if(lastMenuStage<0){try{const v=parseInt(localStorage.getItem('fb_menuStage'));if(v>=0&&v<4)lastMenuStage=v;}catch(e){}}
+  if(!menuBag.length||menuBag[menuBag.length-1]===lastMenuStage){menuBag=shuffle([0,1,2,3]);if(menuBag[menuBag.length-1]===lastMenuStage)menuBag.reverse();}
+  const n=menuBag.pop();lastMenuStage=n;try{localStorage.setItem('fb_menuStage',String(n));}catch(e){}setStage(n);}
 function demoFighters(){player=mkF('box',true,palFor('box',0,true),-60,230);enemy=mkF('tkd',false,palFor('tkd',0,false),60,230);enemy.st='idle';}
 demoFighters();menuStage();
 previewAll();
