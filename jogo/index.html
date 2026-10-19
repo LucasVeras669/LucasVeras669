@@ -3959,7 +3959,7 @@ $('again').onclick=()=>begin(chosen,chosenE);
 // pausa e saída: o botão SAIR pausa a luta e pergunta (sem diálogos do navegador); Esc faz o mesmo no PC
 function setPause(v){ambMute(v);if(!running&&!v&&!paused)return;if(v&&!running&&!(introT>0))return;paused=v;$('pause').hidden=!v;if(v){inp.x=0;inp.z=0;inp.act=null;sid=null;stick.classList.remove('on');for(const k in keys)keys[k]=0;$('resume').focus();}}
 function showPick(v){TITLE_ON=!v;$('titleView').hidden=v;$('pickView').hidden=!v;if(!v)groupPhoto();}
-$('startBtn').onclick=()=>{au();showPick(true);$('pickBox').focus();};
+$('startBtn').onclick=()=>{au();menuStage();camReset=true;showPick(true);$('pickBox').focus();};
 // FOTO DE GRUPO da tela de entrada: os quatro lutadores de frente para a câmera, como numa foto de banda (dois atrás, dois na frente),
 // sorrindo e respirando devagar. Desenhados em pixel art de frente com as cores de cada estilo
 function frontFig(c,st,pal,x,y,k,t,ph){
@@ -4041,7 +4041,7 @@ function menuStage(){
   if(!menuBag.length||menuBag[menuBag.length-1]===lastMenuStage){menuBag=shuffle([0,1,2,3,4]);if(menuBag[menuBag.length-1]===lastMenuStage)menuBag.reverse();}
   const n=menuBag.pop();lastMenuStage=n;try{localStorage.setItem('fb_menuStage',String(n));}catch(e){}setStage(n);}
 function demoFighters(){player=mkF('box',true,palFor('box',0,true),-60,230);enemy=mkF('tkd',false,palFor('tkd',0,false),60,230);enemy.st='idle';}
-demoFighters();menuStage();
+demoFighters();setStage(3);
 previewAll();groupPhoto();
 requestAnimationFrame(loop);
 })();
