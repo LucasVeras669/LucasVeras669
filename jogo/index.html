@@ -64,7 +64,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 /* modo cinema (cena de contra e ESPECIAL, quando a entrada já está travada): botões e HUD esmaecem (CAME-4) */
 #hud,#combo,#pad,#stickHint{transition:opacity .2s}
 .cine #pad,.cine #stickHint{opacity:.15}
-.cine #hud,.cine #combo{opacity:.35}
+.cine #hud,.cine #combo,.cine .exit{opacity:0;transition:opacity .2s}
 #banner h2{margin:0;font-size:clamp(28px,8vw,calc(56px*var(--t)));color:var(--paper);text-shadow:calc(4px*var(--t)) calc(4px*var(--t)) 0 var(--blood),calc(8px*var(--t)) calc(8px*var(--t)) 0 var(--ink);letter-spacing:.06em}
 #banner p{margin:calc(8px*var(--t)) auto 0;font-family:var(--body);font-size:calc(13.3px*var(--t));max-width:40ch;text-shadow:2px 2px 0 var(--ink);padding:0 calc(16px*var(--t))}
 #stick{position:absolute;width:calc(110px*var(--u));height:calc(110px*var(--u));margin:calc(-55px*var(--u)) 0 0 calc(-55px*var(--u));border:2px solid var(--glass);border-radius:50%;background:rgba(13,11,18,.25);pointer-events:none;opacity:0;transition:opacity .15s}
@@ -152,7 +152,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 .exit:active{transform:translateX(-50%) translateY(2px)}
 .exit:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 .screen.pz{background:rgba(13,11,18,.78)}
-.cine .exit{opacity:.25}
+.cine .exit{pointer-events:none}
 .difs{display:flex;gap:calc(20px*var(--m));justify-content:center;flex-wrap:wrap}
 .dif{font-family:var(--display);font-size:calc(11.2px*var(--m));letter-spacing:.08em;padding:calc(8px*var(--m)) calc(14px*var(--m));min-height:44px;background:rgba(13,11,18,.55);color:var(--paper);border:2px solid rgba(239,230,210,.45);cursor:pointer}
 .dif.on{background:var(--blood);border-color:var(--paper)}
