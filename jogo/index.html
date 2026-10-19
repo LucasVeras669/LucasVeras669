@@ -3758,7 +3758,7 @@ const FIGHTERS=[
 let selStep=0;
 for(const F of FIGHTERS){
   const b=document.createElement('button');b.className='card';b.id='pick'+F.id;b.dataset.s=F.s;
-  b.innerHTML=`<canvas id="pvP${F.id}" width="60" height="60"></canvas><strong>${F.t}</strong><small>${F.n}<br>${F.d}</small>`;$('cardsP').appendChild(b);
+  b.innerHTML=`<canvas id="pvP${F.id}" width="60" height="60"></canvas><strong>${F.n}</strong><small>${F.t}</small>`;$('cardsP').appendChild(b);
   b.onclick=()=>{
     const am=/^#auto(?:=(\w+))?$/.exec(location.hash);
     if(TRAINSEL){chosen=F.s;begin(F.s,'box',true);return;}
@@ -3769,7 +3769,7 @@ for(const F of FIGHTERS){
 function menuStep(){selStep=0;TRAINSEL=false;if($('pickTrain'))$('pickTrain').classList.remove('selT');for(const c of $('cardsP').children)c.classList.remove('selP','selE');$('pickT').textContent='ESCOLHA O SEU LUTADOR';$('pickT').className='pk0';}
 // TREINO: cartão dourado ao lado dos lutadores; toque nele e depois no lutador para treinar no Centro de Treino
 {const b=document.createElement('button');b.className='card trn';b.id='pickTrain';
-  b.innerHTML='<canvas id="pvTrain" width="60" height="60"></canvas><span class="tt"><strong>TREINO</strong><small>Centro de Treino<br>Sacos de pancada e bonecos de pau. Sem rival.</small></span>';$('cardsP').appendChild(b);
+  b.innerHTML='<canvas id="pvTrain" width="60" height="60"></canvas><span class="tt"><strong>TREINO</strong><small>CENTRO DE TREINO</small></span>';$('cardsP').appendChild(b);
   b.onclick=()=>{TRAINSEL=!TRAINSEL;b.classList.toggle('selT',TRAINSEL);selStep=0;for(const c of $('cardsP').children)c.classList.remove('selP','selE');
     $('pickT').textContent=TRAINSEL?'ESCOLHA O LUTADOR DO TREINO':'ESCOLHA O SEU LUTADOR';$('pickT').className=TRAINSEL?'pk1':'pk0';};}
 function drawTrainIcon(){const c=$('pvTrain').getContext('2d');c.imageSmoothingEnabled=false;c.clearRect(0,0,60,60);
