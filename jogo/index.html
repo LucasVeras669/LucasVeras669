@@ -258,7 +258,7 @@ function palFor(style,ci,isP){
   return o;}
 function colorsFor(style,es){const a=Math.floor(Math.random()*5);let b=Math.floor(Math.random()*5);if(style===es)while(b===a)b=Math.floor(Math.random()*5);return [a,b];}
 const WOODPAL={skin:'#b4864f',skinD:'#7b5630',skinH:'#d9b27a',hair:'#8a6238',hairH:'#a6784a',sh:'#9a7040',shD:'#5e4122',trim:'#c9a46a',trimD:'#8a6c3c',gl:'#a8793f',glD:'#6b4a26',glH:'#d9b27a',boot:'#7b5630',bootD:'#5e4122',bootH:'#a8793f',sole:'#c9a46a',trail:'#d9b27a'};
-const NAMES={box:'Daniel Reyes',tkd:'Min-jun Park'};
+const NAMES={box:'Henrique',tkd:'Minjun'};
 
 // ---------- poses: [inclinação, cabeça, ombroF, cotoveloF, ombroT, cotoveloT, quadrilF, joelhoF, quadrilT, joelhoT] ----------
 // ginga da capoeira: lado A (perna direita na frente, braço esquerdo guardando o rosto) e lado B (espelho), e um floreio de perna
@@ -1213,7 +1213,7 @@ FIN.mt={nm:['FÚRIA DO TIGRE','COTOVELOS DO DRAGÃO','REI DOS JOELHOS'],
   n:[['jb','tec','khao','khaof'],['sok','sob','sokt','sokc'],['khao','kok','te','khaof']],
   s:[['jb','cx','sok','khao','sokt','khaof','sokp'],['sok','sob','sokt','sokd','khao','sokc'],['tp','khao','kok','khok','te','khaof']]};
 SPSEQ.mt=[['sok','khao','khaof'],['te','sokt','sokp'],['tp','khao','sokc']];
-NAMES.mt='Somchai Wattana';
+NAMES.mt='Somchai';
 // paletas: pele morena, cabelo preto curto, calção de seda (vermelho / azul), cordas das mãos e dos braços (prajioud), mongkol
 PAL.mtP={skin:'#c68b58',skinD:'#86532f',skinH:'#e7b886',hair:'#15110f',hairH:'#383029',sh:'#b4222d',shD:'#661118',trim:'#e9c869',trimD:'#a88a38',wrap:'#ece1c6',wrapD:'#a99e80',rope:'#d9c58f',ropeD:'#8f7f55',band:'#efe4c6',gl:'#ece1c6',glD:'#a99e80',glH:'#ffffff',boot:'#c68b58',bootD:'#86532f',bootH:'#e7b886',sole:'#e7b886',trail:'#ffb347'};
 PAL.mtE={skin:'#b87d4d',skinD:'#7a4a29',skinH:'#d9a874',hair:'#1b1410',hairH:'#40352c',sh:'#1d3e82',shD:'#0f2250',trim:'#d8d8e0',trimD:'#8e8ea0',wrap:'#e8dfc8',wrapD:'#9f957a',rope:'#cdbb84',ropeD:'#85774f',band:'#e6d8b4',gl:'#e8dfc8',glD:'#9f957a',glH:'#ffffff',boot:'#b87d4d',bootD:'#7a4a29',bootH:'#d9a874',sole:'#d9a874',trail:'#6fb0ff'};
@@ -1249,7 +1249,7 @@ SCENES.mt={
 // arremesso do muay thai: clinch no pescoço (plum), joelhada de puxada e arremesso por cima do quadril
 const THRP={def:{GRAB,CRCH,LIFT,TOSS},mt:{GRAB:[.35,-.15,1.95,.7,1.9,.8,.45,-.6,-.45,-.3],CRCH:[.5,-.1,1.75,1.1,1.7,1.2,.5,-.5,1.95,-2.3],LIFT,TOSS}};
 
-// ================= CAPOEIRA (lutador 4) — ginga, pernadas em arco, giros baixos e acrobacias — Thiago Nascimento =================
+// ================= CAPOEIRA (lutador 4) — ginga, pernadas em arco, giros baixos e acrobacias — Tiago =================
 // Padrão de ouro dos três lutadores anteriores: física e cadência (antecipação → impacto → recuperação), defesa dinâmica, contra-ataques,
 // ESPECIAIS (3) e SUPERS (3) sorteados, arremesso, abertura e vitória. Golpes fiéis à arte: bênção, meia-lua de frente, martelo,
 // queixada, pisão, rasteira, armada, meia-lua de compasso, aú batido, ponteira (bananeira), escorão, galopante, cotovelada e mortal.
@@ -1335,7 +1335,7 @@ FIN.cap={nm:['RODA DE FOGO','GINGA MORTAL','VOO DO URUBU'],
   n:[['ben','mdp','bnh','amm'],['pis','mdp','mlf','pia'],['bnh','ben','mdp','mod']],
   s:[['mdp','mlf','bnh','pis','ben','mas','mod'],['ben','mdp','pis','bnh','mlf','mcp'],['mlf','bnh','mdp','pis','esc','arm']]};
 SPSEQ.cap=[['ben','mdp','amm'],['bnh','pis','pia'],['mdp','esc','mor']];
-NAMES.cap='Thiago Nascimento';
+NAMES.cap='Tiago';
 PAL.capP={skin:'#a86b40',skinD:'#6d4022',skinH:'#d19766',hair:'#16100c',hairH:'#392a20',gi:'#f4f2ea',giD:'#b3b0c0',giH:'#ffffff',lap:'#8a8a98',belt:'#e8b830',band:null,trail:'#ffd166'};
 PAL.capE={skin:'#8a5430',skinD:'#563118',skinH:'#b57d4e',hair:'#1c140f',hairH:'#40322a',gi:'#ecebe4',giD:'#a8a6b6',giH:'#ffffff',lap:'#7c7c8c',belt:'#2f7be0',band:null,trail:'#7fb4ff'};
 // defesa dinâmica: negativa (agacha com a mão no chão), cocorinha (agachado cobrindo a cabeça), corpo para trás, rolê e aú
@@ -3750,10 +3750,10 @@ let chosen='box',chosenE='tkd';
 // SELEÇÃO: o jogador escolhe o lutador e depois o adversário (qualquer um dos três, inclusive o mesmo). Para um personagem novo
 // basta incluí-lo nesta lista (e definir o estilo em STY/MOV/PAL).
 const FIGHTERS=[
- {s:'box',id:'Box',t:'BOXE',n:'Daniel Reyes',d:'Jab, direto, gancho, uppercut. Esquiva no pêndulo.'},
- {s:'tkd',id:'Tkd',t:'TAEKWONDO',n:'Min-jun Park',d:'Bandal, dollyo, dwi chagi, tornado. Acrobacias.'},
- {s:'mt',id:'Mt',t:'MUAY THAI',n:'Somchai Wattana',d:'Cotovelos, joelhos e canelas. Acrobacias de cinema.'},
- {s:'cap',id:'Cap',t:'CAPOEIRA',n:'Thiago Nascimento',d:'Ginga, meia-lua, armada, rasteira. Acrobacias.'}];
+ {s:'box',id:'Box',t:'BOXE',n:'Henrique',d:'Jab, direto, gancho, uppercut. Esquiva no pêndulo.'},
+ {s:'tkd',id:'Tkd',t:'TAEKWONDO',n:'Minjun',d:'Bandal, dollyo, dwi chagi, tornado. Acrobacias.'},
+ {s:'mt',id:'Mt',t:'MUAY THAI',n:'Somchai',d:'Cotovelos, joelhos e canelas. Acrobacias de cinema.'},
+ {s:'cap',id:'Cap',t:'CAPOEIRA',n:'Tiago',d:'Ginga, meia-lua, armada, rasteira. Acrobacias.'}];
 // uma tela só: o 1º toque marca o SEU lutador (borda branca brilhante), o 2º marca o ADVERSÁRIO (borda azul brilhante) e a luta começa
 let selStep=0;
 for(const F of FIGHTERS){
