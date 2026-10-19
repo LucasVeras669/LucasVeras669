@@ -362,7 +362,8 @@ const COLS=[
  {n:'branca',main:'#efeee8',dark:'#a8a7b4',light:'#ffffff',acc:'#c62a32'}];
 function palFor(style,ci,isP){
   const b=PAL[style+(isP?'P':'E')],C=COLS[ci],o=Object.assign({},b);
-  if(style==='tkd'||style==='cap'||style==='sam'){Object.assign(o,{gi:C.main,giD:C.dark,giH:C.light,lap:mixHex(C.main,C.dark,.55),belt:C.acc,band:isP?C.acc:null,trail:C.light});}
+  if(style==='sam'){const red=C.n==='preta';Object.assign(o,{gi:'#26262d',giD:'#101014',giH:'#52525e',lap:'#3a3a46',belt:C.acc,band:null,armor:red?'#8f2a24':C.main,armorD:red?'#4a1512':C.dark,armorH:red?'#c4524a':C.light,sash:red?'#6a1c1c':C.dark,gold:'#c9a24a',trail:C.light});}
+  else if(style==='tkd'||style==='cap'){Object.assign(o,{gi:C.main,giD:C.dark,giH:C.light,lap:mixHex(C.main,C.dark,.55),belt:C.acc,band:isP?C.acc:null,trail:C.light});}
   else if(style==='box'){Object.assign(o,{sh:C.main,shD:C.dark,trim:C.acc,trimD:mixHex(C.acc,'#000000',.3),gl:C.main,glD:C.dark,glH:C.light,trail:C.light});}
   else{Object.assign(o,{sh:C.main,shD:C.dark,trim:C.acc,trimD:mixHex(C.acc,'#000000',.3),band:C.acc,trail:C.light});}
   return o;}
@@ -1488,38 +1489,42 @@ THRP.cap={GRAB:[.5,-.1,1.6,1.0,1.5,1.1,.6,-1.0,-.5,-.4],CRCH:[.9,0,1.3,1.0,1.2,1
 // golpes de espada é maior que o dos punhos. Mesmos padrões dos outros lutadores: física, defesa dinâmica, contras, ESPECIAIS e SUPERS
 const GSAM=[.2,-.1,.9,.6,.75,.8,.45,-.6,-.4,-.2],SBLK=[.1,-.3,2.3,1.2,2.2,1.3,.4,-.5,-.4,-.3];
 G.sam=GSAM;DASHP.sam=[.4,-.1,1.0,.5,.8,.7,.85,-1.2,-.7,-.5];BLOCK.sam=SBLK;
-WIN.sam=[-.05,-.3,2.9,.3,2.7,.4,.3,-.2,-.25,-.1];
+WIN.sam=[0,-.25,.35,.2,.3,.25,.3,-.2,-.25,-.1]; // chiburi: espada baixa ao lado do corpo, após o último golpe
 WK.sam={f:4.9,b:-12,y:-25,c:15,a:.28,L:4.6};STR.sam=15;
+// Técnicas reais do kenjutsu e do iaijutsu, em movimento curto, direto e rápido (sem giros nem saltos): nukitsuke (saque horizontal),
+// shomen-uchi/kirioroshi (corte vertical), kesa-giri (diagonal descendente), kiriage (diagonal ascendente), do-uchi/yokogiri (corte
+// no flanco), tsuki (estocada), kote-uchi (corte no punho) e, do jujutsu, fumikomi-geri (chute empurrando), ashi-barai (rasteira) e hiza-geri
+const SPN=[.35,-.1,.4,1.3,.7,1.2,.85,-1.2,-.6,-.4],SPNS=[.5,-.2,1.45,.1,1.35,.2,.65,-.8,-.65,-.1],JOD=[0,-.2,2.75,.55,2.65,.6,.4,-.5,-.4,-.2],KSA=[-.05,-.25,2.9,.4,2.8,.5,.4,-.6,-.4,-.2],KSS=[.7,-.1,.7,.6,.6,.7,.7,-.9,-.5,-.1];
 const SAMK={
- nuk:mk('Saque (Iaijutsu)',{lim:'fh',d:.3,a:.06,h:.12,A:[.4,-.1,.5,1.1,.9,1.2,.9,-1.2,-.6,-.4],S:[.55,-.2,1.5,.2,1.3,.5,.6,-.7,-.7,-.1],dmg:9,r:40,tw:.8,lunge:18,kb:35}),
- kes:mk('Corte diagonal (Kesa-giri)',{lim:'fh',d:.42,a:.13,h:.2,A:[-.15,-.2,2.9,.4,2.8,.5,.4,-.6,-.4,-.2],S:[.7,-.1,1.0,.3,.9,.4,.7,-.9,-.5,-.1],dmg:13,r:38,tw:.6,lunge:12,react:'knock',kb:70}),
- yok:mk('Corte lateral',{lim:'bh',d:.34,a:.08,h:.15,A:[.3,-.1,1.3,1.6,1.1,1.9,.5,-.6,-.5,-.3],S:[.5,-.2,1.35,-.2,1.25,0,.6,-.8,-.55,-.15],dmg:9,r:40,tw:1.3,lv:'body',kb:45}),
- tsu:mk('Estocada (Tsuki)',{lim:'fh',d:.36,a:.1,h:.17,A:[.4,-.1,.6,1.0,.55,1.1,.9,-1.3,-.6,-.4],S:[.75,-.15,1.3,.1,1.2,.15,.75,-.9,-.6,-.05],dmg:10,r:46,tw:.4,lunge:22,lv:'body',react:'stagger',kb:60}),
- gya:mk('Corte ascendente',{lim:'fh',d:.36,a:.1,h:.16,A:[.55,0,.5,.6,.45,.7,.7,-1.0,-.45,-.6],S:[0,-.3,2.5,.3,2.4,.4,.35,-.3,-.3,-.1],dmg:11,r:36,tw:.5,react:'stagger',kb:50}),
- kai:mk('Corte giratório (Kaiten-giri)',{lim:'fh',d:.6,a:.16,h:.38,A:[.3,.1,1.3,1.6,1.1,1.9,.5,-.7,-.5,-.5],S:[.6,-.15,1.4,0,1.3,.1,.6,-.8,-.5,-.3],dmg:14,r:40,spin:TAU,sa:1,wa:.3,ve:1.4,sm:.3,react:'knock',kb:90,lunge:10}),
- tob:mk('Salto cortante (Tobi-giri)',{lim:'fh',d:.6,a:.2,h:.32,A:[-.2,-.2,2.9,.4,2.8,.5,.5,-.8,-.3,-.3],S:[.7,-.1,1.0,.3,.9,.4,.6,-.7,-.4,-.1],dmg:15,r:38,jump:44,lunge:20,react:'knock',kb:110}),
- ent:mk('Avanço cortante',{lim:'fh',d:.3,a:.05,h:.1,A:[.55,-.2,.5,1.1,.9,1.2,.8,-1.3,-.7,-.55],S:[.55,-.2,1.5,.2,1.3,.5,.6,-.7,-.7,-.1],dmg:6,r:40,tw:.3,lunge:24}),
- mae:cl(TK.ban,{n:'Mae Geri'}),ura:cl(TK.dol,{n:'Mawashi Geri'}),
- hiz:mk('Hiza Geri',{lim:'fk',d:.4,a:.1,h:.19,A:[.55,.1,1.25,2.0,1.0,2.2,1.55,-2.4,.6,-1.5],S:[.12,-.15,2.3,1.0,2.45,1.25,2.35,-2.35,.2,-.55],dmg:11,r:28,lunge:14,react:'knock',kb:90,lv:'body'}),
- cct:mk('Contra-corte',{lim:'fh',d:.46,a:.12,h:.19,A:[.2,-.1,2.5,.5,2.4,.6,.5,-.6,-.5,-.3],S:[.7,-.2,1.0,.3,.9,.4,.7,-.9,-.6,-.1],dmg:15,r:38,tw:.6,react:'knock',kb:90,ka:900}),
- cdw:mk('Contra-estocada',{lim:'fh',d:.42,a:.1,h:.17,A:DUCK,S:[.75,-.15,1.3,.1,1.2,.15,.75,-.9,-.6,-.05],dmg:15,r:46,lunge:20,react:'knock',kb:100,ka:900,lv:'body'}),
- air:mk('Corte no ar',{lim:'fh',d:.4,a:.09,h:.16,A:TUCK,S:[.7,-.1,1.0,.3,.9,.4,.7,-.9,-.5,-.1],dmg:8,r:38,jump:0,react:'launch',kb:25,lv:'head'}),
- // golpe de assinatura: três cortes encadeados em um só passo (Ichimonji)
- ich:mk('Ichimonji',{d:.62,jump:6,keys:[[0,[.3,-.1,1.3,1.6,1.1,1.9,.5,-.6,-.5,-.3],700,.7],[.1,[.6,-.1,1.4,-.1,1.3,.1,.7,-.9,-.5,-.1],1800,.55],[.26,[.3,-.1,1.35,1.4,1.2,1.7,.5,-.7,-.5,-.3],900,.7],[.36,[.65,-.1,1.4,-.1,1.3,.1,.7,-.9,-.5,-.1],1800,.55],[.58,null,280,.7]],
-   hits:[{t:.13,dmg:7,react:'hit',lim:'fh',lv:'body',kb:20},{t:.39,dmg:11,react:'knock',lim:'fh',lv:'head',kb:100}]}),
+ nuk:mk('Nukitsuke (saque)',{lim:'fh',d:.22,a:.04,h:.09,A:SPN,S:SPNS,dmg:10,r:44,tw:1.1,lunge:16,kb:35}),
+ men:mk('Kirioroshi (corte vertical)',{lim:'fh',d:.3,a:.09,h:.15,A:JOD,S:[.65,-.15,.95,.55,.85,.65,.75,-1.0,-.5,-.1],dmg:13,r:44,tw:.3,lunge:18,react:'knock',kb:70}),
+ kes:mk('Kesa-giri (corte diagonal)',{lim:'fh',d:.3,a:.09,h:.15,A:KSA,S:KSS,dmg:12,r:44,tw:.7,lunge:14,react:'knock',kb:60}),
+ kir:mk('Kiriage (corte ascendente)',{lim:'fh',d:.3,a:.08,h:.14,A:[.55,0,.4,.9,.35,1.0,.75,-1.0,-.45,-.6],S:[.1,-.25,2.4,.5,2.3,.6,.35,-.3,-.3,-.1],dmg:11,r:42,tw:.5,react:'stagger',kb:50}),
+ yok:mk('Do-uchi (corte no flanco)',{lim:'bh',d:.26,a:.06,h:.12,A:[.3,-.1,1.3,1.6,1.1,1.9,.5,-.6,-.5,-.3],S:[.5,-.2,1.35,-.2,1.25,0,.6,-.8,-.55,-.15],dmg:10,r:44,tw:1.3,lv:'body',kb:45}),
+ tsu:mk('Tsuki (estocada)',{lim:'fh',d:.28,a:.07,h:.13,A:[.4,-.1,.7,.8,.65,.9,.9,-1.3,-.6,-.4],S:[.8,-.15,1.4,.05,1.3,.1,.8,-.9,-.6,-.05],dmg:11,r:58,tw:.3,lunge:24,lv:'body',react:'stagger',kb:60}),
+ kot:mk('Kote-uchi (corte no punho)',{lim:'fh',d:.2,a:.04,h:.09,A:[.15,-.15,2.2,.6,2.1,.7,.45,-.6,-.4,-.2],S:[.55,-.15,1.0,.5,.9,.6,.7,-.9,-.5,-.1],dmg:7,r:46,tw:.2,lunge:12,kb:20}),
+ ent:mk('Fumikomi (passo e corte)',{lim:'fh',d:.24,a:.04,h:.09,A:SPN,S:SPNS,dmg:7,r:46,tw:.5,lunge:26}),
+ mae:cl(TK.mir,{n:'Fumikomi-geri',dmg:8}),ash:cl(TK.ara,{n:'Ashi-barai'}),
+ hiz:mk('Hiza-geri',{lim:'fk',d:.36,a:.08,h:.17,A:[.55,.1,1.25,2.0,1.0,2.2,1.55,-2.4,.6,-1.5],S:[.12,-.15,2.3,1.0,2.45,1.25,2.35,-2.35,.2,-.55],dmg:11,r:28,lunge:12,react:'knock',kb:90,lv:'body'}),
+ cct:mk('Kaeshi-giri (contra-corte)',{lim:'fh',d:.34,a:.08,h:.15,A:KSA,S:KSS,dmg:15,r:44,tw:.6,react:'knock',kb:90,ka:900}),
+ cdw:mk('Contra-estocada',{lim:'fh',d:.34,a:.08,h:.14,A:DUCK,S:[.8,-.15,1.4,.05,1.3,.1,.8,-.9,-.6,-.05],dmg:15,r:56,lunge:20,react:'knock',kb:100,ka:900,lv:'body'}),
+ air:mk('Corte no ar',{lim:'fh',d:.34,a:.08,h:.14,A:TUCK,S:KSS,dmg:8,r:44,jump:0,react:'launch',kb:25,lv:'head'}),
 };
+// duas técnicas encadeadas num só passo: saque seguido de corte diagonal (Renzoku)
+SAMK.ren=mk('Renzoku (corte duplo)',{d:.5,keys:[[0,SPN,700,.7],[.07,SPNS,2000,.55],[.17,KSA,1300,.65],[.27,KSS,2000,.55],[.46,null,280,.7]],
+   hits:[{t:.09,dmg:7,react:'hit',lim:'fh',lv:'body',kb:20},{t:.29,dmg:12,react:'knock',lim:'fh',lv:'head',kb:100}]});
 MOV.sam=SAMK;
-Object.assign(AREAS,{'Saque (Iaijutsu)':['chest','head'],'Corte diagonal (Kesa-giri)':['head','chest'],'Corte lateral':['side','belly'],'Estocada (Tsuki)':['belly','chest'],'Corte ascendente':['head','chest'],'Corte giratório (Kaiten-giri)':['head','chest'],'Salto cortante (Tobi-giri)':['head','head'],'Avanço cortante':['chest','arm'],'Mae Geri':['belly'],'Mawashi Geri':['side','chest'],'Hiza Geri':['chest','head'],'Contra-corte':['head','chest'],'Contra-estocada':['belly','chest'],'Ichimonji':['chest','head']});
-SEQ.sam=[['nuk','kes','tsu'],['yok','gya','kes'],['nuk','mae','kai'],['tsu','kes','hiz'],['kes','yok','kai'],['gya','tsu','kes'],['nuk','ura','kes','kai'],['hiz','nuk','kes'],['tsu','yok','kes','tob'],['mae','nuk','gya','kai'],['ich','kes'],['nuk','yok','tsu','kai']];
-ESEQ.sam=[['nuk'],['kes'],['yok'],['tsu'],['gya'],['kai'],['mae'],['ura'],['hiz'],['nuk','kes'],['yok','tsu'],['ich']];
-BASIC.sam={b1:'nuk',b2:'kes',b3:'tsu'};BLABEL.sam=['SAQUE','CORTE','ESTOCADA'];
-FIN.sam={nm:['VENTO CORTANTE','DANÇA DA LÂMINA','ÚLTIMO SAMURAI'],
-  n:[['nuk','kes','yok','tsu'],['mae','nuk','kai','kes'],['gya','tsu','ich','kes']],
-  s:[['nuk','kes','yok','tsu','gya','kai','tob'],['ich','kes','yok','mae','nuk','kai'],['nuk','tsu','kes','gya','yok','ich','tob']]};
-SPSEQ.sam=[['nuk','kes','kai'],['yok','gya','tob'],['ich','tsu','kes']];
+Object.assign(AREAS,{'Nukitsuke (saque)':['chest','head'],'Kirioroshi (corte vertical)':['head','chest'],'Kesa-giri (corte diagonal)':['head','chest'],'Kiriage (corte ascendente)':['head','chest'],'Do-uchi (corte no flanco)':['side','belly'],'Tsuki (estocada)':['belly','chest'],'Kote-uchi (corte no punho)':['arm','chest'],'Fumikomi (passo e corte)':['chest','arm'],'Fumikomi-geri':['belly'],'Ashi-barai':['leg'],'Hiza-geri':['chest','head'],'Kaeshi-giri (contra-corte)':['head','chest'],'Contra-estocada':['belly','chest'],'Renzoku (corte duplo)':['chest','head']});
+SEQ.sam=[['nuk','kes','tsu'],['kot','men','yok'],['nuk','kir','men'],['tsu','kes','hiz'],['men','yok','kes'],['kot','nuk','kes','tsu'],['ash','men','kir'],['mae','nuk','kes'],['ren','tsu'],['kes','kir','tsu'],['nuk','yok','men','tsu'],['kot','ren','mae']];
+ESEQ.sam=[['nuk'],['men'],['kes'],['kir'],['yok'],['tsu'],['kot'],['mae'],['ash'],['hiz'],['nuk','kes'],['kot','men'],['ren']];
+BASIC.sam={b1:'nuk',b2:'men',b3:'tsu'};BLABEL.sam=['SAQUE','KIRIOROSHI','ESTOCADA'];
+FIN.sam={nm:['IAI-NUKI','LÂMINA DO VENTO','ÚLTIMO SAMURAI'],
+  n:[['nuk','kes','tsu'],['kot','men','yok','kir'],['ash','ren','men','tsu']],
+  s:[['nuk','kes','yok','kir','men','tsu'],['kot','ren','yok','men','kir','kes','tsu'],['ash','nuk','kes','men','yok','ren','tsu']]};
+SPSEQ.sam=[['nuk','kes','tsu'],['kot','men','kir'],['ren','yok','men']];
 NAMES.sam='Katsuro';
-PAL.samP={skin:'#d9a878',skinD:'#966a44',skinH:'#f2c99e',hair:'#14100e',hairH:'#383029',gi:'#26262d',giD:'#101014',giH:'#52525e',lap:'#8a8a98',belt:'#c9a24a',band:null,trail:'#cfe6ff'};
-PAL.samE={skin:'#d0a070',skinD:'#8c603c',skinH:'#ecc090',hair:'#1a1410',hairH:'#40352c',gi:'#8a2a30',giD:'#4a1216',giH:'#c25a5e',lap:'#d8d0c0',belt:'#1e1e24',band:null,trail:'#ff9a9a'};
+PAL.samP={skin:'#d9a878',skinD:'#966a44',skinH:'#f2c99e',hair:'#2a1b14',hairH:'#5a3e2c',gi:'#26262d',giD:'#101014',giH:'#52525e',lap:'#3a3a46',belt:'#c9a24a',band:null,trail:'#cfe6ff',armor:'#8f2a24',armorD:'#4a1512',armorH:'#c4524a',sash:'#6a1c1c',gold:'#c9a24a'};
+PAL.samE={skin:'#d0a070',skinD:'#8c603c',skinH:'#ecc090',hair:'#1a1410',hairH:'#40352c',gi:'#26262d',giD:'#101014',giH:'#52525e',lap:'#3a3a46',belt:'#c9a24a',band:null,trail:'#ff9a9a',armor:'#8f2a24',armorD:'#4a1512',armorH:'#c4524a',sash:'#6a1c1c',gold:'#c9a24a'};
 const DMS={
   jab:[{n:'block',p:SBLK,dx:8,d:.44},{n:'lean',p:MTLEAN,dx:20,ev:1,d:.46},{n:'parry',p:PARRYP,dx:8,d:.42}],
   hook:[{n:'block',p:SBLK,dx:10,d:.46},{n:'weave',p:BWEAVE,dz:10,sp:.4,ev:1,d:.54},{n:'lean',p:MTLEAN,dx:20,ev:1,d:.48}],
@@ -1528,8 +1533,8 @@ const DMS={
   low:[{n:'skip',p:BSKIP,y:16,ev:1,d:.54},{n:'check',p:MTCHECK,dx:6,d:.46},{n:'pivot',p:BPIV,dx:6,dz:24,sp:.7,ev:1,d:.5}],
   kick:[{n:'block',p:SBLK,dx:20,d:.5},{n:'duck',p:ROLLP,dx:4,dz:20,sp:.6,ev:1,d:.56},{n:'pivot',p:BPIV,dx:8,dz:26,sp:.8,ev:1,d:.52}]};
 DEFP.sam={head:SBLK,body:CRUNCH,low:MTCHECK,kick:SBLK};
-STY.sam={spd:1.6,bare:0,acro:0,pace:94,pace2:76,R:64,Rv:12,sp:54,hop:3,punish:'kes',quick:'nuk',grd:.12,dodge:'box',spec:'VENTO CORTANTE',fe:['nuk','kes','tsu'],scn:'sam',
-  cnt:(M,d)=>d<40?M.cct:M.cdw,far:['tob','kai'],mid:'ent',dm:DMS,
+STY.sam={spd:1.6,bare:0,acro:0,pace:94,pace2:76,R:64,Rv:12,sp:54,hop:3,punish:'kes',quick:'nuk',grd:.12,dodge:'box',spec:'IAI-NUKI',fe:['nuk','men','tsu'],scn:'sam',
+  cnt:(M,d)=>d<40?M.cct:M.cdw,far:['tsu','ent'],mid:'ent',dm:DMS,
   pickScn:({em,e,p,kickAtk,body})=>em.lunge>=10||e.st==='strike'&&Math.abs(e.x-p.x)>40?['estocada','iai']:kickAtk?['iai','corte']:body?['estocada','corte']:['corte','iai','estocada']};
 Object.assign(PARRY,{
  samblk:pm('Defesa com a lâmina',{d:.3,keys:[[0,SBLK,1400,.55],[.22,GSAM,500,.7]],lunge:-6}),
@@ -1538,9 +1543,9 @@ Object.assign(PARRY,{
 });
 SCENES.sam={
  iai:{n:'CONTRA-SAQUE',steps:[{mv:PARRY.samslip,cam:'face',slow:.25},{mv:cl(SAMK.nuk,{dmg:15,react:'knock',kb:110}),cam:'dutchR',slow:.4,impact:1,lines:1}]},
- corte:{n:'DEFESA E CORTE',steps:[{mv:PARRY.samblk,cam:'close',slow:.28},{mv:cl(SAMK.kes,{dmg:16,react:'knock',kb:110}),cam:'dutchL',slow:.4,impact:1,lines:1}]},
+ corte:{n:'DEFESA E CORTE',steps:[{mv:PARRY.samblk,cam:'close',slow:.28},{mv:cl(SAMK.men,{dmg:16,react:'knock',kb:110}),cam:'dutchL',slow:.4,impact:1,lines:1}]},
  estocada:{n:'PASSO E ESTOCADA',steps:[{mv:PARRY.samstep,cam:'wide',slow:.25},{mv:cl(SAMK.tsu,{dmg:15,react:'knock',kb:120}),cam:'low',slow:.4,impact:1,lines:1}]},
- lethal:{n:'VENTO CORTANTE',red:1,steps:[{mv:PARRY.samslip,cam:'face',slow:.2},{mv:cl(SAMK.nuk,{react:'hit'}),cam:'close',slow:.6},{mv:cl(SAMK.yok,{react:'hit',dmg:10}),cam:'dutchL',slow:.5},{mv:cl(SAMK.gya,{dmg:10,react:'stagger'}),cam:'low',slow:.5,lines:1},{mv:cl(SAMK.kes,{dmg:18,n:'Corte final'}),cam:'dutchR',slow:.28,impact:1,lines:1}]},
+ lethal:{n:'IAI-NUKI',red:1,steps:[{mv:PARRY.samslip,cam:'face',slow:.2},{mv:cl(SAMK.nuk,{react:'hit'}),cam:'close',slow:.6},{mv:cl(SAMK.yok,{react:'hit',dmg:10}),cam:'dutchL',slow:.5},{mv:cl(SAMK.kir,{dmg:10,react:'stagger'}),cam:'low',slow:.5,lines:1},{mv:cl(SAMK.men,{dmg:18,n:'Corte final'}),cam:'dutchR',slow:.28,impact:1,lines:1}]},
 };
 THRP.sam={GRAB:[.5,-.1,1.6,1.0,1.5,1.1,.6,-1.0,-.5,-.4],CRCH:[.9,0,1.3,1.0,1.2,1.1,1.3,-2.2,.9,-1.5],LIFT,TOSS};
 
@@ -2491,7 +2496,10 @@ function drawFighter(c,f,S,T,ps,LI){
     else{const m=mid(el,ha,.6),g=dk?'giD':'gi';
       // a mão e o antebraço saem de dentro da manga (desenhados antes dela); manga mais larga no fim, com barra
       Q.push(['d',r0,2.8,g],['b',r0,el,4.6,g,!dk],['b',m,ha,3,sk,!dk],['d',ha,2,sk],['b',el,m,4.4,g,!dk],['b',mid(el,m,.45),m,5.3,g,0]);
-      if(!dk)Q.push(['b',mid(el,m,.9),m,5.3,'giM',0]);flush();}
+      if(!dk)Q.push(['b',mid(el,m,.9),m,5.3,'giM',0]);flush();
+      // ombreira (sode) e braçal (kote) de laca por cima da manga escura
+      if(sam){Q.push(['b',r0,mid(r0,el,.55),8.6,dk?'armorD':'armor',0],['b',mid(el,ha,.12),mid(el,ha,.72),6.2,dk?'armorD':'armor',0]);flush();
+        if(!fl&&!dk){seg(off(r0,[0,0],0),mid(r0,el,.55),.8,col('gold'));seg(mid(el,ha,.12),mid(el,ha,.72),.6,col('armorH'));}}}
   };
   const leg=(kn,an,toe,dk)=>{const h=S.hip,sk=dk?'skinD':'skin',sd=nrm(an,kn,[0,-1]);
     if(mt){const m1=mid(h,kn,.55),a1=mid(kn,an,.74);
@@ -2518,6 +2526,12 @@ function drawFighter(c,f,S,T,ps,LI){
   const tpt=(h,u)=>mid(tf(h),tb(h),u);
   const trunks=()=>{poly([tpt(0,1),tpt(.3,1),tpt(.3,0),tpt(0,0)],col('sh'));if(!fl)poly([tpt(0,1),tpt(.3,1),tpt(.3,.72),tpt(0,.7)],col('shD'));
     poly([tpt(.2,1),tpt(.32,1),tpt(.32,0),tpt(.2,0)],col('trim'));};
+  // armadura de laca vermelha (do-maru): peitoral de lamelas com cordas, faixa na cintura e friso dourado no peito
+  const cuirass=()=>{poly([tpt(.2,1),tpt(.2,0),tpt(.96,0),tpt(.96,1)],col('armor'));
+    poly([tpt(.2,1),tpt(.96,1),tpt(.96,.66),tpt(.2,.66)],col('armorD'));
+    for(const h of [.3,.4,.5,.6,.7,.8,.9])seg(tpt(h,.04),tpt(h,.96),.7,col('armorD'));
+    for(const h of [.26,.5,.74])for(const u of [.18,.4,.62,.84])seg(tpt(h,u),tpt(h+.08,u),.5,col('armorH'));
+    seg(tpt(.96,.02),tpt(.96,.98),1.1,col('gold'));seg(tpt(.2,.02),tpt(.2,.98),1.7,col('sash'));};
   const torso=()=>{
     Q.push(['b',S.sh,S.nk,3.8,'skin',0]);flush();
     c.lineWidth=2*ow*ps;c.strokeStyle=OL;path(tp);c.stroke();poly(tp,col(bare?'skin':'gi'));
@@ -2526,6 +2540,7 @@ function drawFighter(c,f,S,T,ps,LI){
         for(const h of [.4,.5,.6])seg(tpt(h,.12),tpt(h,.24),.7,col('skinD'));
         seg(tpt(.93,.1),tpt(.42,.1),.8,col('skinH'));}
       else{const A=tpt(.96,.62),B=tpt(.3,.12);seg(mid(A,B,.02),B,1.4,col('giH'));seg(off(A,hw,-.08),off(B,hw,-.08),.8,col('lap'));seg(tpt(.93,.12),tpt(.45,.12),.9,col('giH'));}}
+    if(sam&&!fl)cuirass();else if(sam)poly([tpt(.2,1),tpt(.2,0),tpt(.96,0),tpt(.96,1)],'#ffffff');
     if(bare&&!capo)trunks();
   };
   // depois da perna da frente: o calção (boxe) ou a saia do dobok com a faixa (tkd) cobrem a raiz da coxa sem costura
@@ -2538,8 +2553,9 @@ function drawFighter(c,f,S,T,ps,LI){
       Q.push(['b',off(S.hB,sp,.9),off(S.hF,sp,.9),2.2,'belt',0],['b',k0,t1,1.3,'belt',0],['b',k0,t2,1.1,'belt',0],['d',k0,1.3,'belt']);flush();return;}
     if(bare){trunks();return;}
     const a=tpt(.22,1),e=tpt(.22,0),b=off(off(S.hB,sp,-4.8),hw,-.12),d=off(off(S.hF,sp,-4.8),hw,.1),sk=[a,S.hB,b,d,S.hF,e];
-    c.lineWidth=2*ow*ps;c.strokeStyle=OL;path(sk);c.stroke();poly(sk,col('gi'));
-    if(!fl){poly([b,d,mid(d,S.hF,.24),mid(b,S.hB,.24)],col('giM'));poly([a,S.hB,b,mid(b,d,.3),mid(S.hB,S.hF,.3),mid(a,e,.3)],col('giM'));}
+    c.lineWidth=2*ow*ps;c.strokeStyle=OL;path(sk);c.stroke();poly(sk,col(sam?'armor':'gi'));
+    if(!fl){poly([b,d,mid(d,S.hF,.24),mid(b,S.hB,.24)],col(sam?'armorD':'giM'));poly([a,S.hB,b,mid(b,d,.3),mid(S.hB,S.hF,.3),mid(a,e,.3)],col(sam?'armorD':'giM'));
+      if(sam){for(const t of [.2,.4,.6,.8])seg(mid(S.hF,S.hB,t),mid(d,b,t),.6,col('armorD'));seg(b,d,1,col('gold'));}}
     const k0=mid(off(S.hF,sp,.9),off(S.hB,sp,.9),.06),t1=off(off(k0,cv,5),cp,.5),t2=off(off(k0,cv,4),cp,-.6);
     Q.push(['b',off(S.hB,sp,.9),off(S.hF,sp,.9),2.2,'belt',0],['b',k0,t1,1.3,'belt',0],['b',k0,t2,1.1,'belt',0],['d',k0,1.3,'belt']);flush();
   };
@@ -2551,7 +2567,7 @@ function drawFighter(c,f,S,T,ps,LI){
     const hair=bare?[...arc(5.35,.95,3.75,9),at(-2.9,-1.7),at(-1.3,1),at(1.9,2.8)]
       :[at(-2.6,-1.6),...arc(5.75,3.85,.5,11),at(5.5,1.9),at(4,2.5),at(3.1,1.7),at(1.4,2.7),at(-1.3,1)];
     if(!box){const r0=at(-4.6,1.3),r1=at(-4,-1.8),tip=off(at(-4.7,-.4),cv,5);Q.push(['p',[r0,tip,r1],'hair']);}
-    Q.push(['d',h,5*HS,'skin'],['d',at(2.5,-3.1),1.7*HS,'skin'],['d',at(4.6,-.5),1.05*HS,'skin'],['p',hair,'hair']);if(sam)Q.push(['d',at(-1.8,5.9),1.9*HS,'hair'],['b',at(-1.8,5.9),at(-.4,7.7),1.3,'hair',0]);flush();
+    Q.push(['d',h,5*HS,'skin'],['d',at(2.5,-3.1),1.7*HS,'skin'],['d',at(4.6,-.5),1.05*HS,'skin'],['p',hair,'hair']);if(sam)Q.push(['p',[at(-4.6,3.2),at(-7.4,-2.6),at(-6.6,-9.5),at(-2.8,-7),at(-1,.5)],'hair'],['p',[at(1.2,-3),at(4.5,-2.8),at(3.4,-6.2),at(.4,-5.4)],'hair']);flush();
     if(!fl){
       seg(at(-1.4,-3.5),at(1.5,-3.9),1,col('skinM'));
       disc(at(-.9,-.5),.95,col('skinM'));if(ps>1.6)disc(at(-.8,-.5),.4,col('skinD'));
@@ -2568,8 +2584,8 @@ function drawFighter(c,f,S,T,ps,LI){
         Q.push(['b',k0,at(3.7,3.3),1.8,'band',0],['b',k0,t1,1.4,'band',0],['b',k0,t2,1.1,'band',0],['d',k0,1.3,'band']);flush();}}
   };
   // katana: lâmina na mão da frente, seguindo o antebraço (cabo escuro, tsuba dourada, aço claro com fio brilhante)
-  const katana=()=>{const sw=S.swapU,ha=sw?S.bh:S.fh,el=sw?S.be:S.fe,d=nrm(ha,el),tail=off(ha,d,-5),tip=off(ha,d,32),gd=off(ha,d,2.4),up=[-d[1],d[0]];
-    seg(tail,tip,3.4,OL);seg(tail,off(ha,d,1.6),2.2,fl?'#fff':'#2a1c16');disc(gd,1.9,fl?'#fff':'#c9a24a');seg(off(ha,d,3.4),tip,1.6,fl?'#fff':'#dfe8f2');
+  const katana=()=>{const sw=S.swapU,ha=sw?S.bh:S.fh,el=sw?S.be:S.fe,d=nrm(ha,el),tail=off(ha,d,-8),tip=off(ha,d,54),gd=off(ha,d,3),up=[-d[1],d[0]];
+    seg(tail,tip,4,OL);seg(tail,off(ha,d,2),2.8,fl?'#fff':'#2a1c16');disc(gd,2.4,fl?'#fff':'#c9a24a');seg(off(ha,d,4),tip,2.1,fl?'#fff':'#dfe8f2');
     if(!fl)seg(off(off(ha,d,4),up,.5),off(off(tip,d,-2),up,.5),.5,'#ffffff');};
   const swap=S.swap;
   const legB=()=>swap?leg(S.fk,S.ff,S.ft,true):leg(S.bk,S.bf,S.bt,true);
