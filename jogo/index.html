@@ -162,25 +162,16 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 .kbd{display:none;font-size:calc(12px*var(--m));opacity:.7;margin:0;max-width:60ch;line-height:1.5}
 @media (hover:hover) and (pointer:fine){.kbd{display:block}}
 
-/* MENU INICIAL em tema claro: fundo de papel quente com listras suaves, textos escuros de alto contraste (só o #menu; pausa e fim de luta seguem escuros) */
-#menu{background:radial-gradient(ellipse at 50% 0%,#fffaf0 0%,#f3ebdc 55%,#e5dac5 100%),repeating-linear-gradient(135deg,rgba(60,40,10,.035) 0 14px,transparent 14px 28px);background-blend-mode:normal;color:#1c1712}
-#menu h1{color:#1c1712;text-shadow:calc(4px*var(--m)) calc(4px*var(--m)) 0 var(--blood),calc(8px*var(--m)) calc(8px*var(--m)) 0 rgba(28,23,18,.2)}
-#menu .dif{background:#fff;color:#1c1712;border-color:rgba(28,23,18,.5)}
-#menu .dif.on{background:var(--blood);color:#fff;border-color:#1c1712}
-#menu .dif[data-d=mestre].on{background:#8a2a14}
-#menu .difd{color:#3a3126;opacity:1}
-#menu #pickT{background:#fff;animation:none;text-shadow:none}
-#menu #pickT.pk0{color:#1c1712;border-color:#1c1712;box-shadow:0 calc(4px*var(--m)) 0 rgba(28,23,18,.28)}
-#menu #pickT.pk1{color:#0c4aa0;border-color:#0c4aa0;background:#eaf3ff;box-shadow:0 calc(4px*var(--m)) 0 rgba(12,74,160,.3)}
-#menu .card{background:#fff;color:#1c1712;border-color:rgba(28,23,18,.35);box-shadow:0 calc(3px*var(--m)) 0 rgba(28,23,18,.18)}
-#menu .card small{color:#4a3f31;opacity:1}
-#menu .card:hover,#menu .card:active{border-color:#c77a00;background:#fff4dc}
-#menu .card.selP{border-color:#1c1712;background:#f1ece0;box-shadow:0 0 0 3px #1c1712,0 calc(4px*var(--m)) 0 rgba(28,23,18,.3)}
-#menu .card.selE{border-color:#1f6fd8;background:#e8f1ff;box-shadow:0 0 0 3px #1f6fd8,0 calc(4px*var(--m)) 0 rgba(31,111,216,.35)}
-#menu .card.trn{background:#fff1cf;border-color:#c77a00;box-shadow:0 0 0 2px #c77a00,0 0 18px 2px rgba(199,122,0,.45)}
-#menu .card.trn strong{color:#a65b00}
-#menu .card.trn.selT{background:#ffe3a3;box-shadow:0 0 0 3px #1c1712,0 0 22px 4px rgba(199,122,0,.6)}
-@keyframes trnGlow{50%{box-shadow:0 0 0 2px #c77a00,0 0 28px 8px rgba(199,122,0,.7)}}
+/* o cenário sorteado aparece por trás: véu escuro leve, cards e textos com fundo/sombra própria para ler em qualquer cenário (claro ou escuro) */
+#menu{background:linear-gradient(180deg,rgba(13,11,18,.34),rgba(13,11,18,.72))}
+#menu .card{background:rgba(13,11,18,.74)}
+#menu .card.selP{background:rgba(40,40,52,.85)}
+#menu .card.selE{background:rgba(14,40,84,.85)}
+#menu .card.trn{background:rgba(54,36,6,.82)}
+#menu .card small,#menu .difd{text-shadow:0 1px 0 #000,0 0 6px #000;opacity:1}
+#menu .card strong{text-shadow:0 2px 0 #000}
+#menu .dif{background:rgba(13,11,18,.78)}#menu .dif.on{background:var(--blood)}
+#menu h1{text-shadow:calc(4px*var(--m)) calc(4px*var(--m)) 0 var(--blood),calc(8px*var(--m)) calc(8px*var(--m)) 0 #000,0 0 18px rgba(0,0,0,.6)}
 .screen>:first-child{margin-top:auto}.screen>:last-child{margin-bottom:auto}
 </style>
 
@@ -477,8 +468,8 @@ function ambInit(){if(!AC||AMB)return;AMB={buf:ambBuf(4),master:AC.createGain()}
 let ambApplied=null;
 function ambSync(){
   if(!AC)return;ambInit();if(!AMB)return;if(AC.state==='suspended'){try{AC.resume();}catch(e){}}
-  const key=STAGE+'|'+(paused?1:0);if(key===ambApplied)return;ambApplied=key;ambStage=STAGE;
-  const t=AC.currentTime,r=(g,v)=>{g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(v,t,.18);},st=STAGE;
+  const stg=($('menu')&&!$('menu').hidden)?-1:STAGE,key=stg+'|'+(paused?1:0);if(key===ambApplied)return;ambApplied=key;ambStage=STAGE;
+  const t=AC.currentTime,r=(g,v)=>{g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(v,t,.18);},st=stg;
   echoSet(st===0);
   r(AMB.rain,st===1?.055:0);r(AMB.rain2,st===1?.022:0);r(AMB.rumb,st===1?.016:0);r(AMB.sea,st===2?.11:0);r(AMB.sea2,st===2?.03:0);r(AMB.hum,0);r(AMB.crowd,0);r(AMB.crowd2,0);
   AMB.master.gain.cancelScheduledValues(t);AMB.master.gain.setTargetAtTime(paused?0:1,t,.15);}
@@ -3804,7 +3795,7 @@ function showMenu(){
   for(const id of ['over','pause','hud','pad','stickHint','bExit'])$(id).hidden=true;
   $('banner').classList.remove('on');$('game').classList.remove('cine');cineOn=false;
   try{if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen();if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}
-  TRC=null;trcUi(false);setStage(0);demoFighters();camReset=true;koCam=null;cine=0;lbox=0;flashA=0;trauma=0;slowT=0;timeScale=1;hitstop=0;parts.length=0;trails.length=0;pops.length=0;
+  TRC=null;trcUi(false);menuStage();demoFighters();camReset=true;koCam=null;cine=0;lbox=0;flashA=0;trauma=0;slowT=0;timeScale=1;hitstop=0;parts.length=0;trails.length=0;pops.length=0;
   $('menu').hidden=false;menuStep(0);previewAll();$('pickBox').focus();
 }
 $('bExit').onclick=()=>setPause(true);$('resume').onclick=()=>setPause(false);$('quit').onclick=showMenu;$('quit2').onclick=showMenu;
@@ -3835,8 +3826,11 @@ function fontRebuild(){try{if(!wallFont&&[...document.fonts].some(f=>/Silkscreen
 try{document.fonts.load('700 12px Silkscreen').then(fontRebuild,()=>{});document.fonts.ready.then(fontRebuild);document.fonts.addEventListener('loadingdone',fontRebuild);}catch(e){}
 setTimeout(fontRebuild,3000);
 addEventListener('resize',resize);resize();
+// cenário do fundo do menu: sorteado entre os quatro (subsolo, cidade, praia e centro de treino) a cada vez, sem repetir o anterior
+let lastMenuStage=-1;
+function menuStage(){let n;do{n=Math.floor(Math.random()*4);}while(n===lastMenuStage);lastMenuStage=n;setStage(n);}
 function demoFighters(){player=mkF('box',true,palFor('box',0,true),-60,230);enemy=mkF('tkd',false,palFor('tkd',0,false),60,230);enemy.st='idle';}
-demoFighters();
+demoFighters();menuStage();
 previewAll();
 requestAnimationFrame(loop);
 })();
