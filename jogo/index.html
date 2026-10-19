@@ -172,6 +172,17 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 #menu .card strong{text-shadow:0 2px 0 #000}
 #menu .dif{background:rgba(13,11,18,.78)}#menu .dif.on{background:var(--blood)}
 #menu h1{text-shadow:calc(4px*var(--m)) calc(4px*var(--m)) 0 var(--blood),calc(8px*var(--m)) calc(8px*var(--m)) 0 #000,0 0 18px rgba(0,0,0,.6)}
+#scenes{background:rgba(10,8,14,.97)}
+/* botão do menu que abre a escolha de cenários e a tela com todos os cenários (+ cartão ALEATÓRIO) */
+.scbtn{display:flex;align-items:center;gap:calc(10px*var(--m));font-family:var(--display);font-size:calc(11px*var(--m));letter-spacing:.08em;color:var(--paper);background:rgba(13,11,18,.82);border:3px solid var(--amber);padding:calc(8px*var(--m)) calc(16px*var(--m));cursor:pointer;box-shadow:0 0 14px rgba(242,169,59,.45)}
+.scbtn b{color:var(--amber);font-weight:700}
+.scbtn:hover,.scbtn:active{background:rgba(242,169,59,.22)}
+.scTitle{margin:0;font-family:var(--display);font-size:calc(22px*var(--m));letter-spacing:.08em;text-align:center;padding:calc(7px*var(--m)) calc(22px*var(--m));border:3px solid #fff;color:#fff;background:rgba(0,0,0,.6);text-shadow:0 0 12px rgba(255,255,255,.9),3px 3px 0 #000;box-shadow:0 0 18px rgba(255,255,255,.5)}
+.card.scn{width:calc(190px*var(--m));background:rgba(13,11,18,.78)}
+.card.scn canvas{width:calc(176px*var(--m));height:calc(99px*var(--m));image-rendering:pixelated;border:2px solid rgba(239,230,210,.35)}
+.card.scn.on{border-color:var(--amber);box-shadow:0 0 0 2px var(--amber),0 0 22px 4px rgba(242,169,59,.7);background:rgba(60,40,8,.85)}
+.card.scn.on strong{color:var(--amber)}
+@media (max-height:420px){.scTitle{font-size:15px;padding:4px 14px}.card.scn{width:118px;padding:4px}.card.scn canvas{width:108px;height:61px}.scbtn{font-size:9px;padding:5px 12px}}
 .screen>:first-child{margin-top:auto}.screen>:last-child{margin-bottom:auto}
 </style>
 
@@ -206,8 +217,14 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
     <h1>FLUXO<br>BRUTAL</h1>
     <div class="difs" role="radiogroup" aria-label="Dificuldade"><button class="dif" data-d="facil" role="radio">FÁCIL</button><button class="dif" data-d="medio" role="radio">MÉDIO</button><button class="dif" data-d="mestre" role="radio">MESTRE</button></div>
     <p class="difd" id="difd"></p>
+    <button class="scbtn" id="sceneBtn" aria-label="Escolher cenário"><span>ESCOLHER CENÁRIOS</span><b id="sceneLbl">ALEATÓRIO</b></button>
     <h2 id="pickT" class="pk0">ESCOLHA O SEU LUTADOR</h2>
     <div class="cards" id="cardsP"></div>
+  </div>
+  <div class="screen" id="scenes" hidden>
+    <h2 class="scTitle">ESCOLHER CENÁRIO</h2>
+    <div class="cards" id="cardsS"></div>
+    <div class="ctas"><button class="cta alt" id="scBack">VOLTAR</button></div>
   </div>
   <div class="screen pz" id="pause" hidden>
     <h1>PAUSADO</h1>
@@ -496,7 +513,7 @@ const sfx={
 const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
 
 // ---------- estado ----------
-let TRAIN=false,TRAINSEL=false;
+let TRAIN=false,TRAINSEL=false,SCENE_SEL=-1;try{const v=parseInt(localStorage.getItem('fb_scene'));if(v>=0&&v<5)SCENE_SEL=v;}catch(e){}
 let player=null,enemy=null,parts=[],trails=[],pops=[],time=0,hitstop=0,timeScale=1,slowT=0,cine=0,flashA=0,lbox=0,tiltT=0;
 let rclock=0; // relógio real acumulado (ritmo e amassar botão não dependem de câmera lenta, hitstop nem velocidade do FLUXO)
 let speedL=0,impactF=0,impactRed=false,sceneName='',sceneRed=false;
@@ -550,7 +567,7 @@ function startRound(){
   // câmera do round novo: nada do KO (plano, zoom, inclinação, tarjas, tremor) vaza; corte com fade a partir do preto (CAME-8)
   camReset=true;koCam=null;fadeA=1;trauma=0;lbox=0;flashA=0;
   // contagem regressiva 4-3-2-1: os dois se aquecem (socam/chutam o ar) e na virada para a luta ficam em guarda
-  setStage(TRAIN?3:STG[(round-1)%3]);
+  setStage(TRAIN?3:SCENE_SEL>=0?SCENE_SEL:STG[(round-1)%3]);
   running=false;introT=INTRO;introN=99;introSub=(round===3?'ROUND FINAL':'ROUND '+round)+' · '+STAGE_NAMES[STAGE];
   player.st='intro';enemy.st='intro';player.t=0;enemy.t=0;
   updHud(true);
@@ -3850,6 +3867,27 @@ function setDiff(d,save){DIFF=DDESC[d]?d:'facil';DP=aiParams();$('difd').textCon
 document.querySelectorAll('.dif').forEach(b=>b.addEventListener('click',()=>setDiff(b.dataset.d,true)));
 {let d='facil';try{d=localStorage.getItem('fb_dif')||'facil';}catch(e){}setDiff(d,false);}
 let chosen='box',chosenE='tkd';
+// ESCOLHER CENÁRIOS: lista com os cinco cenários e um cartão ALEATÓRIO (padrão: um cenário sorteado por round). A escolha vale para todos os
+// rounds e fica guardada no aparelho; no modo TREINO o cenário é sempre o Centro de Treino
+const SCN=[{id:0,t:'SUBSOLO 9'},{id:1,t:'CIDADE ABANDONADA'},{id:2,t:'PRAIA'},{id:3,t:'CENTRO DE TREINO'},{id:4,t:'LUA'}];
+const sceneLabel=()=>{$('sceneLbl').textContent=SCENE_SEL<0?'ALEATÓRIO':SCN[SCENE_SEL].t;};
+function openScenes(){
+  const keep=STAGE;$('scenes').hidden=false;const list=$('cardsS');list.innerHTML='';
+  const mkCard=(id,title,sub)=>{const b=document.createElement('button');b.className='card scn'+(SCENE_SEL===id?' on':'');b.dataset.id=id;
+    b.innerHTML=`<canvas width="160" height="90"></canvas><strong>${title}</strong><small>${sub}</small>`;b.onclick=()=>{SCENE_SEL=id;try{localStorage.setItem('fb_scene',String(id));}catch(e){}sceneLabel();closeScenes();};list.appendChild(b);return b.querySelector('canvas');};
+  const rc=mkCard(-1,'ALEATÓRIO','um cenário diferente a cada round');
+  // miniaturas: o próprio jogo desenha cada cenário no quadro e a imagem é copiada para o cartão
+  const th=[];for(const c of SCN){const cv2=mkCard(c.id,c.t,'');th.push(cv2);
+    setStage(c.id);camReset=true;try{render(.016);render(.016);}catch(e){}
+    const sw=cv.width,sh=Math.min(cv.height,Math.round(cv.width*9/16)),sy=Math.round((cv.height-sh)/2);
+    const g=cv2.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(cv,0,sy,sw,sh,0,0,160,90);}
+  setStage(keep);camReset=true;
+  // cartão aleatório: colagem das cinco miniaturas com um ponto de interrogação
+  const g=rc.getContext('2d');g.imageSmoothingEnabled=false;th.forEach((t,i)=>{g.drawImage(t,i*32,0,32,90,i*32,0,32,90);});
+  g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,0,160,90);g.fillStyle='#f2a93b';g.font='bold 54px monospace';g.textAlign='center';g.textBaseline='middle';g.fillText('?',80,48);
+}
+function closeScenes(){$('scenes').hidden=true;}
+$('sceneBtn').onclick=openScenes;$('scBack').onclick=closeScenes;
 // SELEÇÃO: o jogador escolhe o lutador e depois o adversário (qualquer um dos três, inclusive o mesmo). Para um personagem novo
 // basta incluí-lo nesta lista (e definir o estilo em STY/MOV/PAL).
 const FIGHTERS=[
@@ -3894,7 +3932,7 @@ function showMenu(){
 $('bExit').onclick=()=>setPause(true);$('resume').onclick=()=>setPause(false);$('quit').onclick=showMenu;$('quit2').onclick=showMenu;
 addEventListener('keydown',e=>{if(e.code==='Escape'&&!e.repeat&&(running||introT>0))setPause(!paused);});
 
-function previewAll(){for(const F of FIGHTERS){preview('pvP'+F.id,F.s,palFor(F.s,0,true));}drawTrainIcon();}
+function previewAll(){sceneLabel();for(const F of FIGHTERS){preview('pvP'+F.id,F.s,palFor(F.s,0,true));}drawTrainIcon();}
 // prévias animadas no menu (mostram golpes do estilo)
 function preview(id,style,pal){const c=$(id).getContext('2d');const f=mkF(style,true,pal,0,0);const list=SEQ[style].flat();let li=0,mt=0,mv=null,pt=performance.now();
   (function draw(now){if(c.canvas.offsetParent===null){if(!$('menu').hidden)requestAnimationFrame(draw);return;}const dt=Math.min(.05,((now||pt)-pt)/1000);pt=now||pt;time+=0;mt+=dt;
