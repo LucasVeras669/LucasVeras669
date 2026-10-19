@@ -518,7 +518,7 @@ function ambSync(){
   const stg=($('menu')&&!$('menu').hidden)?-1:STAGE,key=stg+'|'+(paused?1:0);if(key===ambApplied)return;ambApplied=key;ambStage=STAGE;
   const t=AC.currentTime,r=(g,v)=>{g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(v,t,.18);},st=stg;
   echoSet(st===0);
-  r(AMB.rain,st===1?.055:0);r(AMB.rain2,st===1?.022:0);r(AMB.rumb,st===1?.016:0);r(AMB.sea,st===2?.11:0);r(AMB.sea2,st===2?.03:0);r(AMB.hum,0);r(AMB.vor,st===4?.4:0);r(AMB.vor2,st===4?.18:0);r(AMB.vor3,st===4?.07:0);r(AMB.crowd,0);r(AMB.crowd2,0);
+  r(AMB.rain,st===1?.055:0);r(AMB.rain2,st===1?.022:0);r(AMB.rumb,st===1?.016:0);r(AMB.sea,st===2?.11:0);r(AMB.sea2,st===2?.03:0);r(AMB.hum,0);r(AMB.vor,st===4?.8:0);r(AMB.vor2,st===4?.36:0);r(AMB.vor3,st===4?.14:0);r(AMB.crowd,0);r(AMB.crowd2,0);
   AMB.master.gain.cancelScheduledValues(t);AMB.master.gain.setTargetAtTime(paused?0:1,t,.15);}
 function ambSet(){ambApplied=null;ambSync();}
 function ambMute(){ambApplied=null;}
