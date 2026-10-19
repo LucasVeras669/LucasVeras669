@@ -176,6 +176,9 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 /* botão do menu que abre a escolha de cenários e a tela com todos os cenários (+ cartão ALEATÓRIO) */
 .scbtn{display:flex;align-items:center;gap:calc(10px*var(--m));font-family:var(--display);font-size:calc(11px*var(--m));letter-spacing:.08em;color:var(--paper);background:rgba(13,11,18,.82);border:3px solid var(--amber);padding:calc(8px*var(--m)) calc(16px*var(--m));cursor:pointer;box-shadow:0 0 14px rgba(242,169,59,.45)}
 .scbtn b{color:var(--amber);font-weight:700}
+.scwarn{margin:0;font-family:var(--display);font-size:calc(10px*var(--m));letter-spacing:.08em;color:#fff;background:#c0392b;border:2px solid #fff;padding:calc(5px*var(--m)) calc(12px*var(--m))}
+.scbtn.need{animation:scneed .7s ease-in-out infinite alternate;background:rgba(242,169,59,.35)}
+@keyframes scneed{from{box-shadow:0 0 6px rgba(242,169,59,.4)}to{box-shadow:0 0 26px 6px rgba(242,169,59,.95)}}
 .scbtn:hover,.scbtn:active{background:rgba(242,169,59,.22)}
 .scTitle{margin:0;font-family:var(--display);font-size:calc(22px*var(--m));letter-spacing:.08em;text-align:center;padding:calc(7px*var(--m)) calc(22px*var(--m));border:3px solid #fff;color:#fff;background:rgba(0,0,0,.6);text-shadow:0 0 12px rgba(255,255,255,.9),3px 3px 0 #000;box-shadow:0 0 18px rgba(255,255,255,.5)}
 .card.scn{width:calc(190px*var(--m));background:rgba(13,11,18,.78)}
@@ -219,7 +222,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
     <p class="difd" id="difd"></p>
     <h2 id="pickT" class="pk0">ESCOLHA O SEU LUTADOR</h2>
     <div class="cards" id="cardsP"></div>
-    <button class="scbtn" id="sceneBtn" aria-label="Escolher cenário"><span>ESCOLHER CENÁRIOS</span></button>
+    <p class="scwarn" id="scWarn" hidden>ESCOLHA UM CENÁRIO PARA COMEÇAR A LUTA</p><button class="scbtn" id="sceneBtn" aria-label="Escolher cenário"><span>ESCOLHER CENÁRIOS</span></button>
   </div>
   <div class="screen" id="scenes" hidden>
     <h2 class="scTitle">ESCOLHER CENÁRIO</h2>
@@ -513,7 +516,7 @@ const sfx={
 const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
 
 // ---------- estado ----------
-let TRAIN=false,TRAINSEL=false,SCENE_SEL=-1;try{const v=parseInt(localStorage.getItem('fb_scene'));if(v>=0&&v<5)SCENE_SEL=v;}catch(e){}
+let TRAIN=false,TRAINSEL=false,SCENE_SEL=-2;
 let player=null,enemy=null,parts=[],trails=[],pops=[],time=0,hitstop=0,timeScale=1,slowT=0,cine=0,flashA=0,lbox=0,tiltT=0;
 let rclock=0; // relógio real acumulado (ritmo e amassar botão não dependem de câmera lenta, hitstop nem velocidade do FLUXO)
 let speedL=0,impactF=0,impactRed=false,sceneName='',sceneRed=false;
@@ -3867,14 +3870,14 @@ function setDiff(d,save){DIFF=DDESC[d]?d:'facil';DP=aiParams();$('difd').textCon
 document.querySelectorAll('.dif').forEach(b=>b.addEventListener('click',()=>setDiff(b.dataset.d,true)));
 {let d='facil';try{d=localStorage.getItem('fb_dif')||'facil';}catch(e){}setDiff(d,false);}
 let chosen='box',chosenE='tkd';
-// ESCOLHER CENÁRIOS: lista com os cinco cenários e um cartão ALEATÓRIO (padrão: um cenário sorteado por round). A escolha vale para todos os
-// rounds e fica guardada no aparelho; no modo TREINO o cenário é sempre o Centro de Treino
+// ESCOLHER CENÁRIOS: lista com os cinco cenários e um cartão ALEATÓRIO (um cenário sorteado por round). Sem cenário escolhido (SCENE_SEL=-2) a luta
+// não começa: o menu avisa. A escolha vale para todos os rounds até recarregar a página; no modo TREINO o cenário é sempre o Centro de Treino
 const SCN=[{id:0,t:'SUBSOLO 9'},{id:1,t:'CIDADE ABANDONADA'},{id:2,t:'PRAIA'},{id:3,t:'CENTRO DE TREINO'},{id:4,t:'LUA'}];
 const sceneLabel=()=>{};
 function openScenes(){
   const keep=STAGE;$('scenes').hidden=false;const list=$('cardsS');list.innerHTML='';
   const mkCard=(id,title,sub)=>{const b=document.createElement('button');b.className='card scn'+(SCENE_SEL===id?' on':'');b.dataset.id=id;
-    b.innerHTML=`<canvas width="160" height="90"></canvas><strong>${title}</strong><small>${sub}</small>`;b.onclick=()=>{SCENE_SEL=id;try{localStorage.setItem('fb_scene',String(id));}catch(e){}sceneLabel();closeScenes();};list.appendChild(b);return b.querySelector('canvas');};
+    b.innerHTML=`<canvas width="160" height="90"></canvas><strong>${title}</strong><small>${sub}</small>`;b.onclick=()=>{SCENE_SEL=id;sceneLabel();closeScenes();warnScene(false);if(selStep===2)startPair();};list.appendChild(b);return b.querySelector('canvas');};
   // miniaturas: o próprio jogo desenha cada cenário no quadro e a imagem é copiada para o cartão
   const th=[];for(const c of [SCN[0],SCN[1],SCN[2],SCN[4],SCN[3]]){const cv2=mkCard(c.id,c.t,'');th.push(cv2);
     setStage(c.id);camReset=true;try{render(.016);render(.016);}catch(e){}
@@ -3897,6 +3900,8 @@ const FIGHTERS=[
  {s:'cap',id:'Cap',t:'CAPOEIRA',n:'Tiago',d:'Ginga, meia-lua, armada, rasteira. Acrobacias.'}];
 // uma tela só: o 1º toque marca o SEU lutador (borda branca brilhante), o 2º marca o ADVERSÁRIO (borda azul brilhante) e a luta começa
 let selStep=0;
+function warnScene(on){$('scWarn').hidden=!on;$('sceneBtn').classList.toggle('need',on);}
+function startPair(){if(SCENE_SEL===3){begin(chosen,'box',true);return;}begin(chosen,chosenE);}
 for(const F of FIGHTERS){
   const b=document.createElement('button');b.className='card';b.id='pick'+F.id;b.dataset.s=F.s;
   b.innerHTML=`<canvas id="pvP${F.id}" width="60" height="60"></canvas><strong>${F.n}</strong><small>${F.t}</small>`;$('cardsP').appendChild(b);
@@ -3906,8 +3911,9 @@ for(const F of FIGHTERS){
     if(selStep===0){chosen=F.s;if(am){chosenE=am[1]||(F.s==='box'?'tkd':'box');begin(chosen,chosenE);return;}
       selStep=1;b.classList.add('selP');$('pickT').textContent='ESCOLHA O SEU OPONENTE';$('pickT').className='pk1';return;}
     if(selStep===1){chosenE=F.s;selStep=2;b.classList.add('selE');
-      setTimeout(()=>{begin(chosen,chosenE);},380);}};}
-function menuStep(){selStep=0;TRAINSEL=false;if($('pickTrain'))$('pickTrain').classList.remove('selT');for(const c of $('cardsP').children)c.classList.remove('selP','selE');$('pickT').textContent='ESCOLHA O SEU LUTADOR';$('pickT').className='pk0';}
+      if(SCENE_SEL===-2){warnScene(true);return;}
+      setTimeout(startPair,380);}};}
+function menuStep(){selStep=0;warnScene(false);TRAINSEL=false;if($('pickTrain'))$('pickTrain').classList.remove('selT');for(const c of $('cardsP').children)c.classList.remove('selP','selE');$('pickT').textContent='ESCOLHA O SEU LUTADOR';$('pickT').className='pk0';}
 // TREINO: escolhendo o cenário Centro de Treino, o lutador escolhido entra direto no treino (parceiro de madeira, sem rounds)
 function drawTrainIcon(){const c=$('pvTrain').getContext('2d');c.imageSmoothingEnabled=false;c.clearRect(0,0,60,60);
   c.fillStyle='#7e5834';c.fillRect(0,0,60,40);c.fillStyle='#5a3c21';c.fillRect(0,34,60,6);c.fillStyle='#b88a56';c.fillRect(0,40,60,20);
