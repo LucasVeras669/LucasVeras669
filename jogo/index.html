@@ -502,10 +502,14 @@ function ambBuf(sec){const n=Math.floor(AC.sampleRate*sec),b=AC.createBuffer(2,n
 function ambNode(type,f,q,vol,lfo){const s=AC.createBufferSource();s.buffer=AMB.buf;s.loop=true;s.loopStart=Math.random()*1.5;s.start(0,s.loopStart);const fl=AC.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q||.7;const g=AC.createGain();g.gain.value=0;s.connect(fl);
   // a oscilação lenta (mar, multidão) fica num estágio próprio, antes do volume do cenário: com o volume em 0 o som some de verdade
   if(lfo){const m=AC.createGain(),o=AC.createOscillator(),d=AC.createGain();m.gain.value=1-lfo[1];o.frequency.value=lfo[1]?lfo[0]:0;d.gain.value=lfo[1];o.connect(d);d.connect(m.gain);o.start();fl.connect(m);m.connect(g);}else fl.connect(g);
-  g.connect(AMB.master);return g;}
+  AMB.lastF=fl;g.connect(AMB.master);return g;}
 function ambInit(){if(!AC||AMB)return;AMB={buf:ambBuf(4),master:AC.createGain()};AMB.master.gain.value=0;AMB.master.connect(AC.destination);
   AMB.rain=ambNode('highpass',1500,.5,0);AMB.rain2=ambNode('bandpass',5200,.8,0);AMB.rumb=ambNode('lowpass',200,.7,0);
-  AMB.sea=ambNode('lowpass',560,.6,0,[.11,.7]);AMB.sea2=ambNode('bandpass',2600,.9,0,[.13,.6]);AMB.hum=ambNode('lowpass',90,1,0);AMB.crowd=ambNode('bandpass',680,.55,0,[.23,.25]);AMB.crowd2=ambNode('bandpass',1700,.7,0,[.31,.3]);}
+  AMB.sea=ambNode('lowpass',560,.6,0,[.11,.7]);AMB.sea2=ambNode('bandpass',2600,.9,0,[.13,.6]);AMB.hum=ambNode('lowpass',90,1,0);AMB.crowd=ambNode('bandpass',680,.55,0,[.23,.25]);AMB.crowd2=ambNode('bandpass',1700,.7,0,[.31,.3]);
+  // LUA: vento/vórtex do buraco negro: grave que respira devagar + dois sopros em banda estreita cuja frequência varre para cima e para baixo (redemoinho)
+  AMB.vor=ambNode('lowpass',150,.9,0,[.07,.5]);
+  const sweep=(g,base,depth,rate)=>{const o=AC.createOscillator(),d=AC.createGain();o.frequency.value=rate;d.gain.value=depth;o.connect(d);d.connect(AMB.lastF.frequency);o.start();return g;};
+  AMB.vor2=sweep(ambNode('bandpass',380,4,0,[.09,.55]),380,260,.11);AMB.vor3=sweep(ambNode('bandpass',900,5,0,[.13,.6]),900,500,.07);}
 // sincronismo: a cada 250 ms o som ambiente é conferido contra o estado real do jogo (cenário e pausa) e corrigido se estiver
 // diferente; assim nenhuma sequência de menu/pausa/troca de cenário deixa o som mudo, preso no cenário antigo ou sobreposto
 let ambApplied=null;
@@ -514,7 +518,7 @@ function ambSync(){
   const stg=($('menu')&&!$('menu').hidden)?-1:STAGE,key=stg+'|'+(paused?1:0);if(key===ambApplied)return;ambApplied=key;ambStage=STAGE;
   const t=AC.currentTime,r=(g,v)=>{g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(v,t,.18);},st=stg;
   echoSet(st===0);
-  r(AMB.rain,st===1?.055:0);r(AMB.rain2,st===1?.022:0);r(AMB.rumb,st===1?.016:0);r(AMB.sea,st===2?.11:0);r(AMB.sea2,st===2?.03:0);r(AMB.hum,0);r(AMB.crowd,0);r(AMB.crowd2,0);
+  r(AMB.rain,st===1?.055:0);r(AMB.rain2,st===1?.022:0);r(AMB.rumb,st===1?.016:0);r(AMB.sea,st===2?.11:0);r(AMB.sea2,st===2?.03:0);r(AMB.hum,0);r(AMB.vor,st===4?.2:0);r(AMB.vor2,st===4?.09:0);r(AMB.vor3,st===4?.035:0);r(AMB.crowd,0);r(AMB.crowd2,0);
   AMB.master.gain.cancelScheduledValues(t);AMB.master.gain.setTargetAtTime(paused?0:1,t,.15);}
 function ambSet(){ambApplied=null;ambSync();}
 function ambMute(){ambApplied=null;}
@@ -3276,7 +3280,7 @@ function buildMoon(){
   return {st,cr,rk,du,fp,mt,ac};
 }
 function drawEarth(){
-  const q=P(1500,470,4200),r=130*q[2],x=q[0],y=q[1];
+  const q=P(2000,500,4800),r=95*q[2],x=q[0],y=q[1];
   ctx.globalCompositeOperation='lighter';
   let g=ctx.createRadialGradient(x,y,r*.85,x,y,r*1.9);g.addColorStop(0,'rgba(110,180,255,.5)');g.addColorStop(1,'rgba(110,180,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r*1.9,0,TAU);ctx.fill();
   ctx.globalCompositeOperation='source-over';
