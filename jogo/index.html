@@ -3605,10 +3605,10 @@ function buildBeach(){
   for(let i=0;i<150;i++)gl.push({x:R(-1100,1100),z:R(380,1300),ph:R(0,6),f:R(1.5,4),k:R(0,1)});
   const palms=[{x:-270,z:334,h:92,lean:.22,ph:0},{x:262,z:330,h:104,lean:-.18,ph:2},{x:-520,z:340,h:84,lean:.12,ph:4},{x:560,z:338,h:90,lean:-.1,ph:1},{x:-760,z:336,h:96,lean:.14,ph:3}];
   const dunes=mkPlane(-1000,2000,0,60,g=>{const Q=seeded(77);
-    const gr=g.createLinearGradient(0,60,0,0);gr.addColorStop(0,'#2c6a3a');gr.addColorStop(1,'#4c9646');g.fillStyle=gr;g.beginPath();g.moveTo(-1000,0);
+    const gr=g.createLinearGradient(0,60,0,0);gr.addColorStop(0,'#cfb277');gr.addColorStop(1,'#e8d4a0');g.fillStyle=gr;g.beginPath();g.moveTo(-1000,0);
     for(let x=-1000;x<=1000;x+=20)g.lineTo(x,22+14*Math.sin(x*.011)+9*Math.sin(x*.031+1)+Q(0,4));g.lineTo(1000,0);g.fill();
-    g.fillStyle='rgba(20,60,30,.35)';for(let x=-1000;x<1000;x+=20){const y=22+14*Math.sin(x*.011)+9*Math.sin(x*.031+1);g.fillRect(x+10,y-10,10,10);}
-    speck(g,-1000,0,2000,50,2600,['rgba(190,230,140,.4)','rgba(20,56,28,.4)'],Q);
+    g.fillStyle='rgba(120,92,50,.3)';for(let x=-1000;x<1000;x+=20){const y=22+14*Math.sin(x*.011)+9*Math.sin(x*.031+1);g.fillRect(x+10,y-10,10,10);}
+    speck(g,-1000,0,2000,50,2600,['rgba(255,244,205,.5)','rgba(110,84,46,.4)'],Q);
     for(let i=0;i<340;i++){const x=Q(-1000,1000),y=22+14*Math.sin(x*.011)+9*Math.sin(x*.031+1);g.strokeStyle=['#587f34','#7da446','#a7bf5a'][Math.floor(Q(0,3))];g.lineWidth=1;g.beginPath();g.moveTo(x,y-5);g.quadraticCurveTo(x+Q(-3,3),y+Q(2,8),x+Q(-6,6),y+Q(8,18));g.stroke();}});
   return {sp,rip,shells,fp,tuf,palms,fg,gulls,gl,dunes};
 }
@@ -3625,8 +3625,13 @@ function drawBeachBG(){
   {const a=P(-560,0,1380),b=P(-230,0,1380),h=40*a[2];
     ctx.fillStyle='#3d7a74';ctx.beginPath();ctx.moveTo(a[0],a[1]);for(let i=0;i<=12;i++){const t=i/12;ctx.lineTo(a[0]+(b[0]-a[0])*t,a[1]-Math.sin(t*PI)*h*(1-.22*Math.abs(Math.sin(t*9))));}ctx.lineTo(b[0],b[1]);ctx.fill();
     ctx.fillStyle='#2c5f5c';ctx.beginPath();ctx.moveTo(a[0]+(b[0]-a[0])*.5,a[1]-h);for(let i=0;i<=6;i++){const t=.5+i/12;ctx.lineTo(a[0]+(b[0]-a[0])*t,a[1]-Math.sin(t*PI)*h*(1-.22*Math.abs(Math.sin(t*9))));}ctx.lineTo(b[0],b[1]);ctx.lineTo(a[0]+(b[0]-a[0])*.5,a[1]);ctx.fill();
-    const bx=-300+((time*3.2)%1400)-200,q=P(bx,0,1250),s=q[2];ctx.fillStyle='#f5f0e6';ctx.beginPath();ctx.moveTo(q[0],q[1]-26*s);ctx.lineTo(q[0]+12*s,q[1]-3*s);ctx.lineTo(q[0],q[1]-3*s);ctx.fill();
-    ctx.fillStyle='#d9c08a';ctx.beginPath();ctx.moveTo(q[0]-1*s,q[1]-22*s);ctx.lineTo(q[0]-10*s,q[1]-3*s);ctx.lineTo(q[0]-1*s,q[1]-3*s);ctx.fill();ctx.fillStyle='#6e432a';ctx.fillRect(q[0]-12*s,q[1]-3*s,26*s,3*s);}
+    // barco abandonado: casco de madeira encalhado e inclinado, mastro quebrado e vela rasgada, balançando devagar
+    {const q=P(-110,0,1300),s=q[2]*3.2,bob=Math.sin(time*.8)*.6*s;ctx.save();ctx.translate(q[0],q[1]+bob);ctx.rotate(-.16+Math.sin(time*.5)*.015);
+      ctx.fillStyle='#4a3524';ctx.beginPath();ctx.moveTo(-17*s,-7*s);ctx.lineTo(17*s,-9*s);ctx.lineTo(12*s,1*s);ctx.lineTo(-11*s,1*s);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#7a5a3c';ctx.fillRect(-17*s,-8*s,34*s,2*s);ctx.fillStyle='#2e2016';for(let k=-3;k<=3;k++)ctx.fillRect(k*4.5*s,-6*s,1*s,6*s);
+      ctx.strokeStyle='#3a2a1c';ctx.lineWidth=1.6*s;ctx.beginPath();ctx.moveTo(-2*s,-8*s);ctx.lineTo(-4*s,-24*s);ctx.stroke();
+      ctx.fillStyle='#cfc5ae';ctx.beginPath();ctx.moveTo(-4*s,-23*s);ctx.lineTo(8*s,-14*s);ctx.lineTo(3*s,-16*s);ctx.lineTo(5*s,-9*s);ctx.lineTo(-3*s,-11*s);ctx.closePath();ctx.fill();
+      ctx.restore();ctx.fillStyle='rgba(255,255,255,.55)';ctx.fillRect(q[0]-20*s,q[1]+bob-1*s,40*s,1.2*s);}}
   // mar: 26 faixas em perspectiva do azul-marinho do fundo ao turquesa raso, brilhando perto do sol
   const N=26;
   for(let i=0;i<N;i++){const t0=i/N,t1=(i+1)/N,zA=1500-(1500-300)*Math.pow(t0,1.4),zB=1500-(1500-300)*Math.pow(t1,1.4),t=Math.pow(t0,1.05);
@@ -3654,9 +3659,9 @@ function drawBeachBG(){
   // píer de madeira avançando para o mar à direita
   // faixa de areia: borda molhada espelhando o céu, que avança e recua
   const pts=[];for(let x=-1300;x<=1300;x+=40)pts.push([x,0,shoreZ(x)]);
-  const sand=[...pts,[1300,0,60],[-1300,0,60]],f0=P(camX,0,Math.max(60,camZ+NEAR+6)),f1=P(camX,0,330),sg=ctx.createLinearGradient(0,f1[1],0,f0[1]);sg.addColorStop(0,'#3f7a3c');sg.addColorStop(.25,'#4e8e46');sg.addColorStop(.7,'#5c9d4c');sg.addColorStop(1,'#6aa955');
+  const sand=[...pts,[1300,0,60],[-1300,0,60]],f0=P(camX,0,Math.max(60,camZ+NEAR+6)),f1=P(camX,0,330),sg=ctx.createLinearGradient(0,f1[1],0,f0[1]);sg.addColorStop(0,'#cdb176');sg.addColorStop(.25,'#e4cd96');sg.addColorStop(.7,'#efdcae');sg.addColorStop(1,'#f4e6bd');
   polyW(sand,sg);
-  const wet=[...pts.map(p=>[p[0],0,p[2]]),...pts.slice().reverse().map(p=>[p[0],0,p[2]-20-6*Math.sin(p[0]*.03+time*.5)])];polyW(wet,'rgba(52,56,40,.5)');
+  const wet=[...pts.map(p=>[p[0],0,p[2]]),...pts.slice().reverse().map(p=>[p[0],0,p[2]-20-6*Math.sin(p[0]*.03+time*.5)])];polyW(wet,'rgba(122,98,58,.45)');
   const wet2=[...pts.map(p=>[p[0],0,p[2]-4]),...pts.slice().reverse().map(p=>[p[0],0,p[2]-9-3*Math.sin(p[0]*.04+time*.5)])];polyW(wet2,'rgba(190,226,236,.32)');
   // dunas de fundo (plano pré-pintado) atrás da areia
   drawPlane(S.dunes,356);
@@ -3666,29 +3671,17 @@ function drawBeachBG(){
     ctx.strokeStyle=`rgba(255,255,255,${al})`;ctx.lineWidth=wd*P(camX,0,322)[2]*1.6;ctx.beginPath();
     for(let x=-1300;x<1300;x+=18){if(hs(Math.floor(x/18)*1.7+dz+Math.floor(time*.8))<.2)continue;const a=P(x,0,shoreZ(x)+dz),b=P(x+17,0,shoreZ(x+17)+dz);ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);}ctx.stroke();}
   // textura da areia: grãos claros e escuros, marolas e pegadas
-  ctx.fillStyle='rgba(60,44,24,.4)';ctx.beginPath();for(const d of S.sp){const q=P(d.x,0,d.z);if(q[0]<CAM.vb[0]-3||q[0]>CAM.vb[2]+3)continue;ctx.rect(q[0],q[1],Math.max(1,d.w*q[2]),Math.max(1,d.w*q[2]*.7));}ctx.fill();
-  ctx.fillStyle='rgba(200,235,150,.4)';ctx.beginPath();for(const d of S.sp){if(d.c<.5)continue;const q=P(d.x+1,0,d.z-.5);if(q[0]<CAM.vb[0]-3||q[0]>CAM.vb[2]+3)continue;ctx.rect(q[0],q[1],Math.max(1,d.w*q[2]*.8),1);}ctx.fill();
-  ctx.strokeStyle='rgba(28,70,32,.35)';ctx.lineWidth=.8;ctx.beginPath();for(const r of S.rip){if(!nearVB(r.x,r.z,r.l))continue;const a=P(r.x,0,r.z),b=P(r.x+r.l,0,r.z+Math.sin(r.x)*1.5);ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);}ctx.stroke();
+  ctx.fillStyle='rgba(112,84,44,.4)';ctx.beginPath();for(const d of S.sp){const q=P(d.x,0,d.z);if(q[0]<CAM.vb[0]-3||q[0]>CAM.vb[2]+3)continue;ctx.rect(q[0],q[1],Math.max(1,d.w*q[2]),Math.max(1,d.w*q[2]*.7));}ctx.fill();
+  ctx.fillStyle='rgba(255,248,218,.5)';ctx.beginPath();for(const d of S.sp){if(d.c<.5)continue;const q=P(d.x+1,0,d.z-.5);if(q[0]<CAM.vb[0]-3||q[0]>CAM.vb[2]+3)continue;ctx.rect(q[0],q[1],Math.max(1,d.w*q[2]*.8),1);}ctx.fill();
+  ctx.strokeStyle='rgba(122,96,56,.35)';ctx.lineWidth=.8;ctx.beginPath();for(const r of S.rip){if(!nearVB(r.x,r.z,r.l))continue;const a=P(r.x,0,r.z),b=P(r.x+r.l,0,r.z+Math.sin(r.x)*1.5);ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);}ctx.stroke();
   if(0)for(const sh of S.shells){const q=P(sh.x,0,sh.z);if(q[0]<CAM.vb[0]-4||q[0]>CAM.vb[2]+4)continue;ctx.fillStyle='rgba(90,66,36,.35)';ctx.beginPath();ctx.ellipse(q[0]+.8*q[2],q[1]+.6*q[2],1.8*q[2],.9*q[2],0,0,TAU);ctx.fill();ctx.fillStyle=sh.c<.5?'#f7cfc4':'#fff6e6';ctx.beginPath();ctx.ellipse(q[0],q[1],1.6*q[2],.9*q[2],0,0,TAU);ctx.fill();}
   // sombras que o sol projeta na areia (para a direita e para trás), depois os objetos
   for(const p of S.palms){const q=P(p.x+30,0,p.z+4);ctx.fillStyle='rgba(90,64,34,.3)';ctx.beginPath();ctx.ellipse(q[0],q[1],42*q[2],6*q[2],0,0,TAU);ctx.fill();}
-  for(const x of [-210,236])drawTiki(x,x<0?312:324);
   for(const [x,z] of [[340,300],[-600,318]])for(let i=0;i<4;i++)box3(x+i*9-14,x+i*9-2,z-4,z+4,7+i%2*4,'#7e776c','#4e4841','#b0a89a');
   for(const p of S.palms)drawPalm(p);
   drawBeachTufts(S);
   if(!LQ){ctx.strokeStyle='#fdfdfd';ctx.lineWidth=1;ctx.beginPath();for(const b of S.gulls){const x=((b.x+time*b.v+1500)%3000)-1500,q=P(x,b.y+Math.sin(time*.5+b.ph)*12,b.z),fl=Math.sin(time*7+b.ph)*3*q[2]*5;
     ctx.moveTo(q[0]-6*q[2]*5,q[1]-fl);ctx.quadraticCurveTo(q[0]-3*q[2]*5,q[1]-fl*1.6,q[0],q[1]);ctx.quadraticCurveTo(q[0]+3*q[2]*5,q[1]-fl*1.6,q[0]+6*q[2]*5,q[1]-fl);}ctx.stroke();}
-}
-function drawTiki(x,z){
-  if(!nearVB(x,z,30))return;
-  const b=P(x,0,z),t=P(x,46,z),s=b[2];ctx.lineCap='round';
-  ctx.strokeStyle='#4a3220';ctx.lineWidth=3.4*s;ctx.beginPath();ctx.moveTo(b[0],b[1]);ctx.lineTo(t[0],t[1]);ctx.stroke();
-  ctx.strokeStyle='#8a6038';ctx.lineWidth=1.2*s;ctx.beginPath();ctx.moveTo(b[0]-s,b[1]);ctx.lineTo(t[0]-s,t[1]);ctx.stroke();
-  ctx.strokeStyle='#2a1a10';ctx.lineWidth=1*s;ctx.beginPath();for(let k=1;k<5;k++){const y=b[1]+(t[1]-b[1])*k/5;ctx.moveTo(b[0]-2.4*s,y);ctx.lineTo(b[0]+2.4*s,y);}ctx.stroke();
-  const fl=Math.sin(time*9+x)*.5+Math.sin(time*13.7+x*2)*.3,fy=t[1]-3*s;
-  ctx.globalCompositeOperation='lighter';ctx.fillStyle='rgba(255,150,40,.16)';ctx.beginPath();ctx.arc(t[0],fy-5*s,16*s,0,TAU);ctx.fill();ctx.globalCompositeOperation='source-over';
-  ctx.fillStyle='#e8501c';ctx.beginPath();ctx.moveTo(t[0]-3.6*s,fy);ctx.quadraticCurveTo(t[0]-4*s,fy-8*s,t[0]+fl*s,fy-(14+fl*3)*s);ctx.quadraticCurveTo(t[0]+4*s,fy-8*s,t[0]+3.6*s,fy);ctx.fill();
-  ctx.fillStyle='#ffc23a';ctx.beginPath();ctx.moveTo(t[0]-2*s,fy);ctx.quadraticCurveTo(t[0]-2.2*s,fy-5*s,t[0]+fl*.6*s,fy-(8+fl*2)*s);ctx.quadraticCurveTo(t[0]+2.2*s,fy-5*s,t[0]+2*s,fy);ctx.fill();
 }
 function drawBeachTufts(S){
   ctx.lineCap='round';ctx.lineWidth=1.1;
