@@ -3875,13 +3875,13 @@ function openScenes(){
   const keep=STAGE;$('scenes').hidden=false;const list=$('cardsS');list.innerHTML='';
   const mkCard=(id,title,sub)=>{const b=document.createElement('button');b.className='card scn'+(SCENE_SEL===id?' on':'');b.dataset.id=id;
     b.innerHTML=`<canvas width="160" height="90"></canvas><strong>${title}</strong><small>${sub}</small>`;b.onclick=()=>{SCENE_SEL=id;try{localStorage.setItem('fb_scene',String(id));}catch(e){}sceneLabel();closeScenes();};list.appendChild(b);return b.querySelector('canvas');};
-  const rc=mkCard(-1,'ALEATÓRIO','um cenário diferente a cada round');
   // miniaturas: o próprio jogo desenha cada cenário no quadro e a imagem é copiada para o cartão
-  const th=[];for(const c of SCN){const cv2=mkCard(c.id,c.t,'');th.push(cv2);
+  const th=[];for(const c of [SCN[0],SCN[1],SCN[2],SCN[4],SCN[3]]){const cv2=mkCard(c.id,c.t,'');th.push(cv2);
     setStage(c.id);camReset=true;try{render(.016);render(.016);}catch(e){}
     const sw=cv.width,sh=Math.min(cv.height,Math.round(cv.width*9/16)),sy=Math.round((cv.height-sh)/2);
     const g=cv2.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(cv,0,sy,sw,sh,0,0,160,90);}
   setStage(keep);camReset=true;
+  const rc=mkCard(-1,'ALEATÓRIO','um cenário diferente a cada round');
   // cartão aleatório: colagem das cinco miniaturas com um ponto de interrogação
   const g=rc.getContext('2d');g.imageSmoothingEnabled=false;th.forEach((t,i)=>{g.drawImage(t,i*32,0,32,90,i*32,0,32,90);});
   g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,0,160,90);g.fillStyle='#f2a93b';g.font='bold 54px monospace';g.textAlign='center';g.textBaseline='middle';g.fillText('?',80,48);
