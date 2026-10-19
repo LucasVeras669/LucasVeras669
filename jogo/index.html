@@ -162,6 +162,25 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 .kbd{display:none;font-size:calc(12px*var(--m));opacity:.7;margin:0;max-width:60ch;line-height:1.5}
 @media (hover:hover) and (pointer:fine){.kbd{display:block}}
 
+/* MENU INICIAL em tema claro: fundo de papel quente com listras suaves, textos escuros de alto contraste (só o #menu; pausa e fim de luta seguem escuros) */
+#menu{background:radial-gradient(ellipse at 50% 0%,#fffaf0 0%,#f3ebdc 55%,#e5dac5 100%),repeating-linear-gradient(135deg,rgba(60,40,10,.035) 0 14px,transparent 14px 28px);background-blend-mode:normal;color:#1c1712}
+#menu h1{color:#1c1712;text-shadow:calc(4px*var(--m)) calc(4px*var(--m)) 0 var(--blood),calc(8px*var(--m)) calc(8px*var(--m)) 0 rgba(28,23,18,.2)}
+#menu .dif{background:#fff;color:#1c1712;border-color:rgba(28,23,18,.5)}
+#menu .dif.on{background:var(--blood);color:#fff;border-color:#1c1712}
+#menu .dif[data-d=mestre].on{background:#8a2a14}
+#menu .difd{color:#3a3126;opacity:1}
+#menu #pickT{background:#fff;animation:none;text-shadow:none}
+#menu #pickT.pk0{color:#1c1712;border-color:#1c1712;box-shadow:0 calc(4px*var(--m)) 0 rgba(28,23,18,.28)}
+#menu #pickT.pk1{color:#0c4aa0;border-color:#0c4aa0;background:#eaf3ff;box-shadow:0 calc(4px*var(--m)) 0 rgba(12,74,160,.3)}
+#menu .card{background:#fff;color:#1c1712;border-color:rgba(28,23,18,.35);box-shadow:0 calc(3px*var(--m)) 0 rgba(28,23,18,.18)}
+#menu .card small{color:#4a3f31;opacity:1}
+#menu .card:hover,#menu .card:active{border-color:#c77a00;background:#fff4dc}
+#menu .card.selP{border-color:#1c1712;background:#f1ece0;box-shadow:0 0 0 3px #1c1712,0 calc(4px*var(--m)) 0 rgba(28,23,18,.3)}
+#menu .card.selE{border-color:#1f6fd8;background:#e8f1ff;box-shadow:0 0 0 3px #1f6fd8,0 calc(4px*var(--m)) 0 rgba(31,111,216,.35)}
+#menu .card.trn{background:#fff1cf;border-color:#c77a00;box-shadow:0 0 0 2px #c77a00,0 0 18px 2px rgba(199,122,0,.45)}
+#menu .card.trn strong{color:#a65b00}
+#menu .card.trn.selT{background:#ffe3a3;box-shadow:0 0 0 3px #1c1712,0 0 22px 4px rgba(199,122,0,.6)}
+@keyframes trnGlow{50%{box-shadow:0 0 0 2px #c77a00,0 0 28px 8px rgba(199,122,0,.7)}}
 .screen>:first-child{margin-top:auto}.screen>:last-child{margin-bottom:auto}
 </style>
 
