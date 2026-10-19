@@ -217,7 +217,7 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
     <h1>FLUXO<br>BRUTAL</h1>
     <div class="difs" role="radiogroup" aria-label="Dificuldade"><button class="dif" data-d="facil" role="radio">FÁCIL</button><button class="dif" data-d="medio" role="radio">MÉDIO</button><button class="dif" data-d="mestre" role="radio">MESTRE</button></div>
     <p class="difd" id="difd"></p>
-    <button class="scbtn" id="sceneBtn" aria-label="Escolher cenário"><span>ESCOLHER CENÁRIOS</span><b id="sceneLbl">ALEATÓRIO</b></button>
+    <button class="scbtn" id="sceneBtn" aria-label="Escolher cenário"><span>ESCOLHER CENÁRIOS</span></button>
     <h2 id="pickT" class="pk0">ESCOLHA O SEU LUTADOR</h2>
     <div class="cards" id="cardsP"></div>
   </div>
@@ -3870,7 +3870,7 @@ let chosen='box',chosenE='tkd';
 // ESCOLHER CENÁRIOS: lista com os cinco cenários e um cartão ALEATÓRIO (padrão: um cenário sorteado por round). A escolha vale para todos os
 // rounds e fica guardada no aparelho; no modo TREINO o cenário é sempre o Centro de Treino
 const SCN=[{id:0,t:'SUBSOLO 9'},{id:1,t:'CIDADE ABANDONADA'},{id:2,t:'PRAIA'},{id:3,t:'CENTRO DE TREINO'},{id:4,t:'LUA'}];
-const sceneLabel=()=>{$('sceneLbl').textContent=SCENE_SEL<0?'ALEATÓRIO':SCN[SCENE_SEL].t;};
+const sceneLabel=()=>{};
 function openScenes(){
   const keep=STAGE;$('scenes').hidden=false;const list=$('cardsS');list.innerHTML='';
   const mkCard=(id,title,sub)=>{const b=document.createElement('button');b.className='card scn'+(SCENE_SEL===id?' on':'');b.dataset.id=id;
