@@ -1449,16 +1449,17 @@ const D_MEDIO={agg:1.65,cdM:.2,wdM:.6,evM:2.2,grdM:1.8,rupM:1.8,dmgM:1.4,react:.
 const STAT={atk:0,hits:0};window.__stat=STAT;window.__st=()=>[enemy.st,player.st,enemy.cd,enemy.sp];window.__spec=()=>{enemy.sp=100;};window.__red=()=>enemy.red;window.__fix=()=>{enemy.x=player.x+30;enemy.z=player.z;enemy.st="idle";enemy.cd=9;};window.__pm=()=>player.mv&&player.mv.n;window.__mvn=()=>[enemy.mv&&enemy.mv.n,enemy.red,enemy.st,enemy.armor,enemy.feint];window.__php=()=>player.hp;window.__ez=()=>[enemy.st,enemy.x,enemy.z,enemy.y,enemy.hp,0,0,eFin];window.__go=(k,kd)=>{const e=enemy,p=player;e.x=p.x+p.face*34;e.z=p.z;e.st="idle";e.cd=99;e.y=0;p.fc=Math.max(p.fc,0);dashTo(p,kd||"norm",{mv:typeof k==="string"?MOV[p.style][k]:k});};window.__fin=(sup)=>{enemy.x=player.x+player.face*34;enemy.z=player.z;enemy.st="idle";enemy.cd=99;player.fc=sup?12:5;doFinisher(player);};window.__dmn=()=>player.dm&&player.dm.v.n;window.__ea2=(st,k)=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[st][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__ri=()=>{introT=INTRO;introN=99;player.st="intro";enemy.st="intro";running=false;player.t=enemy.t=0;banner("","",.01);};window.__stg=n=>{SKI();setStage(n);};window.__gs=()=>[STAGE,round,STG.join()];window.__amb=()=>AMB?["rain","rain2","sea","sea2","hum","crowd","crowd2"].map(k=>+AMB[k].gain.value.toFixed(3)).join(",")+" ctx:"+AC.state:"sem AMB";window.__echo=()=>SFXB?[SFXB.wet.gain.value,SFXB.ev.gain.value].map(v=>+v.toFixed(2)).join(","):"sem";window.__rain=()=>[+RAIN.fl.toFixed(3),RAIN.th];window.__rms=()=>{if(!AMB)return -1;if(!window.__an){window.__an=AC.createAnalyser();window.__an.fftSize=2048;AMB.master.connect(window.__an);}const d=new Float32Array(2048);window.__an.getFloatTimeDomainData(d);let q=0;for(const v of d)q+=v*v;return Math.sqrt(q/2048);};window.__nm=()=>{const o=[];for(let i=0;i<400;i++){player.seq=null;const sq=pick(SEQ[player.style]);o.push(...sq);}return o;};window.__spd=(a,b,c)=>{STY.box.spd=a;STY.tkd.spd=b;STY.mt.spd=c;};window.__hpr=()=>{enemy.hp=enemy.max;};window.__col=()=>{const r=[];for(let i=0;i<2000;i++){const [a,b]=colorsFor("mt","mt");if(a===b)return "IGUAIS";r.push(a);}return [...new Set(r)].join();};window.__pal=(s,c)=>{player.pal=palFor(s,c,true);player.style=s;};window.__gd=()=>{enemy.x=player.x+player.face*34;enemy.z=player.z;enemy.cd=99;eStart(enemy,"guard");enemy.gd=5;};window.__sq=a=>{player.seq=a;player.si=0;};window.__def=v=>{inp.def=v;};window.__eg=()=>{enemy.x=player.x+player.face*40;enemy.z=player.z;enemy.cd=99;eGrab(enemy);};window.__es=()=>{enemy.x=player.x+player.face*50;enemy.z=player.z;eSpecial(enemy);};window.__hp=()=>[player.hp,enemy.hp,player.st,enemy.st];window.__dd=x=>{inp.x=x;inp.z=0;doDodge(player);};window.__cs=n=>{player.cStreak=n;};window.__tp=()=>{enemy.x=player.x-40;enemy.cd=99;};window.__dbg=()=>({rot:player.rot,rotR:player.rotR,yw:player.yw,spin:player.spin,turn:player.turn,ro:player.ro,tw:player.tw,gz:player.gz});window.__pose=()=>[player.pose.map(v=>+v.toFixed(2)),player.pt.map(v=>+v.toFixed(2)),player.y,player.k];window.__ea=k=>{const e=enemy,p=player;e.x=p.x+p.face*50;e.z=p.z;e.chain=[];e.mv=MOV[e.style][k];e.st='wind';e.t=0;e.wd=.35;e.wx=null;e.feint=false;e.red=false;e.armor=false;e.stun=0;e.cd=99;setPose(e,e.mv.A,420,.7);};window.__sk=w=>{const S=skel(w==='e'?enemy:player),o={};for(const k in S)if(Array.isArray(S[k]))o[k]=[S[k][0],S[k][1]];const f=w==='e'?enemy:player;o.x=f.x;return o;};window.__pl=()=>[player.st,player.x,player.y,player.spin,player.turn,player.rot,player.mv&&player.mv.n,player.t];
 window.__thr=()=>({t:(enemy.st==="wind"||enemy.st==="brk"||enemy.st==="strike"&&enemy.hi===0),red:enemy.red,feint:enemy.feint,armor:enemy.armor,st:enemy.st,wd:enemy.wd,et:enemy.t});
 let DP=D_NEUTRO;
-const AI0=.6;
+// MÉDIO = o padrão do MESTRE (skill .6, fixa: não aprende); MESTRE começa um pouco acima (.75) e aprende com os hábitos do jogador
+const ALTA=()=>DIFF==='medio'||DIFF==='mestre';
+const AI0=.6,AIM=.75;
 const AI={skill:AI0,t:0,dash:0,flank:0,dod:0,cnt:0,atk:0,mv:{},last:[],ps:'',pm:null,ins:false,idle:0,lvl:0,pt:-9};
-function aiReset(){Object.assign(AI,{skill:AI0,t:0,dash:0,flank:0,dod:0,cnt:0,atk:0,mv:{},last:[],ps:'',pm:null,ins:false,idle:0,lvl:0,pt:-9});}
+function aiReset(){Object.assign(AI,{skill:DIFF==='mestre'?AIM:AI0,t:0,dash:0,flank:0,dod:0,cnt:0,atk:0,mv:{},last:[],ps:'',pm:null,ins:false,idle:0,lvl:0,pt:-9});}
 const aiSum=()=>AI.dash+AI.flank+AI.dod+AI.cnt+AI.atk+.001;
 // hábito mais repetido entre os golpes que o jogador usa (0 = variado, 1 = sempre o mesmo)
 function aiPred(){let m=0,t=0;for(const k in AI.mv){t+=AI.mv[k];if(AI.mv[k]>m)m=AI.mv[k];}return t>3?m/t:0;}
 function aiParams(){
-  if(DIFF==='medio')return D_MEDIO;
-  if(DIFF!=='mestre')return D_NEUTRO;
-  const k=AI.skill,dodS=AI.dod/aiSum();
+  if(!ALTA())return D_NEUTRO;
+  const k=DIFF==='mestre'?AI.skill:AI0,dodS=AI.dod/aiSum();
   // começa já acima do MÉDIO (skill .6) e vai bem além: no fim fica bem acima, com os hábitos do jogador contra ele
   return {agg:1.3+1*k,cdM:.3-.22*k,wdM:.62-.25*k,evM:2+1.6*k,grdM:1.8+1.4*k,rupM:1.8+1.6*k,dmgM:1.3+.45*k,react:.8+.9*k,chainX:.7+.4*k+dodS*.3,recM:.55-.35*k,close:.8-.15*k,hpM:1.4+.6*k,getM:.6-.3*k,spR:6+3.5*k,spH:40+14*k};
 }
@@ -1471,11 +1472,11 @@ function aiObserve(p,e,dt){
     else if(p.st==='dodge')AI.dod++;
     else if(p.st==='atk'&&p.kind==='norm'&&p.mv){AI.atk++;AI.mv[p.mv.n]=(AI.mv[p.mv.n]||0)+1;AI.idle=0;
       // o jogador abriu um golpe previsível: o rival lê o padrão e se antecipa
-      if(DIFF==='mestre'&&running&&!roundOver&&hittable(e)&&(e.st==='stalk'||e.st==='rec'&&!e.punish&&e.t>.25||e.st==='idle')){
+      if(ALTA()&&running&&!roundOver&&hittable(e)&&(e.st==='stalk'||e.st==='rec'&&!e.punish&&e.t>.25||e.st==='idle')){
         const pr=aiPred(),c=AI.skill*(.2+1.1*Math.max(0,pr-.25));
         if(Math.random()<c){if(Math.random()<.7)eStart(e,'evade');else eStart(e,'guard');if(pr>.45)aiPop('LEU O SEU PADRÃO',e);}}}
     // acabou de esquivar: se ele esquiva muito, o rival já fica pronto para castigar
-    if(AI.ps==='dodge'&&p.st!=='dodge'&&DIFF==='mestre'&&running&&!roundOver&&canAct(e)&&(e.st==='stalk'||e.st==='rec'&&e.t>.2)&&Math.random()<AI.skill*(.15+Math.min(.85,AI.dod/aiSum()*3.5))){
+    if(AI.ps==='dodge'&&p.st!=='dodge'&&ALTA()&&running&&!roundOver&&canAct(e)&&(e.st==='stalk'||e.st==='rec'&&e.t>.2)&&Math.random()<AI.skill*(.15+Math.min(.85,AI.dod/aiSum()*3.5))){
       e.chain=[];eAttack(e,true);e.wd=Math.max(.2,e.wd*.6);e.feint=false;aiPop('CASTIGA A ESQUIVA',e);}
   }
   if(p.inScene&&!AI.ins)AI.cnt++;
@@ -1487,7 +1488,7 @@ function aiGrow(p,e,dt){
   if(DIFF!=='mestre'||!running||roundOver)return;
   AI.t+=dt;const ph=p.hp/p.max,eh=e.hp/e.max;
   let r=.007+(eh<ph-.25?.012:0)-(ph<eh-.2?.011:0)-(ph<.35?.008:0)+(eh<.35?.004:0);
-  AI.skill=clamp(AI.skill+r*dt,.45,1);
+  AI.skill=clamp(AI.skill+r*dt,.7,1);
   const lv=AI.skill>=.85?2:AI.skill>=.7?1:0;
   if(lv>AI.lvl){AI.lvl=lv;pop(lv===1?'ELE ESTÁ APRENDENDO':'ELE SE ADAPTOU',e,'#ff5d3a');sfx.rupt();}
 }
@@ -1511,16 +1512,16 @@ function eSpecial(e){
   const box=e.style==='box';
   const q=pick(SPSEQ[e.style]).slice();e.mv=MOV[e.style][q.shift()];e.chain=q;e.seqHit=false;e.sp=0;e.red=true;e.armor=true;e.feint=false;e.stun=0;e.punish=false;
   if(player.st==='defend'){const q=player;q.dm=null;q.rot=0;q.rotDir=0;q.st='hurt';q.t=0;q.stum=true;q.hurtD=.32;q.vx=e.face*70;setPose(q,STAG,600,.45);kick(q,0,-9);kick(q,2,-8);kick(q,4,-8);pop('DEFESA QUEBRADA',q,'#ff4a4a');pops[pops.length-1].x+=4;pops[pops.length-1].y+=12;sfx.heavy();slow(.4,.3);}
-  e.st='wind';e.t=0;e.wx=null;e.cd=1.2;e.wd=Math.max(.55,.95*(DIFF==='mestre'?lerp(1,.7,AI.skill):DIFF==='medio'?.85:1));
+  e.st='wind';e.t=0;e.wx=null;e.cd=1.2;e.wd=Math.max(.55,.95*(ALTA()?lerp(1,.7,AI.skill):1));
   setPose(e,e.mv.A,420,.7);pop('ESPECIAL!',e,'#ff4a4a');buzz([20,40,20]);quake(.35,0,0);camPunch(.5);hype(.2,e.x);flashA=Math.max(flashA,.18);
 }
 function eAttack(e,first){
   if(first){e.chain=pick(ESEQ[e.style]).slice();STAT.atk++;}
   const k=e.chain.shift();e.mv=MOV[e.style][k];
   e.st='wind';e.t=0;e.armor=false;e.stun=0;e.wd=Math.max(.2,(first?Math.max(.38,.75-round*.1):Math.max(.26,.42-round*.05))*DP.wdM);
-  e.feint=(round>=2||DIFF!=='facil')&&first&&Math.random()<.12+round*.04+(DIFF==='medio'?.18:0);
+  e.feint=(round>=2||DIFF!=='facil')&&first&&Math.random()<.12+round*.04;
   if(first){for(let n=0;n<2;n++)if(Math.random()<DP.chainX*(n?.6:1)&&e.chain.length<4)e.chain.push(pick(pick(ESEQ[e.style])));}
-  if(first&&DIFF==='mestre'){
+  if(first&&ALTA()){
     // jogador que contra muito: mais fintas e tempo quebrado (solta cedo ou tarde) para estragar o contra
     const cs=Math.min(1,AI.cnt/aiSum()*2.5);
     if(!e.feint&&Math.random()<AI.skill*(.12+cs*.8)){e.feint=true;}
@@ -1528,7 +1529,7 @@ function eAttack(e,first){
   }
   setPose(e,e.mv.A,first?420:700,.7);
   // Mestre: alguns ataques saem blindados (não adianta só trocar golpes: é hora de contra ou esquiva)
-  if(DIFF==='mestre'&&first&&!e.feint&&Math.random()<.12+.4*AI.skill){e.armor=true;aiPop('GOLPE BLINDADO',e);}
+  if(ALTA()&&first&&!e.feint&&Math.random()<.12+.4*AI.skill){e.armor=true;aiPop('GOLPE BLINDADO',e);}
 }
 function updEnemy(e,dt){
   e.t+=dt;const p=player,dx=p.x-e.x,ad=Math.abs(dx);
@@ -1561,7 +1562,7 @@ function updEnemy(e,dt){
     if(running&&!roundOver&&p.st!=='ko'){e.cd-=dt;
       // taekwondista pune quem entra correndo
       if(Y.punish&&p.st==='dash'&&!p.dash.flank&&p.dash.kind==='norm'&&Math.random()<dt*2.5*round){e.chain=[];e.mv=MOV[e.style][Y.punish];e.st='wind';e.t=0;e.wd=.3;e.feint=false;setPose(e,e.mv.A,800,.6);}
-      else if(DP.react>0&&p.st==='dash'&&p.dash&&(p.dash.kind==='norm'||p.dash.kind==='flank')&&Math.random()<dt*DP.react*(1+round)*(DIFF==='mestre'?1+3*AI.dash/aiSum()+2*AI.flank/aiSum():1)){
+      else if(DP.react>0&&p.st==='dash'&&p.dash&&(p.dash.kind==='norm'||p.dash.kind==='flank')&&Math.random()<dt*DP.react*(1+round)*(ALTA()?1+3*AI.dash/aiSum()+2*AI.flank/aiSum():1)){
         // entrada do jogador lida: contra-golpe rápido (boxeador: jab; taekwondista: bandal)
         e.chain=[];e.mv=MOV[e.style][Y.quick];e.st='wind';e.t=0;e.wd=Math.max(.2,.26*DP.wdM);e.feint=false;setPose(e,e.mv.A,800,.6);}
       else if(e.sp>=100&&running&&!roundOver&&canAct(p)&&p.st!=='hurt'&&e.cd<2.8&&Math.random()<dt*6){eSpecial(e);}
@@ -3385,7 +3386,7 @@ function render(rdt){
   ctx.imageSmoothingEnabled=false;
   if(STAGE){drawBG2(RS);drawShadows2(fs,SK);}else{drawBG(RS);drawShadows(fs,SK);}
   const threat=isThreat(enemy);
-  if(threat){const q=P(enemy.x+enemy.ro*enemy.face,0,enemy.z),k=.5+.5*Math.sin(time*40);ctx.strokeStyle=enemy.red?`rgba(255,40,40,${.6+.4*k})`:enemy.feint&&DIFF!=='mestre'?`rgba(255,255,255,${.2+.25*k})`:`rgba(255,255,255,${.5+.5*k})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(q[0],q[1],(16+k*4)*q[2],(4+k)*q[2],0,0,TAU);ctx.stroke();}
+  if(threat){const q=P(enemy.x+enemy.ro*enemy.face,0,enemy.z),k=.5+.5*Math.sin(time*40);ctx.strokeStyle=enemy.red?`rgba(255,40,40,${.6+.4*k})`:enemy.feint&&!ALTA()?`rgba(255,255,255,${.2+.25*k})`:`rgba(255,255,255,${.5+.5*k})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(q[0],q[1],(16+k*4)*q[2],(4+k)*q[2],0,0,TAU);ctx.stroke();}
   // anel do jogador: só no jogo livre (some na cena, no especial com cinema e no fim do round)
   if(!player.inScene&&cine<=0&&!roundOver){const q=P(player.x+player.ro*player.face,0,player.z);ctx.strokeStyle=player.flow>=3?'rgba(242,169,59,.6)':'rgba(127,214,255,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(q[0],q[1],12*q[2],3*q[2],0,0,TAU);ctx.stroke();}
   for(const r of parts)if(r.t==='r'){const q=P(r.x,0,r.z),k=1-r.l/r.ml;ctx.strokeStyle=r.c;ctx.globalAlpha=1-k;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(q[0],q[1],r.r*k*q[2],r.r*k*.3*q[2],0,0,TAU);ctx.stroke();ctx.globalAlpha=1;}
@@ -3397,7 +3398,7 @@ function render(rdt){
   if(enemy.red){const q=P(enemy.x,34,enemy.z),k=.55+.45*Math.sin(time*18),r=46*q[2],g=ctx.createRadialGradient(q[0],q[1],0,q[0],q[1],r);g.addColorStop(0,`rgba(255,50,40,${.45*k})`);g.addColorStop(1,'rgba(255,50,40,0)');ctx.globalCompositeOperation='lighter';ctx.fillStyle=g;ctx.fillRect(q[0]-r,q[1]-r,r*2,r*2);ctx.globalCompositeOperation='source-over';}
   // indicador ⚡ (branco = dá para defender e contra-atacar, vermelho = só esquivar; finta fraquinha nos níveis Fácil e Médio)
   if(threat){const S=SK[1];const q=P(enemy.x,0,enemy.z),hx=q[0]+S.hd[0]*enemy.face*q[2],hy=q[1]-(S.hd[1]+14)*q[2],s=q[2]*(enemy.red?2.8:enemy.armor?2.3:1.9);
-    const on=Math.sin(time*40)>0,fa=enemy.feint&&DIFF!=='mestre';ctx.globalAlpha=fa?.5:1;ctx.fillStyle=enemy.red?(on?'#ff2a2a':'#ff8a5a'):(on?'#ffffff':'#d9e4ea');ctx.strokeStyle=enemy.red?'#3a0000':OL;ctx.lineWidth=1.5;
+    const on=Math.sin(time*40)>0,fa=enemy.feint&&!ALTA();ctx.globalAlpha=fa?.5:1;ctx.fillStyle=enemy.red?(on?'#ff2a2a':'#ff8a5a'):(on?'#ffffff':'#d9e4ea');ctx.strokeStyle=enemy.red?'#3a0000':OL;ctx.lineWidth=1.5;
     ctx.beginPath();ctx.moveTo(hx+1*s,hy-6*s);ctx.lineTo(hx-3*s,hy+1*s);ctx.lineTo(hx,hy+1*s);ctx.lineTo(hx-1.5*s,hy+6*s);ctx.lineTo(hx+3.5*s,hy-1*s);ctx.lineTo(hx+.5*s,hy-1*s);ctx.lineTo(hx+2*s,hy-6*s);ctx.closePath();ctx.fill();ctx.stroke();ctx.globalAlpha=1;}
   // faíscas e clarões (com bloom: halo branco em 'lighter')
   for(const p of parts){if(p.t!=='s'&&p.t!=='f')continue;const q=P(p.x,p.y,p.z);const al=Math.max(0,p.l/p.ml);
@@ -3504,7 +3505,7 @@ function begin(style,es){
   ['b1','b2','b3'].forEach((id,i)=>{$(id).textContent=BLABEL[style][i];$(id).setAttribute('aria-label',BLABEL[style][i]);});
   setTimeout(()=>{if(running)$('stickHint').hidden=true;},9000);
 }
-const DDESC={facil:'Bom para aprender os golpes.',medio:'Rival agressivo: ataca sem parar, com combos longos, e esquiva e defende bem.',mestre:'Rival ultra agressivo e inteligente: aprende seus hábitos, se adapta e fica mais forte durante a luta.'};
+const DDESC={facil:'Bom para aprender os golpes.',medio:'Rival ultra agressivo: ataca sem parar, com combos longos, golpes blindados e fintas, e esquiva e defende muito bem.',mestre:'O mais difícil: começa ainda mais forte que o Médio, aprende seus hábitos, se adapta e fica mais forte durante a luta.'};
 function setDiff(d,save){DIFF=DDESC[d]?d:'facil';DP=aiParams();$('difd').textContent=DDESC[DIFF];
   document.querySelectorAll('.dif').forEach(b=>{const on=b.dataset.d===DIFF;b.classList.toggle('on',on);b.setAttribute('aria-checked',on);});
   if(save){try{localStorage.setItem('fb_dif',DIFF);}catch(e){}}}
