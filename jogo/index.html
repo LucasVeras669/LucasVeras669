@@ -3750,7 +3750,7 @@ function begin(style,es,train){
   ['b1','b2','b3'].forEach((id,i)=>{$(id).textContent=BLABEL[style][i];$(id).setAttribute('aria-label',BLABEL[style][i]);});
   setTimeout(()=>{if(running)$('stickHint').hidden=true;},9000);
 }
-const DDESC={facil:'',medio:'Rival ultra agressivo: ataca sem parar, com combos longos, golpes blindados e fintas, e esquiva e defende muito bem.',mestre:'O mais difícil: começa ainda mais forte que o Médio, aprende seus hábitos, se adapta e fica mais forte durante a luta.'};
+const DDESC={facil:'',medio:'Rival ultra agressivo: ataca sem parar, com combos longos, golpes blindados e fintas, e esquiva e defende muito bem.',mestre:'Rival que aprende seus hábitos, se adapta e cresce durante a luta.'};
 function setDiff(d,save){DIFF=DDESC[d]?d:'facil';DP=aiParams();$('difd').textContent=DDESC[DIFF];
   document.querySelectorAll('.dif').forEach(b=>{const on=b.dataset.d===DIFF;b.classList.toggle('on',on);b.setAttribute('aria-checked',on);});
   if(save){try{localStorage.setItem('fb_dif',DIFF);}catch(e){}}}
