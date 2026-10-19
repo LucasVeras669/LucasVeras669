@@ -1,4 +1,4 @@
-<title>Fluxo Brutal</title>
+<title>Fight Flow Brutal</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="description" content="Jogo de luta 1x1 em pixel art com combate free flow: boxe contra taekwondo.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -187,6 +187,12 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 .card.scn.on strong{color:var(--amber)}
 @media (max-height:420px){.scTitle{font-size:15px;padding:4px 14px}.card.scn{width:118px;padding:4px}.card.scn canvas{width:108px;height:61px}.scbtn{font-size:9px;padding:5px 12px}}
 .screen>:first-child{margin-top:auto}.screen>:last-child{margin-bottom:auto}
+.mv{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(20px*var(--m));margin:auto 0}.mv[hidden]{display:none}
+.screen h1.big{font-size:clamp(34px,10vw,calc(72px*var(--m)));margin-bottom:calc(6px*var(--m))}
+.startBtn{font-family:var(--display);font-size:calc(22px*var(--m));letter-spacing:.2em;padding:calc(12px*var(--m)) calc(46px*var(--m));background:var(--blood);color:var(--paper);border:1px solid var(--paper);cursor:pointer;min-height:44px}
+.startBtn:active{background:#a52a1c}
+#group{width:min(86vw,calc(520px*var(--m)));image-rendering:pixelated;margin-top:calc(10px*var(--m))}
+@media (max-height:420px){.screen h1.big{font-size:30px}.mv{gap:10px}#group{width:min(54vw,400px);margin-top:0}.startBtn{font-size:15px;padding:8px 36px;min-height:36px}}
 /* MINIMALISTA: bordas de 1px, sem brilhos nem sombras duras grossas; seleção marcada só pela cor da linha */
 .card,.scbtn,.scwarn,.dif,.cta,#pickT,.scTitle,.exit{border-width:1px!important;box-shadow:none!important}
 .card{border-color:rgba(239,230,210,.28)}
@@ -240,12 +246,19 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
     <button id="bAtk" aria-label="Luta livre em fluxo">FLUXO</button>
   </div>
   <div class="screen" id="menu">
-    <h1>FLUXO<br>BRUTAL</h1>
+    <div class="mv" id="titleView">
+      <h1 class="big">FIGHT FLOW<br>BRUTAL</h1>
+      <button class="startBtn" id="startBtn" aria-label="Começar">START</button>
+      <canvas id="group" width="260" height="130" aria-label="Todos os lutadores posando juntos"></canvas>
+    </div>
+    <div class="mv" id="pickView" hidden>
+    <h1>FIGHT FLOW<br>BRUTAL</h1>
     <div class="difs" role="radiogroup" aria-label="Dificuldade"><button class="dif" data-d="facil" role="radio">FÁCIL</button><button class="dif" data-d="medio" role="radio">MÉDIO</button><button class="dif" data-d="mestre" role="radio">MESTRE</button></div>
     <p class="difd" id="difd"></p>
     <h2 id="pickT" class="pk0">ESCOLHA O SEU LUTADOR</h2>
     <div class="cards" id="cardsP"></div>
     <p class="scwarn" id="scWarn" hidden>ESCOLHA UM CENÁRIO PARA COMEÇAR A LUTA</p><button class="scbtn" id="sceneBtn" aria-label="Escolher cenário"><span>ESCOLHER CENÁRIOS</span></button>
+      </div>
   </div>
   <div class="screen" id="scenes" hidden>
     <h2 class="scTitle">ESCOLHER CENÁRIO</h2>
@@ -543,7 +556,7 @@ const sfx={
 const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
 
 // ---------- estado ----------
-let TRAIN=false,TRAINSEL=false,SCENE_SEL=-2;
+let TRAIN=false,TRAINSEL=false,SCENE_SEL=-2,TITLE_ON=true;
 let player=null,enemy=null,parts=[],trails=[],pops=[],time=0,hitstop=0,timeScale=1,slowT=0,cine=0,flashA=0,lbox=0,tiltT=0;
 let rclock=0; // relógio real acumulado (ritmo e amassar botão não dependem de câmera lenta, hitstop nem velocidade do FLUXO)
 let speedL=0,impactF=0,impactRed=false,sceneName='',sceneRed=false;
@@ -3035,7 +3048,7 @@ function midPass(fs,RS){
     if(lit){ctx.globalCompositeOperation='source-over';lit=false;}
     if(it.t==='d'){const q=P(it.x,it.y,it.z),al=Math.max(0,it.l/it.ml),r=(2+(1-al)*4)*q[2];ctx.fillStyle=it.c;ctx.globalAlpha=al*.6;ctx.fillRect(q[0]-r/2,q[1]-r/2,r,r);ctx.globalAlpha=1;continue;}
     switch(it.k){
-      case 'F':{const f=fs[it.i],q=P(f.x,0,f.z);
+      case 'F':{if(TITLE_ON)break;const f=fs[it.i],q=P(f.x,0,f.z);
         if(f===player)for(const t of trails){const tq=P(t.f.x,0,t.f.z);drawGhost(ctx,t.f,tq[0],tq[1],tq[2],t.c,t.l/.18*.45);}
         // armadura da ruptura: contorno laranja pulsando atrás do corpo (o golpe livre não interrompe)
         if(f.armor){const k=.5+.5*Math.sin(time*26);drawGhost(ctx,snap(f),q[0],q[1],q[2],k>.5?'#ff5d3a':'#ffb347',.45+.3*k,4+k*1.5);}
@@ -3763,7 +3776,8 @@ function render(rdt){
   const RS=fs.map((f,i)=>{const q=P(f.x,0,f.z),r=fighterSprite(f,SK[i],CAM.m,q[0],q[1],q[2],lightOf(f,q));r.f=f;return r;});
   ctx.setTransform(...CAM.m);
   ctx.imageSmoothingEnabled=false;
-  if(STAGE){drawBG2(RS);drawShadows2(fs,SK);}else{drawBG(RS);drawShadows(fs,SK);}
+  const RS0=TITLE_ON?[]:RS;
+  if(STAGE){drawBG2(RS0);if(!TITLE_ON)drawShadows2(fs,SK);}else{drawBG(RS0);if(!TITLE_ON)drawShadows(fs,SK);}
   const threat=isThreat(enemy);
   if(threat){const q=P(enemy.x+enemy.ro*enemy.face,0,enemy.z),k=.5+.5*Math.sin(time*40);ctx.strokeStyle=enemy.red?`rgba(255,40,40,${.6+.4*k})`:enemy.feint&&!ALTA()?`rgba(255,255,255,${.2+.25*k})`:`rgba(255,255,255,${.5+.5*k})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(q[0],q[1],(16+k*4)*q[2],(4+k)*q[2],0,0,TAU);ctx.stroke();}
   // anel do jogador: só no jogo livre (some na cena, no especial com cinema e no fim do round)
@@ -3944,6 +3958,20 @@ function drawTrainIcon(){const c=$('pvTrain').getContext('2d');c.imageSmoothingE
 $('again').onclick=()=>begin(chosen,chosenE);
 // pausa e saída: o botão SAIR pausa a luta e pergunta (sem diálogos do navegador); Esc faz o mesmo no PC
 function setPause(v){ambMute(v);if(!running&&!v&&!paused)return;if(v&&!running&&!(introT>0))return;paused=v;$('pause').hidden=!v;if(v){inp.x=0;inp.z=0;inp.act=null;sid=null;stick.classList.remove('on');for(const k in keys)keys[k]=0;$('resume').focus();}}
+function showPick(v){TITLE_ON=!v;$('titleView').hidden=v;$('pickView').hidden=!v;if(!v)groupPhoto();}
+$('startBtn').onclick=()=>{au();showPick(true);$('pickBox').focus();};
+// FOTO DE GRUPO da tela de entrada: os quatro lutadores posando juntos (dois atrás, dois na frente), respirando devagar
+function groupPhoto(){
+  const c=$('group').getContext('2d');c.imageSmoothingEnabled=false;
+  const L=[['mt',62,98,1.3,1],['tkd',198,98,1.3,-1],['box',100,124,1.5,1],['cap',162,124,1.5,-1]].map(([st,x,y,sc,fc])=>{const f=mkF(st,true,palFor(st,0,true),0,Z0);f.face=fc;return {f,x,y,sc};});
+  let pt=performance.now();
+  (function draw(now){if($('titleView').hidden||$('menu').hidden)return;const dt=Math.min(.05,((now||pt)-pt)/1000);pt=now||pt;
+    c.clearRect(0,0,260,130);const g=c.createRadialGradient(130,120,4,130,120,130);g.addColorStop(0,'rgba(242,169,59,.35)');g.addColorStop(1,'rgba(242,169,59,0)');c.fillStyle=g;c.fillRect(0,0,260,130);
+    for(const o of L){const f=o.f;setPose(f,idlePose(f),170,.75);phys(f,dt);f.x=0;f.z=Z0;f.st='idle';
+      c.fillStyle='rgba(0,0,0,.5)';c.beginPath();c.ellipse(o.x,o.y+1,16*o.sc,3.4*o.sc,0,0,TAU);c.fill();
+      const r=fighterSprite(f,skel(f),[1,0,0,1,0,0],o.x,o.y,o.sc,PVL);c.drawImage(r.c,0,0,r.w,r.h,r.ox,r.oy,r.w,r.h);}
+    requestAnimationFrame(draw);})();
+}
 function showMenu(){
   paused=false;running=false;matchOver=false;roundOver=0;inp.act=null;inp.x=0;inp.z=0;sid=null;stick.classList.remove('on');
   for(const id of ['over','pause','hud','pad','stickHint','bExit'])$(id).hidden=true;
@@ -3951,7 +3979,7 @@ function showMenu(){
   try{if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen();if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}
   SCENE_SEL=-2;TRAIN=false;chosen='box';chosenE='tkd';
   TRC=null;trcUi(false);menuStage();demoFighters();camReset=true;koCam=null;cine=0;lbox=0;flashA=0;trauma=0;slowT=0;timeScale=1;hitstop=0;parts.length=0;trails.length=0;pops.length=0;
-  $('menu').hidden=false;menuStep(0);previewAll();$('pickBox').focus();
+  $('menu').hidden=false;showPick(true);menuStep(0);previewAll();$('pickBox').focus();
 }
 $('bExit').onclick=()=>setPause(true);$('resume').onclick=()=>setPause(false);$('quit').onclick=showMenu;$('quit2').onclick=showMenu;
 addEventListener('keydown',e=>{if(e.code==='Escape'&&!e.repeat&&(running||introT>0))setPause(!paused);});
@@ -3991,7 +4019,7 @@ function menuStage(){
   const n=menuBag.pop();lastMenuStage=n;try{localStorage.setItem('fb_menuStage',String(n));}catch(e){}setStage(n);}
 function demoFighters(){player=mkF('box',true,palFor('box',0,true),-60,230);enemy=mkF('tkd',false,palFor('tkd',0,false),60,230);enemy.st='idle';}
 demoFighters();menuStage();
-previewAll();
+previewAll();groupPhoto();
 requestAnimationFrame(loop);
 })();
 </script>
