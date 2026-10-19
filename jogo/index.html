@@ -3951,6 +3951,7 @@ function showMenu(){
   for(const id of ['over','pause','hud','pad','stickHint','bExit'])$(id).hidden=true;
   $('banner').classList.remove('on');$('game').classList.remove('cine');cineOn=false;
   try{if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen();if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}
+  SCENE_SEL=-2;TRAIN=false;chosen='box';chosenE='tkd';
   TRC=null;trcUi(false);menuStage();demoFighters();camReset=true;koCam=null;cine=0;lbox=0;flashA=0;trauma=0;slowT=0;timeScale=1;hitstop=0;parts.length=0;trails.length=0;pops.length=0;
   $('menu').hidden=false;menuStep(0);previewAll();$('pickBox').focus();
 }
