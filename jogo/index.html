@@ -1263,11 +1263,11 @@ const CPK={
  // bênção de mão: a mesma base, mas a perna sobe em direção ao rosto
  bnh:mk('Bênção de mão',{lim:'ft',d:.5,a:.1,h:.19,keys:[[0,[.6,0,-.2,.8,-.5,.6,.9,-1.3,-.5,-.1],600,.7],[.1,HDP,1000,.65],[.19,hd(1.4,2.0,-.05,.8,-2.0),2000,.5],[.34,HDP,800,.65],[.5,null,280,.7]],dmg:11,r:30,lv:'head',kb:75,lunge:8}),
  // rasteira de mão: corpo bem baixo, mãos no chão, a perna varre rente às canelas do rival
- ras:mk('Rasteira de mão',{lim:'ff',d:.52,a:.1,h:.2,keys:[[0,[.6,0,-.2,.8,-.5,.6,.9,-1.3,-.5,-.1],600,.7],[.1,HDP,1000,.65],[.2,hd(1.55,1.5,-.05,1.0,-2.1),1900,.5],[.36,HDP,800,.65],[.52,null,280,.7]],dmg:9,r:30,spin:.6,sa:1,ret:1,react:'knock',kb:70,lv:'body',lunge:10}),
+ ras:mk('Rasteira de mão',{lim:'ff',d:.52,a:.1,h:.2,keys:[[0,[.6,0,-.2,.8,-.5,.6,.9,-1.3,-.5,-.1],600,.7],[.1,HDP,1000,.65],[.2,hd(1.55,1.5,-.05,1.0,-2.1),1900,.5],[.36,HDP,800,.65],[.52,null,280,.7]],dmg:10,r:30,spin:TAU,sa:.6,wa:.2,ve:1.4,sm:.15,react:'knock',kb:75,lv:'body',lunge:10}),
  // rabo de arraia alto: mãos no chão, giro rápido e a perna de trás chicoteia o rosto
- rbh:mk('Rabo de arraia alto',{lim:'bt',d:.54,a:.12,h:.26,keys:[[0,[.6,0,-.2,.8,-.5,.6,.9,-1.3,-.5,-.1],600,.7],[.12,HDP,900,.65],[.26,hd(1.5,1.3,-2.2,2.05,-.05),1900,.5],[.4,HDP,800,.65],[.54,null,300,.7]],dmg:11,r:30,spin:.8,sa:1,ret:1,react:'knock',kb:75,lv:'head',lunge:10}),
+ rbh:mk('Rabo de arraia alto',{lim:'bt',d:.54,a:.12,h:.26,keys:[[0,[.6,0,-.2,.8,-.5,.6,.9,-1.3,-.5,-.1],600,.7],[.12,HDP,900,.65],[.26,hd(1.5,1.3,-2.2,2.05,-.05),1900,.5],[.4,HDP,800,.65],[.54,null,300,.7]],dmg:12,r:30,spin:TAU,sa:.5,wa:.2,ve:1.4,sm:.18,react:'knock',kb:80,lv:'head',lunge:10}),
  // meia-lua de mão: uma mão no chão, a perna da frente faz o arco completo até o rosto
- mlm:mk('Meia-lua de mão',{lim:'ft',d:.54,a:.12,h:.25,keys:[[0,[.6,0,-.2,.8,-.5,.6,.9,-1.3,-.5,-.1],600,.7],[.12,hd(1.45,-.4,-.1,.9,-2.0),900,.65],[.25,hd(1.45,1.9,-.05,.9,-2.0),1900,.5],[.4,HDP,800,.65],[.54,null,280,.7]],dmg:11,r:30,spin:.7,sa:1,ret:1,react:'stagger',kb:60,lv:'head',lunge:8}),
+ mlm:mk('Meia-lua de mão',{lim:'ft',d:.54,a:.12,h:.25,keys:[[0,[.6,0,-.2,.8,-.5,.6,.9,-1.3,-.5,-.1],600,.7],[.12,hd(1.45,-.4,-.1,.9,-2.0),900,.65],[.25,hd(1.45,1.9,-.05,.9,-2.0),1900,.5],[.4,HDP,800,.65],[.54,null,280,.7]],dmg:12,r:30,spin:TAU,sa:.5,wa:.2,ve:1.4,sm:.2,react:'stagger',kb:65,lv:'head',lunge:8}),
  // armada de mão: giro completo apoiado nas mãos, o calcanhar de trás acerta a cabeça
  amm:mk('Armada de mão',{lim:'bt',d:.68,a:.14,h:.4,keys:[[0,[.6,0,-.2,.8,-.5,.6,.9,-1.3,-.5,-.1],600,.7],[.14,HDP,900,.65],[.3,hd(1.5,1.3,-2.2,.5,-.3),1100,.6],[.4,hd(1.45,1.3,-2.2,1.95,-.05),2200,.5],[.52,HDP,900,.65],[.68,null,300,.7]],dmg:13,r:30,spin:TAU,sa:.5,wa:.25,ve:1.4,sm:.3,react:'knock',kb:90,lv:'head',lunge:8}),
  // pião de mão: as duas pernas abertas varrem em roda: primeiro as canelas, depois o rosto
@@ -1276,9 +1276,13 @@ const CPK={
  arm:mk('Armada',{lim:'bt',d:.66,a:.14,h:.4,keys:ARMK(1),dmg:12,r:30,spin:TAU,sa:.5,wa:.2,ve:1.5,sm:.3,react:'launch',kb:60,lunge:10}),
  // meia-lua de compasso: mão no chão, corpo baixo e a perna passa por cima em giro
  mcp:mk('Meia-lua de compasso',{lim:'bt',d:.7,a:.16,h:.4,keys:[[0,[.5,0,1.1,1.8,.4,1.3,.6,-1.2,-.45,-.4],700,.7],[.16,[1.2,.1,-1.2,.1,-1.1,.1,1.4,-2.2,-.5,-.05],800,.65],[.3,[1.3,.1,-1.25,.1,-1.15,.1,1.4,-2.3,.6,-.1],1100,.6],[.4,[1.25,.1,-1.2,.1,-1.1,.1,1.4,-2.3,1.75,-.05],2200,.5],[.52,[1.0,.1,-1.0,.2,-.9,.2,1.2,-1.8,1.0,-.9],900,.65],[.7,null,300,.7]],dmg:13,r:30,spin:TAU,sa:.5,wa:.25,ve:1.4,sm:.3,react:'knock',kb:90,lv:'head',lunge:8}),
- rab:mk('Rabo de arraia',{lim:'bt',d:.5,a:.12,h:.24,keys:[[0,[.5,0,1.1,1.8,-.4,.7,.6,-1.2,-.45,-.3],600,.7],[.12,[1.2,.1,-1.2,.1,-1.1,.1,1.4,-2.2,-.5,-.05],900,.65],[.24,[1.3,.1,-1.25,.1,-1.15,.1,1.4,-2.3,1.3,-.05],1900,.5],[.36,[1.0,.1,-1.0,.2,-.9,.2,1.2,-1.8,.4,-.6],800,.65],[.5,null,300,.7]],dmg:10,r:30,spin:.9,sa:1,ret:1,react:'knock',kb:70,lv:'body',lunge:10}),
+ rab:mk('Rabo de arraia',{lim:'bt',d:.5,a:.12,h:.24,keys:[[0,[.5,0,1.1,1.8,-.4,.7,.6,-1.2,-.45,-.3],600,.7],[.12,[1.2,.1,-1.2,.1,-1.1,.1,1.4,-2.2,-.5,-.05],900,.65],[.24,[1.3,.1,-1.25,.1,-1.15,.1,1.4,-2.3,1.3,-.05],1900,.5],[.36,[1.0,.1,-1.0,.2,-.9,.2,1.2,-1.8,.4,-.6],800,.65],[.5,null,300,.7]],dmg:11,r:30,spin:TAU,sa:.5,wa:.2,ve:1.4,sm:.15,react:'knock',kb:75,lv:'body',lunge:10}),
  gan:mk('Gancho',{lim:'bt',d:.44,a:.12,h:.23,A:[.4,0,1.3,2.0,-.4,.7,-.1,-.4,-.7,-.3],S:[-.5,.1,1.2,2.0,-.5,.6,-.1,-.3,1.7,-.9],dmg:11,r:30,tw:.8,spin:.75,sa:1,ret:1,kb:60,lv:'head',react:'stagger'}),
  armp:mk('Armada pulada',{lim:'bt',d:.7,a:.15,h:.42,keys:ARMK(1.05),jump:16,dmg:13,r:32,spin:TAU,sa:.5,wa:.2,ve:1.5,sm:.3,react:'knock',kb:80,lunge:14}),
+ cmd:mk('Compasso duplo',{d:.9,r:32,lunge:10,spin:TAU*2,sa:.5,wa:.2,ve:1.3,sm:.2,keys:[[0,[.6,0,-.2,.8,-.5,.6,.9,-1.3,-.5,-.1],600,.7],[.14,HDP,900,.65],[.3,hd(1.5,1.3,-2.2,1.2,-.05),1800,.5],[.5,hd(1.5,1.3,-2.2,1.95,-.05),1800,.5],[.7,HDP,900,.65],[.9,null,300,.7]],
+   hits:[{t:.32,dmg:7,react:'hit',lim:'bt',lv:'body',kb:35},{t:.52,dmg:10,react:'knock',lim:'bt',lv:'head',kb:90}]}),
+ rag:mk('Rabo de arraia giratório',{d:.74,r:32,lunge:10,spin:TAU,sa:.5,wa:.2,ve:1.4,sm:.2,keys:[[0,[.6,0,-.2,.8,-.5,.6,.9,-1.3,-.5,-.1],600,.7],[.12,HDP,900,.65],[.26,hd(1.5,1.3,-2.2,1.4,-.05),1800,.5],[.44,hd(1.45,1.8,-.05,.9,-2.0),1800,.5],[.58,HDP,900,.65],[.74,null,300,.7]],
+   hits:[{t:.27,dmg:6,react:'hit',lim:'bt',lv:'body',kb:30},{t:.45,dmg:10,react:'knock',lim:'ft',lv:'head',kb:85}]}),
  // aú batido: estrela com as pernas abertas; o pé de trás bate no rosto quando o corpo passa de cabeça para baixo
  aub:mk('Aú batido',{lim:'bt',d:.8,a:.16,h:.31,keys:[[0,[.5,0,1.2,1.9,.5,1.2,.6,-1.1,-.4,-.3],600,.7],[.14,[.9,0,2.9,.1,2.8,.1,1.0,-.6,-.2,-.1],900,.6],[.3,[.5,0,3.05,0,3.05,0,1.15,-.1,-1.2,-.05],1000,.6],[.46,[.4,0,3.0,0,3.0,0,1.0,-.1,-1.0,-.05],900,.6],[.62,[.5,0,2.0,.8,1.5,.9,.7,-.9,-.4,-.4],700,.65],[.8,null,300,.7]],dmg:13,r:34,rot:TAU,rr:.75,react:'knock',kb:90,lv:'head',lunge:20}),
  // ponteira (bananeira): sobe nas mãos e chuta com a perna de trás por cima
@@ -1294,15 +1298,15 @@ const CPK={
 CPK.cct=cl(CPK.mlf,{n:'Meia-lua de contra',dmg:15,react:'knock',kb:100});
 CPK.cdw=cl(CPK.arm,{n:'Armada de contra',dmg:15,react:'knock',kb:80});
 MOV.cap=CPK;
-Object.assign(AREAS,{'Bênção':['belly','chest'],'Bênção de entrada':['belly','chest'],'Meia-lua de frente':['head','head','arm'],'Meia-lua de contra':['head','head'],'Martelo':['head','head','arm'],'Queixada':['head','head'],'Chapa':['belly','chest','side'],'Rabo de arraia':['side','chest'],'Rasteira de mão':['leg'],'Pernada de mão':['belly','side'],'Bênção de mão':['head','head'],'Rabo de arraia alto':['head'],'Meia-lua de mão':['head','chest'],'Armada de mão':['head'],'Pião de mão':['leg','head'],
+Object.assign(AREAS,{'Bênção':['belly','chest'],'Bênção de entrada':['belly','chest'],'Meia-lua de frente':['head','head','arm'],'Meia-lua de contra':['head','head'],'Martelo':['head','head','arm'],'Queixada':['head','head'],'Chapa':['belly','chest','side'],'Rabo de arraia':['side','chest'],'Rasteira de mão':['leg'],'Pernada de mão':['belly','side'],'Bênção de mão':['head','head'],'Rabo de arraia alto':['head'],'Meia-lua de mão':['head','chest'],'Armada de mão':['head'],'Pião de mão':['leg','head'],'Compasso duplo':['side','head'],'Rabo de arraia giratório':['side','head'],
   'Armada':['head','head','chest'],'Armada de contra':['head','head'],'Meia-lua de compasso':['head','head'],'Aú batido':['head','head'],'Ponteira':['head','chest'],'Escorão':['chest','arm'],'Gancho':['head','head'],'Armada pulada':['head','head','chest'],'Mortal':['head','head'],'Mortal frontal':['head','head'],'Aú sem mão':['head','chest'],'Flic-flac':['head','head'],'Pernada no ar':['head']});
 // FLUXO da capoeira: ginga constante, pernadas em arco (meia-lua, martelo, queixada), baixas (pisão, rasteira, compasso), cotoveladas e
 // galopantes e as acrobacias de assinatura (armada, aú, ponteira, mortal). Nunca duas acrobacias giratórias seguidas sem golpe reto
 SEQ.cap=[
  ['mdp','bnh','rbh'],['ben','mdp','mlm','amm'],['ras','mdp','bnh','aub'],['pis','rab','rbh','pia'],['mlm','mdp','ras','fro'],['ben','bnh','mcp','aus'],
  ['mdp','ras','bnh','rbh'],['pis','mlf','mdp','flc'],['bnh','mlm','mdp','arm'],['ras','rab','mdp','pon'],['mlf','mar','mdp','mor'],['mcp','mdp','ras','aub'],
- ['arm','mdp','mlm','pia'],['pis','mdp','bnh','fro'],['rab','mdp','que','aus'],['gan','mdp','ras','pia'],['mlf','mdp','bnh','mor'],['ben','aus','mdp','flc'],['mar','mdp','pon','mlf']];
-ESEQ.cap=[['mdp'],['bnh'],['ras'],['rbh'],['mlm'],['amm'],['pia'],['mdp','bnh'],['rab','mdp'],['ras','mlm'],['arm'],['mar'],['fro'],['aus'],['flc'],['aub'],['pon'],['mor']];
+ ['arm','mdp','mlm','pia'],['pis','mdp','bnh','fro'],['rab','cmd','mdp','aus'],['rag','mdp','ras','pia'],['mlf','mdp','bnh','mor'],['ben','aus','mdp','flc'],['mar','mdp','pon','mlf']];
+ESEQ.cap=[['cmd'],['rag'],['mdp'],['bnh'],['ras'],['rbh'],['mlm'],['amm'],['pia'],['mdp','bnh'],['rab','mdp'],['ras','mlm'],['arm'],['mar'],['fro'],['aus'],['flc'],['aub'],['pon'],['mor']];
 BASIC.cap={b1:'ben',b2:'mlf',b3:'arm'};BLABEL.cap=['BÊNÇÃO','MEIA-LUA','ARMADA'];
 // cada variação gira o corpo no máximo uma vez (mar, que, ras, arm, mcp, aub, pon, mor são os golpes giratórios)
 FIN.cap={nm:['RODA DE FOGO','GINGA MORTAL','VOO DO URUBU'],
