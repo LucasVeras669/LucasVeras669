@@ -188,12 +188,10 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 @media (max-height:420px){.scTitle{font-size:15px;padding:4px 14px}.card.scn{width:118px;padding:4px}.card.scn canvas{width:108px;height:61px}.scbtn{font-size:9px;padding:5px 12px}}
 .screen>:first-child{margin-top:auto}.screen>:last-child{margin-bottom:auto}
 .mv{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(20px*var(--m));margin:auto 0}.mv[hidden]{display:none}
-#logo{width:min(88vw,calc(440px*var(--m)));height:auto;overflow:visible;filter:drop-shadow(0 4px 0 rgba(0,0,0,.4))}
+#logo{width:min(92vw,calc(520px*var(--m)));height:auto;overflow:visible;filter:drop-shadow(0 4px 0 rgba(0,0,0,.4))}
 .startBtn{font-family:Bangers,Impact,sans-serif;font-size:calc(34px*var(--m));letter-spacing:.12em;padding:calc(4px*var(--m)) calc(54px*var(--m));color:#fff;background:linear-gradient(#ff6a3c,#d4202c);border:3px solid #1b1224;box-shadow:4px 4px 0 #1b1224;transform:skewX(-12deg);cursor:pointer;min-height:44px;text-shadow:2px 2px 0 #1b1224}
 .startBtn:active{transform:skewX(-12deg) translate(3px,3px);box-shadow:1px 1px 0 #1b1224}
-#animeGroup{width:min(90vw,calc(44vh*1.45),460px);height:auto;margin-top:calc(2px*var(--m));overflow:visible}
-.aBr{animation:aBr 3.4s ease-in-out infinite}@keyframes aBr{50%{transform:translateY(-1.5px)}}
-@media (max-height:420px){#logo{width:min(46vw,230px)}.startBtn{font-size:24px;padding:2px 40px;min-height:34px}.mv{gap:8px}#animeGroup{width:min(46vw,calc(46vh*1.45))}}
+@media (max-height:420px){#logo{width:min(56vw,300px)}.startBtn{font-size:24px;padding:2px 40px;min-height:34px}.mv{gap:8px}}
 /* MINIMALISTA: bordas de 1px, sem brilhos nem sombras duras grossas; seleção marcada só pela cor da linha */
 .card,.scbtn,.scwarn,.dif,.cta,#pickT,.scTitle,.exit{border-width:1px!important;box-shadow:none!important}
 .card{border-color:rgba(239,230,210,.28)}
@@ -250,7 +248,6 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
     <div class="mv" id="titleView">
       <svg id="logo" viewBox="0 0 380 150" role="img" aria-label="Fight Flow Brutal"></svg>
       <button class="startBtn" id="startBtn" aria-label="Começar">START</button>
-      <svg id="animeGroup" viewBox="0 0 400 276" role="img" aria-label="Todos os lutadores posando juntos depois do treino"></svg>
     </div>
     <div class="mv" id="pickView" hidden>
     <h1>FIGHT FLOW<br>BRUTAL</h1>
@@ -3961,71 +3958,9 @@ $('again').onclick=()=>begin(chosen,chosenE);
 function setPause(v){ambMute(v);if(!running&&!v&&!paused)return;if(v&&!running&&!(introT>0))return;paused=v;$('pause').hidden=!v;if(v){inp.x=0;inp.z=0;inp.act=null;sid=null;stick.classList.remove('on');for(const k in keys)keys[k]=0;$('resume').focus();}}
 function showPick(v){TITLE_ON=!v;$('titleView').hidden=v;$('pickView').hidden=!v;if(!v)groupPhoto();}
 $('startBtn').onclick=()=>{au();menuStage();camReset=true;showPick(true);$('pickBox').focus();};
-// TELA DE ENTRADA EM ESTILO ANIME: logo e foto de grupo desenhados em vetor (SVG): contorno grosso de tinta, cores chapadas com sombra, olhos
-// grandes e brilhantes, cabelos em pontas. Foto de equipe depois do treino: dois de joelhos na frente e dois em pé atrás, abraçados
+// TELA DE ENTRADA EM ESTILO ANIME: o logo é desenhado em vetor (SVG) com contorno grosso de tinta; o fundo é o Centro de Treino
 const AK='#1b1224';
-const aLm=(p,w,c,d)=>{const D=p.length===3?`M${p[0]} Q${p[1]} ${p[2]}`:`M${p.join(' L')}`;
-  return `<path d="${D}" fill="none" stroke="${AK}" stroke-width="${w+5}" stroke-linecap="round" stroke-linejoin="round"/><path d="${D}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`+(d?`<path d="${D}" fill="none" stroke="${d}" stroke-width="${w*.3}" stroke-linecap="round" transform="translate(${w*.28} 0)" opacity=".6"/>`:'');};
-const aHead=(x,y,c)=>{
-  const eye=sx=>`<g transform="translate(${sx*9.5} 3)"><ellipse rx="6.4" ry="8.2" fill="#fff"/><ellipse cx="${-sx*.4}" cy="1" rx="4.6" ry="6.8" fill="${c.eye}"/><ellipse cx="${-sx*.4}" cy="1.6" rx="2.3" ry="4" fill="#120a14"/><circle cx="${-1.8}" cy="-2.6" r="1.9" fill="#fff"/><circle cx="${1.4}" cy="3.4" r=".9" fill="#fff"/>
-      <path d="M${-7.4*sx} -2 C${-4*sx} -9.5 ${4*sx} -9.5 ${7.4*sx} -2" fill="none" stroke="${AK}" stroke-width="2.8" stroke-linecap="round"/><path d="M${7.2*sx} -3 l${3.2*sx} -1.6" stroke="${AK}" stroke-width="2" stroke-linecap="round"/></g>
-      <path d="M${sx*14} -7 L${sx*4.5} ${-9.5-c.brow}" stroke="${c.hair}" stroke-width="2.6" stroke-linecap="round" fill="none"/>`;
-  const HB={box:`<path d="M-25 -4 C-30 -34 -8 -42 0 -42 C10 -42 30 -34 25 -4 L19 -16 L11 -10 L0 -18 L-11 -10 L-19 -16Z"/>`,
-    tkd:`<path d="M-24 -2 C-32 -36 8 -46 27 -22 L24 -4Z"/>`,
-    mt:`<path d="M-24 -6 C-28 -34 -6 -40 0 -40 C8 -40 28 -34 24 -6 L20 -18 L-20 -18Z"/>`,
-    cap:`<g>${[[-24,-12],[-18,-26],[-6,-34],[6,-34],[18,-26],[24,-12],[0,-38]].map(q=>`<circle cx="${q[0]}" cy="${q[1]}" r="13"/>`).join('')}<ellipse cx="0" cy="-14" rx="27" ry="18"/></g>`};
-  const HF={box:`<path d="M-22 -10 L-14 -26 L-8 -14 L0 -30 L7 -14 L15 -27 L22 -10 C14 -22 -14 -22 -22 -10Z"/>`,
-    tkd:`<path d="M-22 -8 L-12 -24 L-4 -12 L6 -28 L12 -12 L24 -22 L22 -6 C12 -20 -12 -20 -22 -8Z"/>`,
-    mt:`<path d="M-21 -10 C-14 -26 14 -26 21 -10 L13 -16 L0 -12 L-13 -16Z"/>`,
-    cap:``};
-  const band=c.band?`<path d="M-22 -13 C-10 -19 10 -19 22 -13 L22 -8 C10 -14 -10 -14 -22 -8Z" fill="${c.band}" stroke="${AK}" stroke-width="2"/>`:'';
-  return `<g transform="translate(${x} ${y})">
-    <g fill="${c.hair}" stroke="${AK}" stroke-width="2.6" stroke-linejoin="round">${HB[c.st]}</g>
-    <path d="M-5 24 L-5 36 L5 36 L5 24Z" fill="${c.skinS}" stroke="${AK}" stroke-width="2.4"/>
-    <circle cx="-21" cy="4" r="5" fill="${c.skin}" stroke="${AK}" stroke-width="2.4"/><circle cx="21" cy="4" r="5" fill="${c.skinS}" stroke="${AK}" stroke-width="2.4"/>
-    <path d="M-21 -6 C-21 -26 21 -26 21 -6 C21 12 13 26 0 30 C-13 26 -21 12 -21 -6Z" fill="${c.skin}" stroke="${AK}" stroke-width="3" stroke-linejoin="round"/>
-    <path d="M11 -18 C21 -10 21 8 8 22 C14 8 15 -6 11 -18Z" fill="${c.skinS}" opacity=".65"/>
-    ${eye(-1)}${eye(1)}
-    <path d="M0 11 l-1.8 4 l3.2 0" fill="none" stroke="${c.skinS}" stroke-width="1.6" stroke-linecap="round"/>
-    <path d="M-5 19 Q0 26 5 19Z" fill="#fff" stroke="${AK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M-3.5 21 Q0 22.5 3.5 21" fill="#e8607a" opacity=".8"/>
-    <g fill="${c.hair}" stroke="${AK}" stroke-width="2.4" stroke-linejoin="round">${HF[c.st]}</g>${band}</g>`;};
-const aTorso=(x,sy,c)=>{
-  const body=`M${x-25} ${sy} C${x-28} ${sy+30} ${x-18} ${sy+42} ${x-16} ${sy+52} L${x+16} ${sy+52} C${x+18} ${sy+42} ${x+28} ${sy+30} ${x+25} ${sy} Q${x} ${sy-7} ${x-25} ${sy}Z`;
-  if(c.st==='tkd')return `<path d="${body}" fill="#f4f2ee" stroke="${AK}" stroke-width="3"/><path d="M${x+14} ${sy+2} C${x+22} ${sy+20} ${x+14} ${sy+40} ${x+16} ${sy+52} L${x+8} ${sy+52}Z" fill="#c9c6d4" opacity=".8"/>
-    <path d="M${x-8} ${sy-3} L${x+6} ${sy+34} M${x+8} ${sy-3} L${x-6} ${sy+34}" stroke="${AK}" stroke-width="2.4" fill="none"/><path d="M${x-6} ${sy-3} L${x} ${sy+10} L${x+6} ${sy-3}Z" fill="${c.skin}"/>
-    <rect x="${x-17}" y="${sy+42}" width="34" height="8" fill="#16121c" stroke="${AK}" stroke-width="2"/><path d="M${x-2} ${sy+48} l-6 12 M${x+2} ${sy+48} l6 12" stroke="#16121c" stroke-width="4" stroke-linecap="round"/>`;
-  return `<path d="${body}" fill="${c.skin}" stroke="${AK}" stroke-width="3"/><path d="M${x+14} ${sy+2} C${x+24} ${sy+22} ${x+14} ${sy+40} ${x+16} ${sy+52} L${x+8} ${sy+52}Z" fill="${c.skinS}" opacity=".7"/>
-    <path d="M${x-17} ${sy+14} Q${x-9} ${sy+22} ${x-1} ${sy+13} M${x+17} ${sy+14} Q${x+9} ${sy+22} ${x+1} ${sy+13} M${x} ${sy+16} L${x} ${sy+46} M${x-9} ${sy+28} l8 0 M${x+1} ${sy+28} l8 0 M${x-9} ${sy+37} l8 0 M${x+1} ${sy+37} l8 0" stroke="${c.skinS}" stroke-width="2" fill="none" stroke-linecap="round"/>`+
-    (c.st==='cap'?`<rect x="${x-17}" y="${sy+43}" width="34" height="7" fill="${c.belt}" stroke="${AK}" stroke-width="2"/><path d="M${x+4} ${sy+49} l4 12" stroke="${c.belt}" stroke-width="4" stroke-linecap="round"/>`:'');};
-const aLegs=(x,hip,fy,c,kneel)=>{
-  const gi=c.st==='tkd'||c.st==='cap',lc=gi?(c.st==='tkd'?'#f4f2ee':'#f4f2ee'):c.skin,ld=gi?'#c9c6d4':c.skinS,w=gi?21:17;let o='';
-  if(kneel){for(const sx of [-1,1]){o+=aLm([[x+sx*9,hip+6],[x+sx*26,hip+30],[x+sx*30,fy-6]],w,lc,ld);o+=`<ellipse cx="${x+sx*36}" cy="${fy-2}" rx="9" ry="5" fill="${c.skin}" stroke="${AK}" stroke-width="2.4"/>`;}}
-  else{for(const sx of [-1,1]){o+=aLm([[x+sx*9,hip+8],[x+sx*11,hip+52],[x+sx*11,fy-8]],w,lc,ld);o+=gi?`<ellipse cx="${x+sx*12}" cy="${fy-3}" rx="11" ry="5" fill="${c.skin}" stroke="${AK}" stroke-width="2.4"/>`:`<ellipse cx="${x+sx*12}" cy="${fy-3}" rx="12" ry="5.5" fill="${c.boot||c.skin}" stroke="${AK}" stroke-width="2.4"/>`;}}
-  if(!gi)o+=`<path d="M${x-22} ${hip-2} L${x+22} ${hip-2} L${x+26} ${hip+(kneel?30:38)} L${x+3} ${hip+(kneel?34:42)} L${x-3} ${hip+(kneel?34:42)} L${x-26} ${hip+(kneel?30:38)}Z" fill="${c.sh}" stroke="${AK}" stroke-width="3" stroke-linejoin="round"/><rect x="${x-22}" y="${hip-4}" width="44" height="7" fill="${c.trim}" stroke="${AK}" stroke-width="2"/><path d="M${x+14} ${hip+4} L${x+24} ${hip+(kneel?28:36)} L${x+12} ${hip+(kneel?32:40)}Z" fill="${c.shD}" opacity=".6"/>`;
-  return o;};
-const aHand=(x,y,c)=>c.st==='box'?`<circle cx="${x}" cy="${y}" r="10" fill="${c.gl}" stroke="${AK}" stroke-width="3"/><path d="M${x-7} ${y-5} Q${x-2} ${y-9} ${x+4} ${y-7}" stroke="#fff" stroke-width="2" fill="none" opacity=".8"/><rect x="${x-8}" y="${y+7}" width="16" height="5" fill="#f4f2ee" stroke="${AK}" stroke-width="2"/>`
-  :c.st==='mt'?`<rect x="${x-8}" y="${y-8}" width="16" height="14" rx="3" fill="${c.trim}" stroke="${AK}" stroke-width="2.6"/><path d="M${x-8} ${y-3} h16 M${x-8} ${y+2} h16" stroke="${c.trimD}" stroke-width="1.6"/><circle cx="${x}" cy="${y+7}" r="5" fill="${c.skin}" stroke="${AK}" stroke-width="2.2"/>`
-  :`<circle cx="${x}" cy="${y}" r="6.5" fill="${c.skin}" stroke="${AK}" stroke-width="2.6"/>`;
-function animeFig(o){const {c,x,fy,kneel}=o,sy=kneel?fy-112:fy-152,hip=sy+50;o.sy=sy;
-  return `<ellipse cx="${x}" cy="${fy+1}" rx="42" ry="7" fill="#000" opacity=".4"/>`+aLegs(x,hip,fy,c,kneel)+aTorso(x,sy,c)+aHead(x,sy-27,c);}
-const aArm=(c,p)=>aLm(p,c.st==='tkd'?15:13,c.st==='tkd'?'#f4f2ee':c.skin,c.st==='tkd'?'#c9c6d4':c.skinS)+aHand(p[p.length-1][0],p[p.length-1][1],c);
 function groupPhoto(){
-  const A={st:'tkd',skin:'#f6d2b0',skinS:'#d9a98a',hair:'#17121c',eye:'#4a6fd0',brow:1,belt:'#16121c',band:'#d9322c'};
-  const B={st:'box',skin:'#e0a37a',skinS:'#b87a56',hair:'#6b3f22',eye:'#2f9bd6',brow:2,sh:'#d92e3a',shD:'#7a121c',trim:'#f4efe2',gl:'#e63946',boot:'#201c26'};
-  const M={st:'mt',skin:'#b9774b',skinS:'#8a5232',hair:'#1b1210',eye:'#3a2418',brow:2,sh:'#2a62d6',shD:'#12306e',trim:'#f2c94c',trimD:'#a8821e',band:'#f2c94c'};
-  const C={st:'cap',skin:'#8a5532',skinS:'#5e3820',hair:'#1a100c',eye:'#2a1a10',brow:1,belt:'#27a844',band:'#f2c94c'};
-  const a={c:A,x:98,fy:268},b={c:C,x:302,fy:268},k1={c:B,x:158,fy:272,kneel:1},k2={c:M,x:242,fy:272,kneel:1};
-  let g='';
-  for(let i=0;i<28;i++){const an=i/28*TAU,w=.05;g+=`<path d="M200 190 L${200+Math.cos(an-w)*340} ${190+Math.sin(an-w)*340} L${200+Math.cos(an+w)*340} ${190+Math.sin(an+w)*340}Z" fill="${i%2?'#ffd166':'#ff6a3c'}" opacity=".11"/>`;}
-  g+=animeFig(a)+animeFig(b);
-  g+=`<g class="aBr">`+animeFig(k1)+animeFig(k2);
-  // ajoelhados: braço de fora na coxa, braço de dentro abraçando o outro pela cintura
-  g+=aArm(B,[[k1.x-25,k1.sy+6],[k1.x-40,k1.sy+30],[k1.x-30,k1.sy+62]])+aArm(M,[[k2.x+25,k2.sy+6],[k2.x+40,k2.sy+30],[k2.x+30,k2.sy+62]]);
-  g+=aArm(B,[[k1.x+25,k1.sy+6],[k1.x+36,k1.sy+34],[k2.x-18,k2.sy+46]])+aArm(M,[[k2.x-25,k2.sy+6],[k2.x-36,k2.sy+30],[k1.x+18,k1.sy+42]]);
-  // em pé: uma mão no ombro do ajoelhado da frente (abraçando por cima) e a outra na cintura
-  g+=aArm(A,[[a.x+25,a.sy+6],[a.x+44,a.sy+36],[k1.x-26,k1.sy+2]])+aArm(C,[[b.x-25,b.sy+6],[b.x-44,b.sy+36],[k2.x+26,k2.sy+2]]);
-  g+=aArm(A,[[a.x-25,a.sy+6],[a.x-40,a.sy+34],[a.x-26,a.sy+56]])+aArm(C,[[b.x+25,b.sy+6],[b.x+40,b.sy+34],[b.x+26,b.sy+56]])+`</g>`;
-  $('animeGroup').innerHTML=g;
   const lg=`<defs><linearGradient id="lgR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd166"/><stop offset=".45" stop-color="#ff6a3c"/><stop offset="1" stop-color="#d4202c"/></linearGradient></defs>
     <path d="M8 98 L352 40 L372 78 L28 140Z" fill="#d4202c" opacity=".9" stroke="${AK}" stroke-width="4"/>
     <g transform="skewX(-10) translate(14 0)" font-family="Bangers,Impact,sans-serif" text-anchor="middle" stroke-linejoin="round" paint-order="stroke">
