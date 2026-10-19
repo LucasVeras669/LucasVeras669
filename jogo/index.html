@@ -217,9 +217,9 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
     <h1>FLUXO<br>BRUTAL</h1>
     <div class="difs" role="radiogroup" aria-label="Dificuldade"><button class="dif" data-d="facil" role="radio">FÁCIL</button><button class="dif" data-d="medio" role="radio">MÉDIO</button><button class="dif" data-d="mestre" role="radio">MESTRE</button></div>
     <p class="difd" id="difd"></p>
-    <button class="scbtn" id="sceneBtn" aria-label="Escolher cenário"><span>ESCOLHER CENÁRIOS</span></button>
     <h2 id="pickT" class="pk0">ESCOLHA O SEU LUTADOR</h2>
     <div class="cards" id="cardsP"></div>
+    <button class="scbtn" id="sceneBtn" aria-label="Escolher cenário"><span>ESCOLHER CENÁRIOS</span></button>
   </div>
   <div class="screen" id="scenes" hidden>
     <h2 class="scTitle">ESCOLHER CENÁRIO</h2>
@@ -3902,17 +3902,13 @@ for(const F of FIGHTERS){
   b.innerHTML=`<canvas id="pvP${F.id}" width="60" height="60"></canvas><strong>${F.n}</strong><small>${F.t}</small>`;$('cardsP').appendChild(b);
   b.onclick=()=>{
     const am=/^#auto(?:=(\w+))?$/.exec(location.hash);
-    if(TRAINSEL){chosen=F.s;begin(F.s,'box',true);return;}
+    if(TRAINSEL||SCENE_SEL===3){chosen=F.s;begin(F.s,'box',true);return;}
     if(selStep===0){chosen=F.s;if(am){chosenE=am[1]||(F.s==='box'?'tkd':'box');begin(chosen,chosenE);return;}
       selStep=1;b.classList.add('selP');$('pickT').textContent='ESCOLHA O SEU OPONENTE';$('pickT').className='pk1';return;}
     if(selStep===1){chosenE=F.s;selStep=2;b.classList.add('selE');
       setTimeout(()=>{begin(chosen,chosenE);},380);}};}
 function menuStep(){selStep=0;TRAINSEL=false;if($('pickTrain'))$('pickTrain').classList.remove('selT');for(const c of $('cardsP').children)c.classList.remove('selP','selE');$('pickT').textContent='ESCOLHA O SEU LUTADOR';$('pickT').className='pk0';}
-// TREINO: cartão dourado ao lado dos lutadores; toque nele e depois no lutador para treinar no Centro de Treino
-{const b=document.createElement('button');b.className='card trn';b.id='pickTrain';
-  b.innerHTML='<canvas id="pvTrain" width="60" height="60"></canvas><span class="tt"><strong>TREINO</strong><small>CENTRO DE TREINO</small></span>';$('cardsP').appendChild(b);
-  b.onclick=()=>{TRAINSEL=!TRAINSEL;b.classList.toggle('selT',TRAINSEL);selStep=0;for(const c of $('cardsP').children)c.classList.remove('selP','selE');
-    $('pickT').textContent=TRAINSEL?'ESCOLHA O LUTADOR DO TREINO':'ESCOLHA O SEU LUTADOR';$('pickT').className=TRAINSEL?'pk1':'pk0';};}
+// TREINO: escolhendo o cenário Centro de Treino, o lutador escolhido entra direto no treino (parceiro de madeira, sem rounds)
 function drawTrainIcon(){const c=$('pvTrain').getContext('2d');c.imageSmoothingEnabled=false;c.clearRect(0,0,60,60);
   c.fillStyle='#7e5834';c.fillRect(0,0,60,40);c.fillStyle='#5a3c21';c.fillRect(0,34,60,6);c.fillStyle='#b88a56';c.fillRect(0,40,60,20);
   c.fillStyle='#4b6fa5';c.fillRect(6,44,48,12);c.fillStyle='#fff0c4';c.fillRect(24,6,12,16);c.fillStyle='#3a2814';c.fillRect(30,6,1,16);c.fillRect(24,13,12,1);
@@ -3932,7 +3928,7 @@ function showMenu(){
 $('bExit').onclick=()=>setPause(true);$('resume').onclick=()=>setPause(false);$('quit').onclick=showMenu;$('quit2').onclick=showMenu;
 addEventListener('keydown',e=>{if(e.code==='Escape'&&!e.repeat&&(running||introT>0))setPause(!paused);});
 
-function previewAll(){sceneLabel();for(const F of FIGHTERS){preview('pvP'+F.id,F.s,palFor(F.s,0,true));}drawTrainIcon();}
+function previewAll(){sceneLabel();for(const F of FIGHTERS){preview('pvP'+F.id,F.s,palFor(F.s,0,true));}}
 // prévias animadas no menu (mostram golpes do estilo)
 function preview(id,style,pal){const c=$(id).getContext('2d');const f=mkF(style,true,pal,0,0);const list=SEQ[style].flat();let li=0,mt=0,mv=null,pt=performance.now();
   (function draw(now){if(c.canvas.offsetParent===null){if(!$('menu').hidden)requestAnimationFrame(draw);return;}const dt=Math.min(.05,((now||pt)-pt)/1000);pt=now||pt;time+=0;mt+=dt;
