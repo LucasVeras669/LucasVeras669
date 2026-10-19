@@ -216,6 +216,21 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 .fname,#combo span,#combo em,#banner p{text-shadow:0 1px 0 var(--ink)}
 #combo b{text-shadow:2px 2px 0 var(--ink)}
 #banner h2{text-shadow:calc(2px*var(--t)) calc(2px*var(--t)) 0 var(--blood)}
+/* SELEÇÃO DE PERSONAGENS (inspirada em jogos de luta clássicos): painéis dos dois lutadores nas laterais, cartões de rosto no meio */
+.selWrap{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:calc(18px*var(--m));align-items:center;width:100%;max-width:1000px}
+.selMid{display:flex;flex-direction:column;align-items:center;gap:calc(16px*var(--m))}
+.pn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:calc(8px*var(--m));border:1px solid rgba(239,230,210,.3);background:rgba(13,11,18,.62)}
+.pn.on{border-color:#fff}.pn2.on{border-color:#4da3ff}
+.pnTag{font-size:calc(11px*var(--m));letter-spacing:.2em;opacity:.7}
+.pnName{font-size:calc(30px*var(--m));letter-spacing:.06em;line-height:1;text-shadow:2px 2px 0 #000}
+.pnSt{font-size:calc(14px*var(--m));letter-spacing:.2em;color:var(--amber)}
+.pn canvas{width:min(100%,calc(180px*var(--m)));height:auto;image-rendering:pixelated}
+#cardsP{flex-wrap:nowrap;gap:calc(10px*var(--m))}
+#cardsP .card{width:calc(70px*var(--m));padding:calc(4px*var(--m));gap:2px}
+#cardsP .card canvas{width:calc(56px*var(--m));height:calc(56px*var(--m))}
+#cardsP .card strong{font-size:calc(13px*var(--m));letter-spacing:.05em}
+@media (orientation:portrait){.selWrap{grid-template-columns:1fr 1fr;grid-template-areas:"a b" "m m";gap:12px}#pn1{grid-area:a}#pn2{grid-area:b}.selMid{grid-area:m}#cardsP .card{width:calc(78px*var(--m))}#logo2{width:min(60vw,260px)}}
+@media (max-height:420px){.selWrap{gap:10px}.pn{padding:4px}.pnName{font-size:22px}.pnSt{font-size:11px}.pnTag{font-size:9px}.pn canvas{width:min(100%,150px)}.selMid{gap:8px}#cardsP .card{width:62px}#cardsP .card canvas{width:48px;height:48px}#logo2{width:min(26vw,150px)}.difd{display:none}}
 </style>
 
 <div id="game">
@@ -251,13 +266,19 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
       <button class="startBtn" id="startBtn" aria-label="Começar">START</button>
     </div>
     <div class="mv" id="pickView" hidden>
-    <svg id="logo2" class="logoS" viewBox="0 0 380 150" role="img" aria-label="Fight Flow Brutal"></svg>
-    <div class="difs" role="radiogroup" aria-label="Dificuldade"><button class="dif" data-d="facil" role="radio">FÁCIL</button><button class="dif" data-d="medio" role="radio">MÉDIO</button><button class="dif" data-d="mestre" role="radio">MESTRE</button></div>
-    <p class="difd" id="difd"></p>
-    <h2 id="pickT" class="pk0">ESCOLHA O SEU LUTADOR</h2>
-    <div class="cards" id="cardsP"></div>
-    <p class="scwarn" id="scWarn" hidden>ESCOLHA UM CENÁRIO PARA COMEÇAR A LUTA</p><button class="scbtn" id="sceneBtn" aria-label="Escolher cenário"><span>ESCOLHER CENÁRIOS</span></button>
+    <div class="selWrap">
+      <div class="pn" id="pn1"><div class="pnTag">VOCÊ</div><div class="pnName" id="pn1n">?</div><div class="pnSt" id="pn1s">escolha</div><canvas id="pn1c" width="180" height="150"></canvas></div>
+      <div class="selMid">
+        <svg id="logo2" class="logoS" viewBox="0 0 380 150" role="img" aria-label="Fight Flow Brutal"></svg>
+        <div class="difs" role="radiogroup" aria-label="Dificuldade"><button class="dif" data-d="facil" role="radio">FÁCIL</button><button class="dif" data-d="medio" role="radio">MÉDIO</button><button class="dif" data-d="mestre" role="radio">MESTRE</button></div>
+        <p class="difd" id="difd"></p>
+        <h2 id="pickT" class="pk0">ESCOLHA O SEU LUTADOR</h2>
+        <div class="cards" id="cardsP"></div>
+        <p class="scwarn" id="scWarn" hidden>ESCOLHA UM CENÁRIO PARA COMEÇAR A LUTA</p><button class="scbtn" id="sceneBtn" aria-label="Escolher cenário"><span>ESCOLHER CENÁRIOS</span></button>
       </div>
+      <div class="pn pn2" id="pn2"><div class="pnTag">OPONENTE</div><div class="pnName" id="pn2n">?</div><div class="pnSt" id="pn2s">escolha</div><canvas id="pn2c" width="180" height="150"></canvas></div>
+    </div>
+    </div>
   </div>
   <div class="screen" id="scenes" hidden>
     <h2 class="scTitle">ESCOLHER CENÁRIO</h2>
@@ -3938,16 +3959,17 @@ function warnScene(on){$('scWarn').hidden=!on;$('sceneBtn').classList.toggle('ne
 function startPair(){if(SCENE_SEL===3){begin(chosen,'box',true);return;}begin(chosen,chosenE);}
 for(const F of FIGHTERS){
   const b=document.createElement('button');b.className='card';b.id='pick'+F.id;b.dataset.s=F.s;
-  b.innerHTML=`<canvas id="pvP${F.id}" width="60" height="60"></canvas><strong>${F.n}</strong><small>${F.t}</small>`;$('cardsP').appendChild(b);
+  b.innerHTML=`<canvas id="pvP${F.id}" width="56" height="56"></canvas><strong>${F.n}</strong>`;$('cardsP').appendChild(b);
+  b.onpointerenter=e=>{if(e.pointerType==='mouse'&&selStep<2)showPanel(selStep===0?1:2,F);};b.onpointerleave=e=>{if(e.pointerType==='mouse')showPanel(1,PANF[1]),showPanel(2,PANF[2]);};
   b.onclick=()=>{
     const am=/^#auto(?:=(\w+))?$/.exec(location.hash);
-    if(TRAINSEL||SCENE_SEL===3){chosen=F.s;begin(F.s,'box',true);return;}
+    if(TRAINSEL||SCENE_SEL===3){chosen=F.s;PANF[1]=F;showPanel(1,F);setTimeout(()=>begin(F.s,'box',true),600);return;}
     if(selStep===0){chosen=F.s;if(am){chosenE=am[1]||(F.s==='box'?'tkd':'box');begin(chosen,chosenE);return;}
-      selStep=1;b.classList.add('selP');$('pickT').textContent='ESCOLHA O SEU OPONENTE';$('pickT').className='pk1';return;}
-    if(selStep===1){chosenE=F.s;selStep=2;b.classList.add('selE');
+      PANF[1]=F;showPanel(1,F);selStep=1;b.classList.add('selP');$('pickT').textContent='ESCOLHA O SEU OPONENTE';$('pickT').className='pk1';return;}
+    if(selStep===1){chosenE=F.s;PANF[2]=F;showPanel(2,F);selStep=2;b.classList.add('selE');
       if(SCENE_SEL===-2){warnScene(true);return;}
-      setTimeout(startPair,380);}};}
-function menuStep(){selStep=0;warnScene(false);TRAINSEL=false;if($('pickTrain'))$('pickTrain').classList.remove('selT');for(const c of $('cardsP').children)c.classList.remove('selP','selE');$('pickT').textContent='ESCOLHA O SEU LUTADOR';$('pickT').className='pk0';}
+      setTimeout(startPair,900);}};}
+function menuStep(){selStep=0;PANF[1]=PANF[2]=null;showPanel(1,null);showPanel(2,null);warnScene(false);TRAINSEL=false;if($('pickTrain'))$('pickTrain').classList.remove('selT');for(const c of $('cardsP').children)c.classList.remove('selP','selE');$('pickT').textContent='ESCOLHA O SEU LUTADOR';$('pickT').className='pk0';}
 // TREINO: escolhendo o cenário Centro de Treino, o lutador escolhido entra direto no treino (parceiro de madeira, sem rounds)
 function drawTrainIcon(){const c=$('pvTrain').getContext('2d');c.imageSmoothingEnabled=false;c.clearRect(0,0,60,60);
   c.fillStyle='#7e5834';c.fillRect(0,0,60,40);c.fillStyle='#5a3c21';c.fillRect(0,34,60,6);c.fillStyle='#b88a56';c.fillRect(0,40,60,20);
@@ -3977,26 +3999,49 @@ function showMenu(){
   try{if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen();if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(e){}
   SCENE_SEL=-2;TRAIN=false;chosen='box';chosenE='tkd';
   TRC=null;trcUi(false);menuStage();demoFighters();camReset=true;koCam=null;cine=0;lbox=0;flashA=0;trauma=0;slowT=0;timeScale=1;hitstop=0;parts.length=0;trails.length=0;pops.length=0;
-  $('menu').hidden=false;showPick(true);menuStep(0);previewAll();$('pickBox').focus();
+  $('menu').hidden=false;showPick(true);menuStep(0);previewAll();panelLoop();$('pickBox').focus();
 }
 $('bExit').onclick=()=>setPause(true);$('resume').onclick=()=>setPause(false);$('quit').onclick=showMenu;$('quit2').onclick=showMenu;
 addEventListener('keydown',e=>{if(e.code==='Escape'&&!e.repeat&&(running||introT>0))setPause(!paused);});
 
-function previewAll(){sceneLabel();for(const F of FIGHTERS){preview('pvP'+F.id,F.s,palFor(F.s,0,true));}}
-// prévias animadas no menu (mostram golpes do estilo)
-function preview(id,style,pal){const c=$(id).getContext('2d');const f=mkF(style,true,pal,0,0);const list=SEQ[style].flat();let li=0,mt=0,mv=null,pt=performance.now();
-  (function draw(now){if(c.canvas.offsetParent===null){if(!$('menu').hidden)requestAnimationFrame(draw);return;}const dt=Math.min(.05,((now||pt)-pt)/1000);pt=now||pt;time+=0;mt+=dt;
-    if(!mv&&mt>.9){mv=MOV[style][list[li++%list.length]];mt=0;f.ki=-1;f.st='atk';f.mv=mv;}
-    if(mv){let ki=0;for(let i=0;i<mv.keys.length;i++)if(mt>=mv.keys[i][0])ki=i;if(ki!==f.ki){f.ki=ki;setPose(f,mv.keys[ki][1],mv.keys[ki][2],mv.keys[ki][3]);}
-      f.spin=spinAt(mv,mt);f.rot=rotAt(mv,mt);
-      f.tw=mv.tw?mv.tw*(mt<mv.h0?eout(clamp(mt/mv.h0,0,1)):1-ease(clamp((mt-mv.h0)/(mv.d-mv.h0),0,1))):0;f.twS=mv.twS;
-      f.y=mv.jump?Math.sin(Math.min(1,mt/(mv.d*.85))*PI)*mv.jump*.6:0;
-      if(mt>=mv.d){mv=null;mt=0;f.spin=0;f.rot=0;f.y=0;f.st='idle';}}
-    else setPose(f,idlePose(f),170,.75);
-    phys(f,dt);f.x=0;f.z=Z0;
-    c.clearRect(0,0,60,60);const g=c.createRadialGradient(30,52,2,30,52,28);g.addColorStop(0,'rgba(242,169,59,.35)');g.addColorStop(1,'rgba(242,169,59,0)');c.fillStyle=g;c.fillRect(0,0,60,60);
-    c.fillStyle='rgba(0,0,0,.5)';c.beginPath();c.ellipse(26,55,14,3,0,0,TAU);c.fill();
-    const r=fighterSprite(f,skel(f),[1,0,0,1,0,0],24,55,.8,PVL);c.imageSmoothingEnabled=false;c.drawImage(r.c,0,0,r.w,r.h,r.ox,r.oy,r.w,r.h);if(!$('menu').hidden)requestAnimationFrame(draw);})();}
+function previewAll(){sceneLabel();for(const F of FIGHTERS)faceCard('pvP'+F.id,F.s);showPanel(1,PANF[1]);showPanel(2,PANF[2]);}
+// ROSTO dos cartões: o sprite real do lutador em pose neutra, recortado na cabeça (mesma arte do jogo)
+function faceCard(id,style){
+  const f=mkF(style,true,palFor(style,0,true),0,Z0),P=[0,0,.2,.3,.2,.3,.1,-.1,-.1,-.1];f.pose=P.slice();f.pt=P.slice();
+  const T=document.createElement('canvas');T.width=T.height=220;const t=T.getContext('2d');t.imageSmoothingEnabled=false;
+  const r=fighterSprite(f,skel(f),[1,0,0,1,0,0],110,205,2.6,PVL);t.drawImage(r.c,0,0,r.w,r.h,r.ox,r.oy,r.w*r.m,r.h*r.m);
+  const d=t.getImageData(0,0,220,220).data;let y0=-1,y1=-1;
+  for(let y=0;y<220&&y1<0;y++)for(let x=0;x<220;x++)if(d[(y*220+x)*4+3]>40){if(y0<0)y0=y;break;}
+  // centro da cabeça: média dos pixels opacos nas primeiras linhas do corpo
+  let sx=0,n=0;for(let y=y0;y<y0+22;y++)for(let x=0;x<220;x++)if(d[(y*220+x)*4+3]>40){sx+=x;n++;}
+  const cx=n?sx/n:110,side=46,c=$(id).getContext('2d');c.imageSmoothingEnabled=false;c.clearRect(0,0,56,56);
+  const g=c.createRadialGradient(28,34,2,28,34,34);g.addColorStop(0,'rgba(242,169,59,.30)');g.addColorStop(1,'rgba(242,169,59,0)');c.fillStyle=g;c.fillRect(0,0,56,56);
+  c.drawImage(T,cx-side/2,y0-5,side,side,0,0,56,56);
+}
+// PAINEL do lutador (estilo seleção de personagens): nome e estilo em cima e, embaixo, a animação dele golpeando em tamanho grande
+const PANF={1:null,2:null},PAN=[null,{style:null},{style:null}];
+function showPanel(n,F){const p=PAN[n];$('pn'+n+'n').textContent=F?F.n:'?';$('pn'+n+'s').textContent=F?F.t:'escolha';$('pn'+n).classList.toggle('on',!!F);if((F&&F.s)!==p.style){p.style=F?F.s:null;p.f=null;}}
+function panelLoop(){
+  const st=[null,{mt:0,mv:null,li:0,pt:performance.now()},{mt:0,mv:null,li:0,pt:performance.now()}];
+  (function draw(now){
+    if($('menu').hidden)return;
+    if($('pickView').hidden){requestAnimationFrame(draw);return;}
+    for(const n of [1,2]){const p=PAN[n],q=st[n],cv=$('pn'+n+'c'),c=cv.getContext('2d');c.imageSmoothingEnabled=false;c.clearRect(0,0,180,150);
+      if(!p.style){c.font='96px Bangers, Impact, sans-serif';c.textAlign='center';c.fillStyle='rgba(239,230,210,.16)';c.fillText('?',90,112);continue;}
+      if(!p.f){p.f=mkF(p.style,n===1,palFor(p.style,0,n===1),0,Z0);q.mt=0;q.mv=null;q.li=0;q.last=now;p.list=SEQ[p.style].flat();}
+      const f=p.f,dt=Math.min(.05,((now||q.pt)-(q.last||now||q.pt))/1000);q.last=now;q.mt+=dt;
+      if(!q.mv&&q.mt>.7){q.mv=MOV[p.style][p.list[q.li++%p.list.length]];q.mt=0;f.ki=-1;f.st='atk';f.mv=q.mv;}
+      if(q.mv){const mv=q.mv;let ki=0;for(let i=0;i<mv.keys.length;i++)if(q.mt>=mv.keys[i][0])ki=i;if(ki!==f.ki){f.ki=ki;setPose(f,mv.keys[ki][1],mv.keys[ki][2],mv.keys[ki][3]);}
+        f.spin=spinAt(mv,q.mt);f.rot=rotAt(mv,q.mt);f.tw=mv.tw?mv.tw*(q.mt<mv.h0?eout(clamp(q.mt/mv.h0,0,1)):1-ease(clamp((q.mt-mv.h0)/(mv.d-mv.h0),0,1))):0;f.twS=mv.twS;
+        f.y=mv.jump?Math.sin(Math.min(1,q.mt/(mv.d*.85))*PI)*mv.jump*.6:0;
+        if(q.mt>=mv.d){q.mv=null;q.mt=0;f.spin=0;f.rot=0;f.y=0;f.st='idle';}}
+      else setPose(f,idlePose(f),170,.75);
+      phys(f,dt);f.x=0;f.z=Z0;
+      const g=c.createRadialGradient(90,138,4,90,138,80);g.addColorStop(0,n===1?'rgba(255,255,255,.22)':'rgba(77,163,255,.26)');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.fillRect(0,0,180,150);
+      c.fillStyle='rgba(0,0,0,.5)';c.beginPath();c.ellipse(90,146,32,5,0,0,TAU);c.fill();
+      const r=fighterSprite(f,skel(f),[1,0,0,1,0,0],90,146,2.1,PVL);c.drawImage(r.c,0,0,r.w,r.h,r.ox,r.oy,r.w*(r.m||1),r.h*(r.m||1));}
+    requestAnimationFrame(draw);})();
+}
 // luz fixa das prévias: quente, de cima e da direita (o brilho âmbar atrás do lutador)
 const PVL={k:.8,lv:12,w:[0,.8],r:[0,.6],d:[[0,0],[1,-1]],side:1};
 
@@ -4017,7 +4062,7 @@ function menuStage(){
   const n=menuBag.pop();lastMenuStage=n;try{localStorage.setItem('fb_menuStage',String(n));}catch(e){}setStage(n);}
 function demoFighters(){player=mkF('box',true,palFor('box',0,true),-60,230);enemy=mkF('tkd',false,palFor('tkd',0,false),60,230);enemy.st='idle';}
 demoFighters();setStage(3);
-previewAll();groupPhoto();
+previewAll();groupPhoto();panelLoop();
 requestAnimationFrame(loop);
 })();
 </script>
