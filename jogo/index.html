@@ -1491,7 +1491,10 @@ THRP.cap={GRAB:[.5,-.1,1.6,1.0,1.5,1.1,.6,-1.0,-.5,-.4],CRCH:[.9,0,1.3,1.0,1.2,1
 // com chutes e giros de apoio. A lâmina é desenhada na mão da frente seguindo o antebraço (ver katana() em drawFighter); o alcance (r) dos
 // golpes de espada é maior que o dos punhos. Mesmos padrões dos outros lutadores: física, defesa dinâmica, contras, ESPECIAIS e SUPERS
 // base: Sha no Kamae, postura oblíqua: pernas bem afastadas, joelhos flexionados, quadril baixo e a lâmina descendo na diagonal à frente
-const GSAM=[.15,-.1,.4,.15,.35,.2,1.0,-1.1,-.5,-.45],SBLK=[.15,-.25,1.1,.5,1.0,.6,.45,-.6,-.4,-.25];
+const GSAM=[.15,-.1,.4,.15,.35,.2,1.0,-1.1,-.5,-.45],SBLK=[.15,-.25,.55,.8,.5,.85,.45,-.6,-.4,-.25];
+// posições da lâmina na defesa, uma para cada tipo de ataque: BE = horizontal na altura da barriga (base), HI = diagonal subindo na frente do rosto,
+// VE = lâmina vertical rente ao corpo (para golpes laterais), DI = diagonal para baixo, LO = lâmina apontada quase para o chão
+const SB_BE=SBLK,SB_HI=[.1,-.35,1.3,.9,1.2,.95,.45,-.6,-.4,-.25],SB_VE=[.2,-.2,.8,1.8,.75,1.85,.5,-.7,-.4,-.25],SB_DI=[.2,-.2,.5,.4,.45,.45,.5,-.7,-.4,-.25],SB_LO=[.3,-.15,.5,.1,.45,.15,.6,-.8,-.4,-.3];
 G.sam=GSAM;DASHP.sam=[.4,-.1,1.0,.5,.8,.7,.85,-1.2,-.7,-.5];BLOCK.sam=SBLK;
 WIN.sam=[0,-.25,.35,.2,.3,.25,.3,-.2,-.25,-.1]; // chiburi: espada baixa ao lado do corpo, após o último golpe
 WK.sam={f:4.9,b:-12,y:-25,c:15,a:.28,L:4.6};STR.sam=15;
@@ -1560,13 +1563,13 @@ NAMES.sam='Katsuro';
 PAL.samP={skin:'#d9a878',skinD:'#966a44',skinH:'#f2c99e',hair:'#2a1b14',hairH:'#5a3e2c',gi:'#26262d',giD:'#101014',giH:'#52525e',lap:'#3a3a46',belt:'#c9a24a',band:null,trail:'#cfe6ff',armor:'#8f2a24',armorD:'#4a1512',armorH:'#c4524a',sash:'#6a1c1c',gold:'#c9a24a'};
 PAL.samE={skin:'#d0a070',skinD:'#8c603c',skinH:'#ecc090',hair:'#1a1410',hairH:'#40352c',gi:'#26262d',giD:'#101014',giH:'#52525e',lap:'#3a3a46',belt:'#c9a24a',band:null,trail:'#ff9a9a',armor:'#8f2a24',armorD:'#4a1512',armorH:'#c4524a',sash:'#6a1c1c',gold:'#c9a24a'};
 const DMS={
-  jab:[{n:'block',p:SBLK,dx:8,d:.44},{n:'lean',p:MTLEAN,dx:20,ev:1,d:.46},{n:'parry',p:PARRYP,dx:8,d:.42}],
-  hook:[{n:'block',p:SBLK,dx:10,d:.46},{n:'weave',p:BWEAVE,dz:10,sp:.4,ev:1,d:.54},{n:'lean',p:MTLEAN,dx:20,ev:1,d:.48}],
-  upper:[{n:'lean',p:MTLEAN,dx:24,ev:1,d:.5},{n:'slip',p:BSLIP,dx:12,dz:14,sp:.5,ev:1,d:.46},{n:'block',p:SBLK,dx:12,d:.46}],
-  body:[{n:'check',p:MTCHECK,dx:8,d:.46},{n:'pivot',p:BPIV,dx:8,dz:26,sp:.8,ev:1,d:.52},{n:'crunch',p:CRUNCH,dx:20,d:.46}],
-  low:[{n:'skip',p:BSKIP,y:16,ev:1,d:.54},{n:'check',p:MTCHECK,dx:6,d:.46},{n:'pivot',p:BPIV,dx:6,dz:24,sp:.7,ev:1,d:.5}],
-  kick:[{n:'block',p:SBLK,dx:20,d:.5},{n:'duck',p:ROLLP,dx:4,dz:20,sp:.6,ev:1,d:.56},{n:'pivot',p:BPIV,dx:8,dz:26,sp:.8,ev:1,d:.52}]};
-DEFP.sam={head:SBLK,body:CRUNCH,low:MTCHECK,kick:SBLK};
+  jab:[{n:'sb-hi',p:SB_HI,dx:8,d:.44},{n:'sb-be',p:SB_BE,dx:8,d:.44},{n:'sb-ve',p:SB_VE,dx:8,d:.44}],
+  hook:[{n:'sb-ve',p:SB_VE,dx:10,d:.46},{n:'sb-hi',p:SB_HI,dx:10,d:.46},{n:'sb-be',p:SB_BE,dx:10,d:.46}],
+  upper:[{n:'sb-di',p:SB_DI,dx:12,d:.46},{n:'sb-lo',p:SB_LO,dx:12,d:.46},{n:'sb-be',p:SB_BE,dx:12,d:.46}],
+  body:[{n:'sb-be',p:SB_BE,dx:10,d:.46},{n:'sb-di',p:SB_DI,dx:10,d:.46},{n:'sb-ve',p:SB_VE,dx:10,d:.46}],
+  low:[{n:'sb-lo',p:SB_LO,dx:8,d:.46},{n:'sb-di',p:SB_DI,dx:8,d:.46},{n:'sb-lo2',p:SB_LO,dx:12,d:.46}],
+  kick:[{n:'sb-be',p:SB_BE,dx:20,d:.5},{n:'sb-di',p:SB_DI,dx:20,d:.5},{n:'sb-lo',p:SB_LO,dx:20,d:.5}]};
+DEFP.sam={head:SB_HI,body:SB_BE,low:SB_LO,kick:SB_DI};
 STY.sam={spd:2.0,bare:0,acro:0,pace:114,pace2:94,R:70,Rv:12,sp:60,hop:3,punish:'kes',quick:'nuk',grd:.05,dodge:'box',spec:'TSUBAME-GAESHI',fe:['nuk','men','tsu'],scn:'sam',
   cnt:(M,d)=>d<40?M.cct:M.cdw,far:['tsu','ent','tob','kai'],mid:'ent',dm:DMS,
   pickScn:({em,e,p,kickAtk,body})=>em.lunge>=10||e.st==='strike'&&Math.abs(e.x-p.x)>40?['estocada','iai']:kickAtk?['iai','corte']:body?['estocada','corte']:['corte','iai','estocada']};
