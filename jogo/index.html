@@ -1597,6 +1597,23 @@ function reactArea(d,ar,hv){const m=hv?1.5:1;
 }
 // ---------- impacto ----------
 const AIRMAX=4; // acertos no ar antes do spike que encerra o juggle
+function stumble(d,a,pw){
+  const dur=Math.min(d.isP?.5:.95,.3+.34*pw);
+  d.stm=dur;d.stmT=0;d.stmS=.02;d.stmN=0;d.stmP=pw;d.stmDir=a.face;d.stmFall=(pw>1.15&&Math.random()<.4)||(d.hp<22&&Math.random()<.5);
+  if(d.isP){d.hurtD=Math.max(d.hurtD||0,dur+.08);d.stum=false;}
+  else{eStart(d,'stagger');d.sd=(dur+.08)/Math.max(.5,DP.getM);}
+}
+// passos trôpegos a cada ~0,15 s: o tronco joga para um lado e para o outro, os braços giram em sentidos opostos, os joelhos cedem;
+// no fim, se o desequilíbrio era grande, cai sentado
+function stumbleTick(f,dt){
+  if(!(f.stm>0))return;
+  if(f.st!=='hit'&&f.st!=='hurt'&&f.st!=='stagger'){f.stm=0;return;}
+  f.stm-=dt;f.stmT+=dt;f.stmS-=dt;const p=f.stmP;
+  if(f.stmS<=0){f.stmS=.13+Math.random()*.05;f.stmN++;const w=f.stmN%2?1:-1,k=Math.max(.35,f.stm/(f.stmT+f.stm)+.3);
+    kick(f,0,-9*w*(.6+p)*k);kick(f,1,7*w*k);kick(f,2,13*w*(.5+p)*k);kick(f,4,-13*w*(.5+p)*k);kick(f,3,-6*w*k);kick(f,5,6*w*k);kick(f,7,-7*k);kick(f,9,-6*k);
+    f.vx+=f.stmDir*(26+32*p);dust(f.x,f.z,2,16);}
+  if(f.stm<=0&&f.stmFall&&f.st!=='ko'){f.stmFall=false;f.st='down';f.t=0;f.vx=f.stmDir*(70+30*p);f.vy=70;setPose(f,AIRP,420,.5);f.rv-=2;kick(f,2,-8);kick(f,4,7);sfx.heavy();dust(f.x,f.z,6,30);}
+}
 function applyHit(a,d,hit,mv){
   // quadro de impacto controlado: o membro que bateu fica na extensão do golpe (sem cotovelo dobrado nem excesso da mola)
   // durante o hitstop; faíscas e rastro já saem dele (FLUI-7)
@@ -1666,6 +1683,11 @@ function applyHit(a,d,hit,mv){
   }else if(react==='knock'||(d.isP&&react==='launch')){d.st='down';d.t=0;d.vx=a.face*(hit.kb+40);d.vy=90;setPose(d,AIRP,500,.5);d.rv-=3;kick(d,2,-7);kick(d,4,6);}
   else if(react==='stagger'&&!d.isP){eStart(d,'stagger');d.vx=a.face*30;}
   else{d.st=d.isP?'hurt':'hit';d.t=0;d.vx=a.face*hit.kb;setPose(d,HP_[ar]||HURT_HEAD,700,.45);}
+  // CAMBALEIO: quem toma o golpe perde o equilíbrio: dá passos para trás tropeçando, balança o tronco, os braços rodam no ar
+  // (catando mamona) e, nos golpes fortes ou em sequência, às vezes cai sentado. Quanto mais golpes seguidos, pior o equilíbrio
+  d.hs=(time-(d.hsT||-9)<1.2)?(d.hs||0)+1:1;d.hsT=time;
+  const spw=clamp(hit.dmg/11+(d.hs-1)*.18+(heavy?.35:0)+(fromBehind?.2:0),.4,1.7);
+  if((d.st==='hit'||d.st==='hurt'||d.st==='stagger')&&(heavy||spw>.75||d.hs>=3))stumble(d,a,spw);
   if(d.isP){sfx.hurt();flashA=.15;loseImp(d,60);d.cStreak=0;}
   // atordoamento acumulado do rival (todas as reações de golpe livre); em pé ele pode romper o combo na hora (RUPTURA)
   if(a.isP&&!d.isP&&a.kind==='norm'){d.stun=(d.stun||0)+1;d.stunT=0;
@@ -2293,6 +2315,7 @@ function eTrc(e){e.chain=[];e.mv=TRCMV[e.style];e.st='wind';e.t=0;e.wd=.42;e.wx=
 // ---------- física e animação por molas ----------
 const KJ=[1,.6,.9,.9,.9,.9,1,1,1,1],ZJ=[1,.65,.9,.9,.9,.9,1,1,1,1];
 function phys(f,dt){
+  if(f.stm>0)stumbleTick(f,dt);
   const ctl=f.st==='trc'||f.st==='intro'||f.st==='atk'||f.st==='dash'||f.st==='dodge'||f.st==='strike'||f.st==='appr'||f.st==='held'||f.st==='thrown',dn=f.st==='down'||f.st==='ko';
   if(!dn)f.fb=0;
   // no ar a gravidade cresce com os acertos do juggle (jg); a velocidade de pouso fica guardada para o quique (landV)
