@@ -591,6 +591,9 @@ const sfx={
  hit:k=>{noise(.1,2200,.45);noise(.05,1300,.3)},
  heavy:()=>{noise(.22,1500,.7);noise(.12,950,.5)},
  swoosh:()=>noise(.14,2600,.12,'bandpass'),
+ // espada: sibilo do ar cortado + brilho metálico da lâmina (saque) e, no acerto, corte seco + tinido
+ blade:()=>{noise(.16,5200,.22,'bandpass');noise(.11,2400,.12,'bandpass');tone(2400,5600,.13,.05,'sawtooth');tone(3300,3000,.4,.025,'triangle')},
+ cut:()=>{noise(.1,7000,.5,'highpass');tone(1900,800,.09,.13,'sawtooth');noise(.18,1700,.38);tone(3700,3400,.3,.05,'triangle')},
  counter:()=>{tone(1300,2100,.12,.12,'square');noise(.2,1500,.6);noise(.1,900,.4)},
  block:()=>{noise(.06,4000,.25,'highpass');tone(600,300,.06,.1,'triangle')},
  hurt:()=>{noise(.14,1200,.5);noise(.07,800,.3)},
@@ -670,7 +673,7 @@ function introStep(rdt){
 // toca um golpe real do repertório (poses, giro, salto, torção) no tempo t: o aquecimento e a comemoração usam os mesmos golpes do jogo
 function sampleMv(f,mv,t){
   const K=mv.keys;let ki=0;for(let i=0;i<K.length;i++)if(t>=K[i][0])ki=i;
-  if(f._si!==mv.n+ki){f._si=mv.n+ki;setPose(f,K[ki][1],K[ki][2],K[ki][3]);if(ki===0||ki===1)sfx.swoosh();}
+  if(f._si!==mv.n+ki){f._si=mv.n+ki;setPose(f,K[ki][1],K[ki][2],K[ki][3]);if(ki===0||ki===1)(f.style==='sam'?sfx.blade:sfx.swoosh)();}
   f.spin=spinAt(mv,t);f.rot=rotAt(mv,t);f.y=mv.jump?Math.sin(Math.min(1,t/(mv.d*.85))*PI)*mv.jump:0;f.twS=mv.twS;
   f.tw=mv.tw?mv.tw*(t<mv.h0?eout(clamp((t-mv.a*.5)/(mv.h0-mv.a*.5),0,1)):1-ease(clamp((t-mv.h0)/(mv.d-mv.h0),0,1))):0;
 }
@@ -1076,7 +1079,7 @@ function dashTo(p,kind,o){
     const qc=clamp(Math.abs(e.x-p.x)/Math.max(1,Math.abs(tx-p.x)),.3,.7);
     p.face=-side;p.spin=s;p.turn=0;p.tv=0;p.dash.s0=s;p.dash.kc=qc<.5?Math.sqrt(qc/2):1-Math.sqrt((1-qc)/2);p.rotDir=1;
   }else{unspin(p);setFace(p,-side);}
-  sfx.swoosh();
+  (p.style==='sam'?sfx.blade:sfx.swoosh)();
 }
 function startMove(f,mv,kind){
   if(kind==='thr'){beginThrow(f);return;}
@@ -1088,7 +1091,7 @@ function startMove(f,mv,kind){
   f.airLift=f.isP&&enemy.st==='air'?Math.min(70,enemy.y):0;
   // toque feito durante o dash vira a fila do golpe (neutro: sem CEDO e sem crédito) (FREE-3)
   f.queued=null;if(f.isP&&f.kind==='norm'&&f.buf){f.queued=f.buf.k;f.buf=null;}
-  sfx.swoosh();
+  (f.style==='sam'?sfx.blade:sfx.swoosh)();
   if(f.isP){$('cMove').textContent=mv.n;f.tgtOk=hittable(enemy);
     // rival atordoado pela esquiva perfeita (punish) não esquiva nem defende a punição (INTE-8)
     if(kind==='norm'&&hittable(enemy)&&(enemy.st==='stalk'||enemy.st==='rec'&&!enemy.punish&&enemy.t>.25||enemy.st==='idle')){
@@ -1607,6 +1610,7 @@ function applyHit(a,d,hit,mv){
   if(a.style==='sam'){sparks(hx,hy,d.z-2,heavy?22:12,true);flashA=Math.max(flashA,heavy?.16:.08);} // corte da lâmina: clarão e fagulhas extras
   const ar=hit.ar||hitArea(mv,hit,fromBehind);
   // impacto na câmera: tremor direcional (recuo no sentido do golpe) e empurrão na mola do zoom (CAME-10/CAME-11)
+  if(a.style==='sam')sfx.cut();
   if(heavy){sfx.heavy();hitstop=.085;quake(.5,a.face,0);camPunch(1.6);buzz(25);}else{sfx.hit(combo);hitstop=.05;quake(.22,a.face,0);camPunch(.6);buzz(10);}
   // a sala reage (VISU-8/VISU-11): plateia, luminárias balançando no golpe pesado, suor (e às vezes sangue) no chão
   hype(heavy?(a.isP?.22:.14):a.isP?.05:.02,d.x);if(heavy){lampKick(.1);splat(d,a.face,Math.random()*3+2|0,a.isP&&Math.random()<.45);}
@@ -1965,7 +1969,7 @@ function updEnemy(e,dt){
         // não mordeu a isca: leitura recompensada (INTE-14)
         if(canAct(p)&&p.st!=='hurt'&&p.st!=='dodge'&&ad<110&&running&&!roundOver){pop('LEU A FINTA',p,'#7fd6ff');gainImp(p,8);}
         break;}
-      e.st='strike';e.t=e.mv.a;e.hi=0;e.ki=-1;e.smear=[];e.twS=e.mv.twS;e.gw=0;e.ank=null;if(!e.mv.jump&&!e.mv.rot&&e.y<1)setAnk(e,ankK(e.mv),e.mv);sfx.swoosh();}
+      e.st='strike';e.t=e.mv.a;e.hi=0;e.ki=-1;e.smear=[];e.twS=e.mv.twS;e.gw=0;e.ank=null;if(!e.mv.jump&&!e.mv.rot&&e.y<1)setAnk(e,ankK(e.mv),e.mv);(e.style==='sam'?sfx.blade:sfx.swoosh)();}
     break;}
    case 'strike':{
     const mv=e.mv,t=e.t;
@@ -2410,7 +2414,7 @@ function skel(f){
   // na frente e o quadril/pernas atrasam conforme a velocidade do giro (yl); a cabeça trava o olhar no rival até onde o pescoço
   // alcança (hg), então no chute de costas o rosto olha por cima do ombro.
   // katana: a ponta da lâmina é o membro que acerta (S.sw): contato, faíscas e rastro saem dela, não da mão
-  if(f.style==='sam'){const dx=P.fh[0]-P.fe[0],dy=P.fh[1]-P.fe[1],l=Math.hypot(dx,dy)||1,u=dx/l,v=dy/l,cs=Math.cos(.28),sn2=Math.sin(.28),ex=u*cs-v*sn2,ey=u*sn2+v*cs;P.sw=[P.fh[0]+ex*46,P.fh[1]+ey*46];}
+  if(f.style==='sam'){const dx=P.fh[0]-P.fe[0],dy=P.fh[1]-P.fe[1],l=Math.hypot(dx,dy)||1,u=dx/l,v=dy/l,cs=Math.cos(.28),sn2=Math.sin(.28),ex=u*cs-v*sn2,ey=u*sn2+v*cs;P.sw=[P.fh[0]+ex*39,P.fh[1]+ey*39];}
   const th=f.spin+f.turn,thL=th+(f.yw||0),ycU=Math.cos(th),ysU=Math.sin(th),ycL=Math.cos(thL),ysL=Math.sin(thL),cr=Math.cos(ra),sr=Math.sin(ra),ro=f.ro||0;
   const LAT={hip:[0,0],nk:[0,1],sh:[0,1],hd:[0,1],hF:[3.8,0],wF:[3.7,.5],cF:[4.8,1],sF:[5.3,1],tF:[2.5,1],tB:[-2.5,1],sB:[-5.3,1],dB:[-4.8,.5],hB:[-3.8,0],
     aF:[5,1],fe:[5.2,1],fh:[5,1],sw:[5,1],aB:[-5,1],be:[-5.2,1],bh:[-5,1],fk:[3,0],ff:[3.1,0],ft:[3.2,0],bk:[-3,0],bf:[-3.1,0],bt:[-3.2,0]};
@@ -2458,7 +2462,7 @@ const PAIN={hit:1,hurt:1,stagger:1,countered:1,air:1,down:1,ko:1,held:1,thrown:1
 // geometria da katana: cabo atrás da mão da frente, lâmina saindo à frente da tsuba, inclinada um pouco para cima em relação ao antebraço (punho)
 function swordPts(S){const sw=S.swapU,ha=sw?S.bh:S.fh,el=sw?S.be:S.fe;let dx=ha[0]-el[0],dy=ha[1]-el[1];const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;
   const th=.28,c=Math.cos(th),s=Math.sin(th),d=[dx*c-dy*s,dx*s+dy*c];
-  return {ha,d,tail:[ha[0]-d[0]*14,ha[1]-d[1]*14],tsu:[ha[0]+d[0]*7,ha[1]+d[1]*7],tip:[ha[0]+d[0]*52,ha[1]+d[1]*52]};}
+  return {ha,d,tail:[ha[0]-d[0]*14,ha[1]-d[1]*14],tsu:[ha[0]+d[0]*7,ha[1]+d[1]*7],tip:[ha[0]+d[0]*44,ha[1]+d[1]*44]};}
 function drawFighter(c,f,S,T,ps,LI){
   const fl=f.flash>0,mt=f.style==='mt',capo=f.style==='cap',sam=f.style==='sam',box=STY[f.style].bare&&!mt&&!capo,bare=!!STY[f.style].bare,LP=litPal(f.pal,LI?LI.lv:10),col=k=>fl?'#ffffff':LP[k],ow=1/ps,fc=f.face;
   c.lineCap='round';c.lineJoin='round';
