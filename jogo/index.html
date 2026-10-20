@@ -1491,7 +1491,7 @@ THRP.cap={GRAB:[.5,-.1,1.6,1.0,1.5,1.1,.6,-1.0,-.5,-.4],CRCH:[.9,0,1.3,1.0,1.2,1
 // com chutes e giros de apoio. A lâmina é desenhada na mão da frente seguindo o antebraço (ver katana() em drawFighter); o alcance (r) dos
 // golpes de espada é maior que o dos punhos. Mesmos padrões dos outros lutadores: física, defesa dinâmica, contras, ESPECIAIS e SUPERS
 // base: Sha no Kamae, postura oblíqua: pernas bem afastadas, joelhos flexionados, quadril baixo e a lâmina descendo na diagonal à frente
-const GSAM=[.15,-.1,.4,.15,.35,.2,1.0,-1.1,-.5,-.45],SBLK=[.1,-.3,2.3,1.2,2.2,1.3,.4,-.5,-.4,-.3];
+const GSAM=[.15,-.1,.4,.15,.35,.2,1.0,-1.1,-.5,-.45],SBLK=[.15,-.25,1.1,.5,1.0,.6,.45,-.6,-.4,-.25];
 G.sam=GSAM;DASHP.sam=[.4,-.1,1.0,.5,.8,.7,.85,-1.2,-.7,-.5];BLOCK.sam=SBLK;
 WIN.sam=[0,-.25,.35,.2,.3,.25,.3,-.2,-.25,-.1]; // chiburi: espada baixa ao lado do corpo, após o último golpe
 WK.sam={f:4.9,b:-12,y:-25,c:15,a:.28,L:4.6};STR.sam=15;
@@ -1501,49 +1501,49 @@ WK.sam={f:4.9,b:-12,y:-25,c:15,a:.28,L:4.6};STR.sam=15;
 const SPN=[.35,-.1,.4,1.3,.7,1.2,.85,-1.2,-.6,-.4],SPNS=[.5,-.2,1.45,.1,1.35,.2,.65,-.8,-.65,-.1],JOD=[0,-.2,2.75,.55,2.65,.6,.4,-.5,-.4,-.2],KSA=[-.05,-.25,2.9,.4,2.8,.5,.4,-.6,-.4,-.2],KSS=[.7,-.1,.7,.6,.6,.7,.7,-.9,-.5,-.1];
 const SAMK={
  nuk:mk('Nukitsuke (saque)',{lim:'sw',d:.22,a:.04,h:.09,A:SPN,S:SPNS,dmg:10,r:84,tw:1.1,lunge:16,kb:35}),
- men:mk('Kirioroshi (corte vertical)',{lim:'sw',d:.3,a:.09,h:.15,A:JOD,S:[.65,-.15,.95,.55,.85,.65,.75,-1.0,-.5,-.1],dmg:13,r:84,tw:.3,lunge:18,react:'knock',kb:70}),
- kes:mk('Kesa-giri (corte diagonal)',{lim:'sw',d:.3,a:.09,h:.15,A:KSA,S:KSS,dmg:12,r:84,tw:.7,lunge:14,react:'knock',kb:60}),
- kir:mk('Kiriage (corte ascendente)',{lim:'sw',d:.3,a:.08,h:.14,A:[.55,0,.4,.9,.35,1.0,.75,-1.0,-.45,-.6],S:[.1,-.25,2.4,.5,2.3,.6,.35,-.3,-.3,-.1],dmg:11,r:84,tw:.5,react:'stagger',kb:50}),
+ men:mk('Kirioroshi (corte vertical)',{lim:'sw',d:.3,a:.09,h:.15,A:JOD,S:[.65,-.15,.95,.55,.85,.65,.75,-1.0,-.5,-.1],dmg:13,r:84,tw:.3,lunge:18,react:'stagger',kb:45}),
+ kes:mk('Kesa-giri (corte diagonal)',{lim:'sw',d:.3,a:.09,h:.15,A:KSA,S:KSS,dmg:12,r:84,tw:.7,lunge:14,react:'stagger',kb:45}),
+ kir:mk('Kiriage (corte ascendente)',{lim:'sw',d:.3,a:.08,h:.14,A:[.55,0,.4,.9,.35,1.0,.75,-1.0,-.45,-.6],S:[.1,-.25,2.4,.5,2.3,.6,.35,-.3,-.3,-.1],dmg:11,r:84,tw:.5,react:'stagger',kb:45}),
  yok:mk('Do-uchi (corte no flanco)',{lim:'sw',d:.26,a:.06,h:.12,A:[.35,-.1,-.7,-.9,-.8,-.8,.5,-.7,-.5,-.3],S:[.5,-.2,1.0,.05,.95,.1,.6,-.8,-.6,-.1],dmg:10,r:84,tw:1.5,lv:'body',lunge:16,kb:45}),
- tsu:mk('Tsuki (estocada)',{lim:'sw',d:.28,a:.07,h:.13,A:[.4,-.1,.7,.8,.65,.9,.9,-1.3,-.6,-.4],S:[.8,-.15,1.4,.05,1.3,.1,.8,-.9,-.6,-.05],dmg:11,r:92,tw:.3,lunge:24,lv:'body',react:'stagger',kb:60}),
+ tsu:mk('Tsuki (estocada)',{lim:'sw',d:.28,a:.07,h:.13,A:[.4,-.1,.7,.8,.65,.9,.9,-1.3,-.6,-.4],S:[.8,-.15,1.4,.05,1.3,.1,.8,-.9,-.6,-.05],dmg:11,r:92,tw:.3,lunge:24,lv:'body',react:'stagger',kb:45}),
  kot:mk('Kote-uchi (corte no punho)',{lim:'sw',d:.2,a:.04,h:.09,A:[.15,-.15,2.2,.6,2.1,.7,.45,-.6,-.4,-.2],S:[.55,-.15,1.0,.5,.9,.6,.7,-.9,-.5,-.1],dmg:7,r:80,tw:.2,lunge:12,kb:20}),
  ent:mk('Fumikomi (passo e corte)',{lim:'sw',d:.24,a:.04,h:.09,A:SPN,S:SPNS,dmg:7,r:86,tw:.5,lunge:26}),
  mae:cl(TK.mir,{n:'Fumikomi-geri',dmg:8}),ash:cl(TK.ara,{n:'Ashi-barai'}),
- hiz:mk('Hiza-geri',{lim:'fk',d:.36,a:.08,h:.17,A:[.55,.1,1.25,2.0,1.0,2.2,1.55,-2.4,.6,-1.5],S:[.12,-.15,2.3,1.0,2.45,1.25,2.35,-2.35,.2,-.55],dmg:11,r:28,lunge:12,react:'knock',kb:90,lv:'body'}),
- cct:mk('Kaeshi-giri (contra-corte)',{lim:'sw',d:.34,a:.08,h:.15,A:KSA,S:KSS,dmg:15,r:84,tw:.6,react:'knock',kb:90,ka:900}),
- cdw:mk('Contra-estocada',{lim:'sw',d:.34,a:.08,h:.14,A:DUCK,S:[.8,-.15,1.4,.05,1.3,.1,.8,-.9,-.6,-.05],dmg:15,r:84,lunge:20,react:'knock',kb:100,ka:900,lv:'body'}),
- air:mk('Corte no ar',{lim:'sw',d:.34,a:.08,h:.14,A:TUCK,S:KSS,dmg:8,r:84,jump:0,react:'launch',kb:25,lv:'head'}),
+ hiz:mk('Hiza-geri',{lim:'fk',d:.36,a:.08,h:.17,A:[.55,.1,1.25,2.0,1.0,2.2,1.55,-2.4,.6,-1.5],S:[.12,-.15,2.3,1.0,2.45,1.25,2.35,-2.35,.2,-.55],dmg:11,r:28,lunge:12,react:'stagger',kb:45,lv:'body'}),
+ cct:mk('Kaeshi-giri (contra-corte)',{lim:'sw',d:.34,a:.08,h:.15,A:KSA,S:KSS,dmg:15,r:84,tw:.6,react:'stagger',kb:45,ka:900}),
+ cdw:mk('Contra-estocada',{lim:'sw',d:.34,a:.08,h:.14,A:DUCK,S:[.8,-.15,1.4,.05,1.3,.1,.8,-.9,-.6,-.05],dmg:15,r:84,lunge:20,react:'stagger',kb:45,ka:900,lv:'body'}),
+ air:mk('Corte no ar',{lim:'sw',d:.34,a:.08,h:.14,A:TUCK,S:KSS,dmg:8,r:84,jump:0,react:'stagger',kb:25,lv:'head'}),
 };
 // duas técnicas encadeadas num só passo: saque seguido de corte diagonal (Renzoku)
 SAMK.ren=mk('Renzoku (corte duplo)',{d:.5,keys:[[0,SPN,700,.7],[.07,SPNS,2000,.55],[.17,KSA,1300,.65],[.27,KSS,2000,.55],[.46,null,280,.7]],
-   hits:[{t:.09,dmg:7,react:'hit',lim:'sw',lv:'body',kb:20},{t:.29,dmg:12,react:'knock',lim:'sw',lv:'head',kb:100}]});
-SAMK.yom=mk('Yoko-men (corte na lateral da cabeça)',{lim:'sw',d:.28,a:.08,h:.14,A:[.2,-.15,2.6,.7,2.5,.8,.4,-.6,-.4,-.2],S:[.55,-.2,1.5,.5,1.4,.6,.6,-.8,-.55,-.1],dmg:13,r:84,tw:1.0,lunge:14,react:'knock',kb:70});
+   hits:[{t:.09,dmg:7,react:'hit',lim:'sw',lv:'body',kb:20},{t:.29,dmg:12,react:'stagger',lim:'sw',lv:'head',kb:45}]});
+SAMK.yom=mk('Yoko-men (corte na lateral da cabeça)',{lim:'sw',d:.28,a:.08,h:.14,A:[.2,-.15,2.6,.7,2.5,.8,.4,-.6,-.4,-.2],S:[.55,-.2,1.5,.5,1.4,.6,.6,-.8,-.55,-.1],dmg:13,r:84,tw:1.0,lunge:14,react:'stagger',kb:45});
 // Tsubame-gaeshi (golpe da andorinha, de Sasaki Kojiro): corte descendente e, sem parar, a lâmina volta no mesmo arco em corte ascendente
 SAMK.tsg=mk('Tsubame-gaeshi (golpe da andorinha)',{d:.46,keys:[[0,KSA,700,.7],[.08,KSS,2200,.55],[.15,[.55,-.1,.5,.4,.45,.5,.75,-1,-.5,-.1],1800,.6],[.26,[.1,-.25,2.4,.5,2.3,.6,.35,-.3,-.3,-.1],2200,.55],[.44,null,280,.7]],
-   hits:[{t:.1,dmg:8,react:'hit',lim:'sw',lv:'body',kb:20},{t:.28,dmg:13,react:'knock',lim:'sw',lv:'head',kb:100}]});
+   hits:[{t:.1,dmg:8,react:'hit',lim:'sw',lv:'body',kb:20},{t:.28,dmg:13,react:'stagger',lim:'sw',lv:'head',kb:45}]});
 // golpes laterais, giratórios e baixos: cada um com trajetória própria da lâmina
-SAMK.kub=mk('Kubi-giri (corte horizontal no pescoço)',{lim:'sw',d:.3,a:.08,h:.15,A:[.25,-.1,-.5,-1.0,-.6,-.9,.5,-.7,-.5,-.3],S:[.35,-.2,1.7,-.5,1.65,-.45,.6,-.8,-.6,-.1],dmg:12,r:84,tw:1.5,lunge:14,react:'knock',kb:80});
-SAMK.sune=mk('Sune-giri (corte nas pernas)',{lim:'sw',d:.32,a:.09,h:.16,A:[.7,-.1,-.4,-.9,-.5,-.8,1.0,-1.2,-.5,-.3],S:[.9,-.1,.4,.25,.35,.3,1.2,-1.7,-.5,-.4],dmg:9,r:84,tw:.8,lunge:16,react:'knock',kb:60,lv:'body'});
-SAMK.kai=mk('Kaiten-giri (corte giratório)',{lim:'sw',d:.6,a:.16,h:.38,A:[.3,.1,1.3,1.6,1.1,1.9,.5,-.7,-.5,-.5],S:[.6,-.15,1.0,.05,.9,.1,.6,-.8,-.5,-.3],dmg:14,r:84,spin:TAU,sa:1,wa:.3,ve:1.4,sm:.3,react:'knock',kb:90,lunge:10,jump:8});
-SAMK.tob=mk('Tobi-giri (salto cortante)',{lim:'sw',d:.6,a:.2,h:.32,A:KSA,S:KSS,dmg:15,r:84,jump:42,lunge:22,react:'knock',kb:110});
+SAMK.kub=mk('Kubi-giri (corte horizontal no pescoço)',{lim:'sw',d:.3,a:.08,h:.15,A:[.25,-.1,-.5,-1.0,-.6,-.9,.5,-.7,-.5,-.3],S:[.35,-.2,1.7,-.5,1.65,-.45,.6,-.8,-.6,-.1],dmg:12,r:84,tw:1.5,lunge:14,react:'stagger',kb:45});
+SAMK.sune=mk('Sune-giri (corte nas pernas)',{lim:'sw',d:.32,a:.09,h:.16,A:[.7,-.1,-.4,-.9,-.5,-.8,1.0,-1.2,-.5,-.3],S:[.9,-.1,.4,.25,.35,.3,1.2,-1.7,-.5,-.4],dmg:9,r:84,tw:.8,lunge:16,react:'stagger',kb:45,lv:'body'});
+SAMK.kai=mk('Kaiten-giri (corte giratório)',{lim:'sw',d:.6,a:.16,h:.38,A:[.3,.1,1.3,1.6,1.1,1.9,.5,-.7,-.5,-.5],S:[.6,-.15,1.0,.05,.9,.1,.6,-.8,-.5,-.3],dmg:14,r:84,spin:TAU,sa:1,wa:.3,ve:1.4,sm:.3,react:'stagger',kb:45,lunge:10,jump:8});
+SAMK.tob=mk('Tobi-giri (salto cortante)',{lim:'sw',d:.6,a:.2,h:.32,A:KSA,S:KSS,dmg:15,r:84,jump:42,lunge:22,react:'stagger',kb:45});
 Object.assign(AREAS,{'Kubi-giri (corte horizontal no pescoço)':['head','head'],'Sune-giri (corte nas pernas)':['leg'],'Kaiten-giri (corte giratório)':['side','head'],'Tobi-giri (salto cortante)':['head','head']});
 // OS TRÊS GOLPES BÁSICOS, cada um com preparação, golpe e recuperação bem marcados (cadência: arma → corta → volta à guarda)
 // 1) VERTICAL: lâmina erguida acima da cabeça (pausa) e desce em diagonal para baixo, terminando apontada para o chão à frente
 SAMK.men=mk('Kirioroshi (corte vertical)',{lim:'sw',d:.58,a:.2,h:.28,keys:[
   [0,[.1,-.2,2.9,1.2,2.8,1.3,.5,-.6,-.4,-.2],700,.7],[.19,[-.05,-.3,3.0,.9,2.9,1.0,.5,-.6,-.4,-.2],900,.7],
   [.28,[.75,-.1,1.0,-.05,.95,0,.9,-1.2,-.5,-.1],2400,.5],[.4,[.55,-.1,.8,.1,.75,.2,.8,-1.1,-.5,-.1],1000,.65],[.58,null,280,.7]],
-  dmg:13,r:84,tw:.3,lunge:18,react:'knock',kb:70,lv:'head'});
+  dmg:13,r:84,tw:.3,lunge:18,react:'stagger',kb:45,lv:'head'});
 // 2) LATERAL: lâmina recuada atrás do quadril, na altura da cintura; varre na horizontal e atravessa o flanco
 SAMK.yok=mk('Do-uchi (corte no flanco)',{lim:'sw',d:.54,a:.19,h:.26,keys:[
   [0,[.4,-.1,-.5,-1.1,-.6,-1.0,.6,-.8,-.6,-.2],700,.7],[.18,[.5,-.15,-.8,-1.3,-.9,-1.2,.7,-.9,-.6,-.2],900,.7],
   [.27,[.55,-.2,1.2,.35,1.15,.4,.6,-.8,-.6,-.1],2400,.5],[.38,[.6,-.2,1.5,.7,1.4,.8,.6,-.8,-.55,-.1],1000,.65],[.54,null,280,.7]],
-  dmg:11,r:84,tw:1.5,lunge:16,react:'knock',kb:60,lv:'body'});
+  dmg:11,r:84,tw:1.5,lunge:16,react:'stagger',kb:45,lv:'body'});
 // 3) GIRATÓRIO: agacha e recua a lâmina, gira o corpo inteiro com a espada estendida e fecha o giro cortando o peito
 SAMK.kai=mk('Kaiten-giri (corte giratório)',{lim:'sw',d:.7,a:.15,h:.44,keys:[
   [0,[.5,-.1,-.4,-1.0,-.5,-.9,.9,-1.0,-.5,-.4],700,.7],[.15,[.6,-.1,-.7,-1.2,-.8,-1.1,1.0,-1.2,-.5,-.5],700,.7],
   [.3,[.2,-.1,1.55,0,1.5,.05,.7,-.8,-.7,-.4],1100,.6],[.43,[.6,-.1,1.2,.35,1.1,.4,.6,-.8,-.5,-.1],2400,.5],
   [.55,[.55,-.1,1.4,.6,1.3,.7,.6,-.8,-.5,-.1],1000,.65],[.7,null,280,.7]],
-  dmg:15,r:86,spin:TAU,sa:.4,wa:.2,ve:1.5,sm:.3,react:'knock',kb:100,lunge:12,lv:'body'});
+  dmg:15,r:86,spin:TAU,sa:.4,wa:.2,ve:1.5,sm:.3,react:'stagger',kb:45,lunge:12,lv:'body'});
 // velocidade: o samurai é o lutador mais rápido do jogo; todos os tempos dos golpes (duração, antecipação, impacto) são 25% mais curtos
 for(const k in SAMK){const m=SAMK[k];if(m.__fast)continue;m.__fast=1;const q=.84;m.d*=q;m.a*=q;m.h*=q;m.h0*=q;m.hl*=q;if(m.hi!==undefined)m.hi*=1;
   m.keys=m.keys.map(x=>[x[0]*q,x[1],x[2],x[3]]);m.hits.forEach(h=>{h.t*=q;});if(m.sm!==undefined)m.sm*=q;if(m.h0>m.d)m.d=m.h0+.05;}
