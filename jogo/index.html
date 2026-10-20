@@ -1518,6 +1518,9 @@ SAMK.yom=mk('Yoko-men (corte na lateral da cabeça)',{lim:'sw',d:.28,a:.08,h:.14
 // Tsubame-gaeshi (golpe da andorinha, de Sasaki Kojiro): corte descendente e, sem parar, a lâmina volta no mesmo arco em corte ascendente
 SAMK.tsg=mk('Tsubame-gaeshi (golpe da andorinha)',{d:.46,keys:[[0,KSA,700,.7],[.08,KSS,2200,.55],[.15,[.55,-.1,.5,.4,.45,.5,.75,-1,-.5,-.1],1800,.6],[.26,[.1,-.25,2.4,.5,2.3,.6,.35,-.3,-.3,-.1],2200,.55],[.44,null,280,.7]],
    hits:[{t:.1,dmg:8,react:'hit',lim:'sw',lv:'body',kb:20},{t:.28,dmg:13,react:'knock',lim:'sw',lv:'head',kb:100}]});
+// velocidade: o samurai é o lutador mais rápido do jogo; todos os tempos dos golpes (duração, antecipação, impacto) são 25% mais curtos
+for(const k in SAMK){const m=SAMK[k];if(m.__fast)continue;m.__fast=1;const q=.75;m.d*=q;m.a*=q;m.h*=q;m.h0*=q;m.hl*=q;if(m.hi!==undefined)m.hi*=1;
+  m.keys=m.keys.map(x=>[x[0]*q,x[1],x[2],x[3]]);m.hits.forEach(h=>{h.t*=q;});if(m.sm!==undefined)m.sm*=q;if(m.h0>m.d)m.d=m.h0+.05;}
 MOV.sam=SAMK;
 Object.assign(AREAS,{'Nukitsuke (saque)':['chest','head'],'Kirioroshi (corte vertical)':['head','chest'],'Kesa-giri (corte diagonal)':['head','chest'],'Kiriage (corte ascendente)':['head','chest'],'Do-uchi (corte no flanco)':['side','belly'],'Tsuki (estocada)':['belly','chest'],'Kote-uchi (corte no punho)':['arm','chest'],'Fumikomi (passo e corte)':['chest','arm'],'Fumikomi-geri':['belly'],'Ashi-barai':['leg'],'Hiza-geri':['chest','head'],'Kaeshi-giri (contra-corte)':['head','chest'],'Contra-estocada':['belly','chest'],'Renzoku (corte duplo)':['chest','head'],'Yoko-men (corte na lateral da cabeça)':['head','head'],'Tsubame-gaeshi (golpe da andorinha)':['chest','head']});
 SEQ.sam=[['yom','tsg'],['nuk','yom','tsu'],['tsg','kes','tsu'],['kot','yom','kir'],['nuk','kes','tsu'],['kot','men','yok'],['nuk','kir','men'],['tsu','kes','hiz'],['men','yok','kes'],['kot','nuk','kes','tsu'],['ash','men','kir'],['mae','nuk','kes'],['ren','tsu'],['kes','kir','tsu'],['nuk','yok','men','tsu'],['kot','ren','mae']];
@@ -1538,7 +1541,7 @@ const DMS={
   low:[{n:'skip',p:BSKIP,y:16,ev:1,d:.54},{n:'check',p:MTCHECK,dx:6,d:.46},{n:'pivot',p:BPIV,dx:6,dz:24,sp:.7,ev:1,d:.5}],
   kick:[{n:'block',p:SBLK,dx:20,d:.5},{n:'duck',p:ROLLP,dx:4,dz:20,sp:.6,ev:1,d:.56},{n:'pivot',p:BPIV,dx:8,dz:26,sp:.8,ev:1,d:.52}]};
 DEFP.sam={head:SBLK,body:CRUNCH,low:MTCHECK,kick:SBLK};
-STY.sam={spd:1.6,bare:0,acro:0,pace:94,pace2:76,R:64,Rv:12,sp:54,hop:3,punish:'kes',quick:'nuk',grd:.12,dodge:'box',spec:'TSUBAME-GAESHI',fe:['nuk','men','tsu'],scn:'sam',
+STY.sam={spd:2.4,bare:0,acro:0,pace:132,pace2:106,R:70,Rv:12,sp:60,hop:3,punish:'kes',quick:'nuk',grd:.05,dodge:'box',spec:'TSUBAME-GAESHI',fe:['nuk','men','tsu'],scn:'sam',
   cnt:(M,d)=>d<40?M.cct:M.cdw,far:['tsu','ent'],mid:'ent',dm:DMS,
   pickScn:({em,e,p,kickAtk,body})=>em.lunge>=10||e.st==='strike'&&Math.abs(e.x-p.x)>40?['estocada','iai']:kickAtk?['iai','corte']:body?['estocada','corte']:['corte','iai','estocada']};
 Object.assign(PARRY,{
